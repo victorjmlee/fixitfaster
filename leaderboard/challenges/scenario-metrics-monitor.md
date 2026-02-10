@@ -1,65 +1,65 @@
-# 시나리오: 메트릭/모니터가 안 나오거나 알람이 이상함
+# Scenario: Metrics or monitors missing / alerts wrong
 
-**난이도:** ⭐⭐ Medium  
-**예상 소요 시간:** 15~25분  
-**관련 Datadog 제품:** Metrics, Monitors, Agent
-
----
-
-## 증상 요약
-
-- **Case 1:** 특정 메트릭이 Datadog에 안 들어오거나, 이전에 보이던 메트릭이 사라짐  
-- **Case 2:** 모니터(알람)가 설정돼 있는데 알림이 오지 않거나, 반대로 잘못된 조건으로 자꾸 알림이 옴  
-
-참가자 환경에서는 “정상일 때 보이던 메트릭/모니터”를 기준으로, 주최자가 망가뜨려 둔 상태에서 원인을 찾아 복구합니다.
+**Difficulty:** ⭐⭐ Medium
+**Estimated time:** 15–25 min
+**Related Datadog products:** Metrics, Monitors, Agent
 
 ---
 
-## 환경
+## Symptom summary
 
-- **플랫폼:** 로컬 Docker (Datadog Agent), (선택) 메트릭을 보내는 앱
+- **Case 1:** A metric no longer appears in Datadog, or a metric that was there before has disappeared.
+- **Case 2:** A monitor (alert) is configured but notifications do not arrive, or they fire incorrectly.
+
+Participants work from the state where metrics/monitors were previously correct; the organizer has broken something and they must find and fix it.
+
+---
+
+## Environment
+
+- **Platform:** Local Docker (Datadog Agent), (optional) app sending metrics
 - **Agent:** Datadog Agent 7.x
-- **기타:** 커스텀 메트릭 또는 기본 시스템 메트릭, 모니터 1~2개 (팀에서 지정)
+- **Note:** Custom or default system metrics, 1–2 monitors (specify per team)
 
 ---
 
-## 재현 단계 / 관찰 가능한 현상
+## Steps to reproduce / What to observe
 
-1. **메트릭:** Metrics Explorer 또는 대시보드에서 기대한 메트릭이 없거나 0만 나옴
-2. **모니터:** Monitors에서 상태가 잘못됨(항상 Alert/No Data 등) 또는 알림이 안 옴
-3. Agent는 떠 있고, 다른 제품(APM/Logs)은 정상일 수 있음
+1. **Metrics:** In Metrics Explorer or a dashboard, the expected metric is missing or always zero.
+2. **Monitors:** In Monitors, status is wrong (e.g. always Alert/No Data) or notifications do not fire.
+3. The Agent is running; other products (APM, Logs) may be fine.
 
 ---
 
-## 허용 리소스
+## Allowed resources
 
-- [x] Datadog 공식 문서 (Metrics, Monitors, Agent)
+- [x] Datadog documentation (Metrics, Monitors, Agent)
 - [x] Help Center, Troubleshooting
-- [ ] 내부 Wiki: (팀에서 지정)
+- [ ] Internal wiki: (specify per team)
 
 ---
 
-## 제출 포맷 (참가자용)
+## Submission format (for participants)
 
-- **원인 요약:**
-- **해결 단계:**
-- **참고한 문서/링크:**
-- **소요 시간:**
+- **Root cause summary:**
+- **Resolution steps:**
+- **Documentation / links used:**
+- **Time taken:**
 
 ---
 
-## 주최자용: 망가뜨리는 방법 & 정답
+## For organizers: How to break it & answer key
 
-**망가뜨리는 방법 (택 1):**
+**How to break it (choose one):**
 
-- **A. 메트릭:** Agent에서 메트릭 전송 비활성화 또는 잘못된 prefix/필터로 해당 메트릭이 안 나가게 함
-- **B. 모니터:** 모니터 쿼리를 존재하지 않는 메트릭/잘못된 조건으로 변경
-- **C. 모니터:** 알림 채널(이메일/슬랙)을 잘못된 값으로 바꿔서 알림이 안 가게 함
+- **A. Metrics:** Disable metric collection in the Agent or use a wrong prefix/filter so the metric is not sent.
+- **B. Monitor:** Change the monitor query to a non-existent metric or wrong condition.
+- **C. Monitor:** Set the notification channel (email/Slack) to an invalid value so alerts do not reach anyone.
 
-**정답 요약:**
+**Answer summary:**
 
-- **A:** 메트릭 수집/전송 설정 복구, Agent 재시작
-- **B:** 올바른 메트릭/조건으로 모니터 수정
-- **C:** 알림 채널 복구, 모니터 저장
+- **A:** Restore metric collection/forwarding config and restart the Agent.
+- **B:** Fix the monitor query (correct metric/condition).
+- **C:** Restore the notification channel and save the monitor.
 
-**관련 공식 문서:** Metrics, Monitors, Agent
+**Related docs:** Metrics, Monitors, Agent

@@ -1,91 +1,87 @@
-# 시나리오: Infrastructure에 호스트가 안 나옴
+# Scenario: Host not showing in Infrastructure
 
-**난이도:** ⭐ Easy  
-**예상 소요 시간:** 10~20분  
-**관련 Datadog 제품:** Infrastructure (Host Map, 등), Agent
-
----
-
-## 증상 요약
-
-Datadog Infrastructure(호스트 맵, 인벤토리 등)에 **Agent를 띄운 호스트가 보이지 않습니다.**  
-이전에는 보였거나, 막 Agent를 올린 참가자는 “한 번도 안 보였다” 상태.
+**Difficulty:** ⭐ Easy
+**Estimated time:** 10–20 min
+**Related Datadog products:** Infrastructure (Host Map, etc.), Agent
 
 ---
 
-## 환경
+## Symptom summary
 
-- **플랫폼:** 로컬 Docker (Datadog Agent)
+The host where the Agent is running **does not appear in Datadog Infrastructure** (Host Map, inventory, etc.).  
+It may have been visible before, or for new setups it has never appeared.
+
+---
+
+## Environment
+
+- **Platform:** Local Docker (Datadog Agent)
 - **Agent:** Datadog Agent 7.x
-- **기타:** API 키는 동일한데 호스트만 안 보임
+- **Note:** Same API key; only the host is missing.
 
 ---
 
-## 재현 단계 / 관찰 가능한 현상
+## Steps to reproduce / What to observe
 
-1. Datadog 콘솔 → Infrastructure → Host Map (또는 Hosts) 에서 해당 호스트 없음
-2. Agent 컨테이너는 떠 있고 `agent status` 는 성공
-3. (선택) 메트릭/APM도 안 들어오거나, 일부만 들어옴
+1. In Datadog → Infrastructure → Host Map (or Hosts), the expected host is missing.
+2. The Agent container is running and `agent status` succeeds.
+3. (Optional) Metrics/APM may also be missing or partial.
 
 ---
 
-## 허용 리소스
+## Allowed resources
 
-- [x] Datadog 공식 문서 (Infrastructure, Agent)
+- [x] Datadog documentation (Infrastructure, Agent)
 - [x] Agent Troubleshooting
-- [ ] 내부 Wiki: (팀에서 지정)
+- [ ] Internal wiki: (specify per team)
 
 ---
 
-## 제출 포맷 (참가자용)
+## Submission format (for participants)
 
-- **원인 요약:**
-- **해결 단계:**
-- **참고한 문서/링크:**
-- **소요 시간:**
+- **Root cause summary:**
+- **Resolution steps:**
+- **Documentation / links used:**
+- **Time taken:**
 
 ---
 
-## 주최자용: 망가뜨리는 방법 & 정답
+## For organizers: How to break it & answer key
 
-**망가뜨리는 방법 (택 1, 구현 쉬운 순):**
+**How to break it (choose one; easier options first):**
 
-**방법 A. 호스트 이름을 잘못된 값으로 변경 (추천)**  
-→ Infrastructure에는 호스트가 “다른 이름”으로만 보이고, 기대하는 `fixitfaster-agent`는 안 보임.
+**Option A. Wrong hostname (recommended)**  
+→ The host appears under a different name in Infrastructure; the expected name `fixitfaster-agent` is not in the list.
 
-`docker-compose.yml` 의 **agent** 서비스에서:
+In `docker-compose.yml` for the **agent** service:
 
-1. `hostname: fixitfaster-agent` 를 **`hostname: broken-infra-host`** 로 변경
-2. `DD_HOSTNAME=fixitfaster-agent` 를 **`DD_HOSTNAME=broken-infra-host`** 로 변경 (또는 이 줄 삭제)
+1. Change `hostname: fixitfaster-agent` to `hostname: broken-infra-host`.
+2. Change `DD_HOSTNAME=fixitfaster-agent` to `DD_HOSTNAME=broken-infra-host` (or remove the line).
 
-저장 후 Agent만 재시작:
+Then restart only the Agent:
 
 ```bash
 npm run agent:down && npm run agent:up
 ```
 
-그러면 Datadog Infrastructure → Hosts / Host Map 에는 **`broken-infra-host`** 만 보이고, **`fixitfaster-agent`** 는 목록에 없음. 참가자는 “Agent 호스트가 안 보인다” → 문서에서 호스트명 설정 확인 → compose 에서 `DD_HOSTNAME`·`hostname` 복구.
+In Datadog Infrastructure → Hosts / Host Map you will see **`broken-infra-host`** only; **`fixitfaster-agent`** will not appear. Participants fix by restoring `DD_HOSTNAME` and `hostname` in the compose file.
 
-**방법 B. Agent 컨테이너 중지**  
-→ 호스트가 아예 메트릭을 안 보내서 몇 분 뒤 Infrastructure에서 사라짐.
+**Option B. Stop the Agent container**  
+→ The host stops sending metrics and disappears from Infrastructure after a few minutes.
 
 ```bash
 docker stop fixitfaster-agent
 ```
 
-(다른 데모 컨테이너는 계속 떠 있어도 됨. Agent만 중지.)  
-참가자: Agent 다시 기동 (`npm run agent:up` 또는 `docker start fixitfaster-agent`).
+(Other demo containers can keep running.) Participants fix by starting the Agent again (`npm run agent:up` or `docker start fixitfaster-agent`).
 
-**방법 C. API 키를 다른 org 키로 변경**  
-→ 데이터가 다른 org로 가서 이 org의 Infrastructure에는 호스트가 안 보임. 다른 org API 키가 있을 때만 사용.
+**Option C. Use a different org API key**  
+→ Data goes to another org, so the host does not appear in this org’s Infrastructure. Use only if you have another org’s key.
 
----
+**Answer summary:**
 
-**정답 요약:**
+- **A:** Restore `hostname: fixitfaster-agent` and `DD_HOSTNAME=fixitfaster-agent` in docker-compose.yml, then `npm run agent:down && npm run agent:up`.
+- **B:** Run `npm run agent:up` or `docker start fixitfaster-agent`.
+- **C:** Restore the correct org `DATADOG_API_KEY` in `.env.local` and restart the Agent.
 
-- **A:** `docker-compose.yml` 에서 `hostname: fixitfaster-agent`, `DD_HOSTNAME=fixitfaster-agent` 복구 후 `npm run agent:down && npm run agent:up`
-- **B:** `npm run agent:up` 또는 `docker start fixitfaster-agent`
-- **C:** `.env.local` 의 `DATADOG_API_KEY` 를 올바른 org 키로 복구 후 Agent 재시작
-
-**관련 공식 문서:**  
-[Infrastructure Monitoring](https://docs.datadoghq.com/infrastructure/), [Agent Troubleshooting](https://docs.datadoghq.com/agent/troubleshooting/), [Hostname in Containers](https://docs.datadoghq.com/agent/troubleshooting/hostname_containers/)
+**Related docs:** [Infrastructure Monitoring](https://docs.datadoghq.com/infrastructure/), [Agent Troubleshooting](https://docs.datadoghq.com/agent/troubleshooting/), [Hostname in Containers](https://docs.datadoghq.com/agent/troubleshooting/hostname_containers/)

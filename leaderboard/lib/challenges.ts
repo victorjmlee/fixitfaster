@@ -29,16 +29,16 @@ function parseChallenge(id: string, raw: string): Challenge {
   const body = raw;
   const titleMatch = raw.match(/^#\s+(.+?)(?:\n|$)/);
   const title = titleMatch ? titleMatch[1].trim() : id;
-  const metaBlock = raw.match(/\*\*난이도:\*\*\s*(.+?)(?:\n|$)/);
+  const metaBlock = raw.match(/\*\*Difficulty:\*\*\s*(.+?)(?:\n|$)/i);
   const difficulty = metaBlock ? metaBlock[1].trim() : "";
-  const estMatch = raw.match(/\*\*예상 소요 시간:\*\*\s*(.+?)(?:\n|$)/);
+  const estMatch = raw.match(/\*\*Estimated time:\*\*\s*(.+?)(?:\n|$)/i);
   const estimatedMinutes = estMatch ? estMatch[1].trim() : "";
-  const prodMatch = raw.match(/\*\*관련 Datadog 제품:\*\*\s*(.+?)(?:\n|$)/);
+  const prodMatch = raw.match(/\*\*Related Datadog products:\*\*\s*(.+?)(?:\n|$)/i);
   const products = prodMatch ? prodMatch[1].trim() : "";
-  const symptomSummary = extractSection(raw, "증상 요약");
-  const environment = extractSection(raw, "환경");
-  const steps = extractSection(raw, "재현 단계 / 관찰 가능한 현상");
-  const allowedResources = extractSection(raw, "허용 리소스");
+  const symptomSummary = extractSection(raw, "Symptom summary");
+  const environment = extractSection(raw, "Environment");
+  const steps = extractSection(raw, "Steps to reproduce / What to observe");
+  const allowedResources = extractSection(raw, "Allowed resources");
   return {
     id,
     title,

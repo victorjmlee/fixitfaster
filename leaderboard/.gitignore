@@ -8,6 +8,10 @@ data/submissions.json
 .DS_Store
 *.pem
 
+# Local deploy artifacts (created by deploy-eb.sh, removed after upload)
+deploy-.zip
+deploy-*.zip
+
 # Elastic Beanstalk Files
 .elasticbeanstalk/*
 !.elasticbeanstalk/*.cfg.yml

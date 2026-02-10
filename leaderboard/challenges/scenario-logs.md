@@ -1,62 +1,62 @@
-# 시나리오: 로그가 Datadog에 안 보임
+# Scenario: Logs not visible in Datadog
 
-**난이도:** ⭐⭐ Medium  
-**예상 소요 시간:** 15~25분  
-**관련 Datadog 제품:** Log Management, Agent
-
----
-
-## 증상 요약
-
-이전에는 Datadog Logs에 앱/시스템 로그가 수집됐는데, **어느 순간부터 로그가 전혀 들어오지 않거나 특정 소스만 사라졌습니다.**
+**Difficulty:** ⭐⭐ Medium
+**Estimated time:** 15–25 min
+**Related Datadog products:** Log Management, Agent
 
 ---
 
-## 환경
+## Symptom summary
 
-- **플랫폼:** 로컬 Docker (Datadog Agent)
+App or system logs were previously collected in Datadog Logs, but **at some point logs stopped ingesting entirely, or only certain sources disappeared.**
+
+---
+
+## Environment
+
+- **Platform:** Local Docker (Datadog Agent)
 - **Agent:** Datadog Agent 7.x
-- **기타:** 로그 소스는 파일/ stdout / 컨테이너 로그 등 (팀에서 지정)
+- **Note:** Log sources may be file, stdout, container logs, etc. (specify per team)
 
 ---
 
-## 재현 단계 / 관찰 가능한 현상
+## Steps to reproduce / What to observe
 
-1. Datadog 콘솔 → Logs → Explorer 에서 기대하던 로그가 없음
-2. (선택) Agent 설정에서 로그 수집이 꺼져 있거나 경로/소스가 잘못됨
-3. 앱은 동작 중이고 로그는 로컬에는 남고 있음
+1. In Datadog → Logs → Explorer, expected logs are missing.
+2. (Optional) Agent config shows log collection disabled or wrong path/source.
+3. The app is running and logs are present locally.
 
 ---
 
-## 허용 리소스
+## Allowed resources
 
-- [x] Datadog 공식 문서 (Log Management, Agent)
+- [x] Datadog documentation (Log Management, Agent)
 - [x] Help Center, Agent Troubleshooting
-- [ ] 내부 Wiki: (팀에서 지정)
+- [ ] Internal wiki: (specify per team)
 
 ---
 
-## 제출 포맷 (참가자용)
+## Submission format (for participants)
 
-- **원인 요약:**
-- **해결 단계:**
-- **참고한 문서/링크:**
-- **소요 시간:**
+- **Root cause summary:**
+- **Resolution steps:**
+- **Documentation / links used:**
+- **Time taken:**
 
 ---
 
-## 주최자용: 망가뜨리는 방법 & 정답
+## For organizers: How to break it & answer key
 
-**망가뜨리는 방법 (택 1):**
+**How to break it (choose one):**
 
-- **A.** Agent 환경변수 `DD_LOGS_ENABLED=false` 로 설정 후 재시작
-- **B.** 로그 수집 경로/파일을 잘못된 경로로 변경 (예: 존재하지 않는 파일)
-- **C.** Agent에서 해당 로그 소스만 비활성화하거나 tag를 잘못 설정해 탐색이 안 되게 함
+- **A.** Set Agent env var `DD_LOGS_ENABLED=false` and restart.
+- **B.** Point log collection to a wrong path/file (e.g. a path that does not exist).
+- **C.** Disable that log source in the Agent or set tags so it is hard to find in Explorer.
 
-**정답 요약:**
+**Answer summary:**
 
-- **A:** `DD_LOGS_ENABLED=true` 복구, Agent 재시작
-- **B:** 올바른 로그 경로/설정 복구
-- **C:** 소스/태그 설정 복구
+- **A:** Restore `DD_LOGS_ENABLED=true` and restart the Agent.
+- **B:** Restore the correct log path/config.
+- **C:** Restore source/tag configuration.
 
-**관련 공식 문서:** Log Collection (Agent), Troubleshooting
+**Related docs:** Log Collection (Agent), Troubleshooting

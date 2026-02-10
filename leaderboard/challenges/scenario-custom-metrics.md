@@ -1,70 +1,71 @@
-# 시나리오: 커스텀 메트릭이 안 들어옴
+# Scenario: Custom metrics not appearing
 
-**난이도:** ⭐⭐ Medium  
-**예상 소요 시간:** 10~20분  
-**관련 Datadog 제품:** Metrics, Agent (DogStatsD)
-
----
-
-## 증상 요약
-
-앱에서 DogStatsD로 커스텀 메트릭을 보내는데, **Metrics Explorer에 해당 메트릭이 안 보입니다.**  
-`fixitfaster.demo.*` 메트릭이 전혀 나타나지 않음.
+**Difficulty:** ⭐⭐ Medium
+**Estimated time:** 10–20 min
+**Related Datadog products:** Metrics, Agent (DogStatsD)
 
 ---
 
-## 환경
+## Symptom summary
 
-- **메트릭 소스:** `metrics-demo` 컨테이너 (DogStatsD 클라이언트)
+The app sends custom metrics via DogStatsD, but **those metrics do not appear in Metrics Explorer.**  
+No `fixitfaster.demo.*` metrics are visible.
+
+---
+
+## Environment
+
+- **Metric source:** `metrics-demo` container (DogStatsD client)
 - **Agent:** Datadog Agent 7.x (Docker)
-- **DogStatsD 포트:** 8125/udp
+- **DogStatsD port:** 8125/udp
 
 ---
 
-## 재현 단계 / 관찰 가능한 현상
+## Steps to reproduce / What to observe
 
-1. Datadog Metrics → Explorer에서 `fixitfaster.demo` 검색
-2. 메트릭이 없음 (자동완성에도 안 나옴)
-3. `metrics-demo` 컨테이너 로그에는 "sent metrics" 메시지가 정상 출력
-4. (선택) Agent status에서 DogStatsD 상태 확인 필요
+1. In Datadog Metrics → Explorer, search for `fixitfaster.demo`.
+2. No metrics appear (and they do not show in autocomplete).
+3. The `metrics-demo` container logs show "sent metrics" as expected.
+4. (Optional) Check Agent status for DogStatsD.
 
 ---
 
-## 허용 리소스
+## Allowed resources
 
-- [x] Datadog 공식 문서 (Metrics, DogStatsD)
+- [x] Datadog documentation (Metrics, DogStatsD)
 - [x] Agent Troubleshooting
-- [ ] 내부 Wiki: (팀에서 지정)
+- [ ] Internal wiki: (specify per team)
 
 ---
 
-## 제출 포맷 (참가자용)
+## Submission format (for participants)
 
-- **원인 요약:**
-- **해결 단계:**
-- **참고한 문서/링크:**
-- **소요 시간:**
+- **Root cause summary:**
+- **Resolution steps:**
+- **Documentation / links used:**
+- **Time taken:**
 
 ---
 
-## 주최자용: 망가뜨리는 방법 & 정답
+## For organizers: How to break it & answer key
 
-**망가뜨리는 방법:**
+**How to break it:**
 
-- **A.** `DD_DOGSTATSD_NON_LOCAL_TRAFFIC=false` 설정 → 외부 컨테이너에서 메트릭 수신 거부
-- **B.** 8125 포트 매핑 제거 또는 막기
-- **C.** Agent에서 `dogstatsd_stats_enable: false` 또는 DogStatsD 완전 비활성화
+- **A.** Set `DD_DOGSTATSD_NON_LOCAL_TRAFFIC=false` so the Agent does not accept metrics from other containers.
+- **B.** Remove or block port 8125 mapping.
+- **C.** Disable DogStatsD in the Agent (e.g. `dogstatsd_stats_enable: false` or full disable).
 
-**정답 요약:**
+**Answer summary:**
 
-- **A:** `DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true` 설정 후 Agent 재시작
-- **B:** docker-compose.yml에 `8125:8125/udp` 포트 매핑 추가
-- **C:** DogStatsD 활성화 설정 복구
+- **A:** Set `DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true` and restart the Agent.
+- **B:** Add `8125:8125/udp` port mapping in docker-compose.yml.
+- **C:** Re-enable DogStatsD in the Agent config.
 
-**확인 방법:**
+**How to verify:**
+
 ```bash
-# Agent 컨테이너에서 DogStatsD 상태 확인
+# Check DogStatsD status in the Agent container
 docker exec fixitfaster-agent agent status | grep -A5 DogStatsD
 ```
 
-**관련 공식 문서:** DogStatsD, Custom Metrics
+**Related docs:** DogStatsD, Custom Metrics

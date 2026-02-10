@@ -1,70 +1,71 @@
-# 시나리오: Trace에서 로그가 연결 안 됨
+# Scenario: Logs not linked from Trace
 
-**난이도:** ⭐⭐ Medium  
-**예상 소요 시간:** 15~20분  
-**관련 Datadog 제품:** APM, Log Management
-
----
-
-## 증상 요약
-
-APM Trace 상세 페이지에서 **"Logs" 탭에 로그가 안 보입니다.**  
-로그는 따로 들어오고, 트레이스도 따로 들어오는데, **서로 연결이 안 됨.**
+**Difficulty:** ⭐⭐ Medium
+**Estimated time:** 15–20 min
+**Related Datadog products:** APM, Log Management
 
 ---
 
-## 환경
+## Symptom summary
 
-- **서비스:** `correlation-demo` (Node.js + dd-trace)
+On the APM Trace detail page, **the "Logs" tab shows no logs.**  
+Logs are being collected and traces are present, but **they are not linked to each other.**
+
+---
+
+## Environment
+
+- **Service:** `correlation-demo` (Node.js + dd-trace)
 - **Agent:** Datadog Agent 7.x (Docker)
-- **로그:** JSON 형식으로 stdout 출력
+- **Logs:** JSON format to stdout
 
 ---
 
-## 재현 단계 / 관찰 가능한 현상
+## Steps to reproduce / What to observe
 
-1. Datadog APM → Traces → `correlation-demo` 서비스의 트레이스 클릭
-2. 트레이스 상세 → **Logs** 탭이 비어있음
-3. Logs Explorer에서 `service:correlation-demo` 검색하면 로그는 있음
-4. 로그에 `dd.trace_id`, `dd.span_id` 필드가 없거나 잘못됨
+1. In Datadog APM → Traces, open a trace for the `correlation-demo` service.
+2. On the trace detail page, the **Logs** tab is empty.
+3. In Logs Explorer, searching for `service:correlation-demo` returns logs.
+4. Logs are missing or have incorrect `dd.trace_id` / `dd.span_id` fields.
 
 ---
 
-## 허용 리소스
+## Allowed resources
 
-- [x] Datadog 공식 문서 (APM, Logs)
+- [x] Datadog documentation (APM, Logs)
 - [x] Connect Logs and Traces
-- [x] Node.js APM Docs
-- [ ] 내부 Wiki: (팀에서 지정)
+- [x] Node.js APM docs
+- [ ] Internal wiki: (specify per team)
 
 ---
 
-## 제출 포맷 (참가자용)
+## Submission format (for participants)
 
-- **원인 요약:**
-- **해결 단계:**
-- **참고한 문서/링크:**
-- **소요 시간:**
+- **Root cause summary:**
+- **Resolution steps:**
+- **Documentation / links used:**
+- **Time taken:**
 
 ---
 
-## 주최자용: 망가뜨리는 방법 & 정답
+## For organizers: How to break it & answer key
 
-**망가뜨리는 방법:**
+**How to break it:**
 
-- **A.** `DD_LOGS_INJECTION=false`로 설정하여 trace_id 삽입 비활성화
-- **B.** 로그에서 `dd.trace_id`, `dd.span_id` 필드를 다른 이름으로 변경
-- **C.** 로그 service 태그를 APM service 이름과 다르게 설정 (예: `correlation-demo` vs `correlationdemo`)
+- **A.** Set `DD_LOGS_INJECTION=false` so trace_id is not injected into logs.
+- **B.** Change log field names from `dd.trace_id` / `dd.span_id` to something else.
+- **C.** Set the log `service` tag to a different value than the APM service name (e.g. `correlation-demo` vs `correlationdemo`).
 
-**정답 요약:**
+**Answer summary:**
 
-- **A:** `DD_LOGS_INJECTION=true` 로 변경 후 컨테이너 재시작
-- **B:** Datadog Pipeline에서 Remapper로 `dd.trace_id` → `trace_id` 매핑
-- **C:** 서비스 이름 통일 (APM과 Logs에서 동일해야 함)
+- **A:** Set `DD_LOGS_INJECTION=true` and restart the container.
+- **B:** Use a Datadog pipeline Remapper to map to `trace_id` (or restore field names).
+- **C:** Use the same service name in APM and Logs.
 
-**Correlation 필수 조건:**
-1. 로그에 `dd.trace_id` 필드 존재
-2. 로그의 `service` 태그 = APM의 `service` 이름
-3. (선택) `dd.span_id`도 있으면 특정 span에 연결
+**Correlation requirements:**
 
-**관련 공식 문서:** Connect Logs and Traces, dd-trace-js
+1. Logs must include a `dd.trace_id` field.
+2. The log `service` tag must match the APM service name.
+3. (Optional) `dd.span_id` links to a specific span.
+
+**Related docs:** Connect Logs and Traces, dd-trace-js
