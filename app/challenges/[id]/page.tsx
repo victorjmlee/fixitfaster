@@ -99,8 +99,8 @@ export default function ChallengePage() {
       if (res.ok) {
         const data = await res.json();
         setSubmitOk(true);
-        if (data._gradingHint) {
-          console.warn("Grading skipped:", data._gradingHint);
+        if (data._gradingSkipped && data._gradingHint) {
+          alert(data._gradingHint);
         }
         setTimeout(() => router.push("/"), 500);
       } else {

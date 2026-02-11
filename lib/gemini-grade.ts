@@ -1,6 +1,6 @@
 import { REFERENCE_ANSWERS } from "./reference-answers";
 
-const GEMINI_MODEL_IDS = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.0-pro", "gemini-pro"];
+const GEMINI_MODEL_IDS = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.0-pro", "gemini-pro"];
 
 export type GradeResult = { score: number; feedback?: string };
 
@@ -31,9 +31,19 @@ Example:
 }
 
 function parseScoreFromText(text: string): { score: number; feedback?: string } {
-  const numMatch = text.match(/\b(\d{1,3})\b/);
-  const score = Math.min(100, Math.max(0, numMatch ? parseInt(numMatch[1], 10) : 0));
   const lines = text.split("\n").map((s) => s.trim()).filter(Boolean);
+  // Prompt asks "Line 1: single integer 0-100" — use first line; avoid taking "0" from "0-100"
+  const firstLine = lines[0] ?? "";
+  const numbersOnFirstLine = Array.from(firstLine.matchAll(/\b(\d{1,3})\b/g), (m) =>
+    Math.min(100, Math.max(0, parseInt(m[1], 10)))
+  );
+  const scoreInRange = numbersOnFirstLine.find((n) => n >= 1 && n <= 100);
+  const scoreFromFirstLine =
+    scoreInRange ?? (numbersOnFirstLine[0] != null ? numbersOnFirstLine[0] : null);
+  const score =
+    scoreFromFirstLine != null
+      ? scoreFromFirstLine
+      : Math.min(100, Math.max(0, parseInt(text.match(/\b(\d{1,3})\b/)?.[1] ?? "0", 10) || 0));
   const feedback =
     lines[1] && lines[1] !== "-" && !/^\d+$/.test(lines[1]) ? lines[1] : undefined;
   return { score, feedback };
@@ -64,28 +74,33 @@ async function callAiGateway(prompt: string): Promise<{ ok: true; text: string }
     headers["x-target-account"] = "eval";
   }
 
-  const res = await fetch(url, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      model: AI_GATEWAY_MODEL,
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 256,
-      temperature: 0.2,
-    }),
-  });
-  if (!res.ok) {
-    const err = await res.text();
-    console.warn(`[grade] AI Gateway failed: ${res.status}`, err.slice(0, 400));
-    return { ok: false, status: res.status };
-  }
-  const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
-  const text = data.choices?.[0]?.message?.content?.trim();
-  if (!text) {
-    console.warn("[grade] AI Gateway: 200 but no content in choices[0].message.content", JSON.stringify(data).slice(0, 300));
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        model: AI_GATEWAY_MODEL,
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 256,
+        temperature: 0.2,
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.text();
+      console.warn(`[grade] AI Gateway failed: ${res.status}`, err.slice(0, 400));
+      return { ok: false, status: res.status };
+    }
+    const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+    const text = data.choices?.[0]?.message?.content?.trim();
+    if (!text) {
+      console.warn("[grade] AI Gateway: 200 but no content in choices[0].message.content", JSON.stringify(data).slice(0, 300));
+      return { ok: false, status: 0 };
+    }
+    return { ok: true, text };
+  } catch (e) {
+    console.warn("[grade] AI Gateway request failed (network/unreachable):", e instanceof Error ? e.message : String(e));
     return { ok: false, status: 0 };
   }
-  return { ok: true, text };
 }
 
 // --- Gemini (direct) ---
@@ -95,24 +110,29 @@ async function callGemini(
   prompt: string
 ): Promise<{ ok: true; text: string } | { ok: false; status: number }> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${encodeURIComponent(apiKey)}`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.2, maxOutputTokens: 256 },
-    }),
-  });
-  if (!res.ok) {
-    const err = await res.text();
-    console.warn(`[grade] Gemini ${modelId} failed: ${res.status} ${err.slice(0, 200)}`);
-    return { ok: false, status: res.status };
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.2, maxOutputTokens: 256 },
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.text();
+      console.warn(`[grade] Gemini ${modelId} failed: ${res.status} ${err.slice(0, 200)}`);
+      return { ok: false, status: res.status };
+    }
+    const data = (await res.json()) as {
+      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+    };
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    return text ? { ok: true, text } : { ok: false, status: 0 };
+  } catch (e) {
+    console.warn(`[grade] Gemini ${modelId} request failed (network):`, e instanceof Error ? e.message : String(e));
+    return { ok: false, status: 0 };
   }
-  const data = (await res.json()) as {
-    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-  };
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-  return text ? { ok: true, text } : { ok: false, status: 0 };
 }
 
 /**

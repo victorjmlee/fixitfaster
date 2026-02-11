@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "npx next dev",
+    "dev:lan": "npx next dev -H 0.0.0.0",
     "build": "npx next build",
     "start": "node scripts/start-server.js",
     "lint": "npx next lint",

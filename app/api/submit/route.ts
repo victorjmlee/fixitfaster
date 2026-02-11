@@ -50,8 +50,10 @@ export async function POST(req: Request) {
     if (grade.success) {
       updateSubmission(submission.id, { score: grade.score });
       submission.score = grade.score;
+      console.log("[submit] Grading ok challengeId=%s score=%s", submission.challengeId, grade.score);
       return NextResponse.json(submission);
     }
+    console.warn("[submit] Grading skipped challengeId=%s reason=%s", submission.challengeId, grade.reason);
     const hintByReason: Record<string, string> = {
       no_key: "GEMINI_API_KEY를 .env.local 또는 Vercel 환경변수에 설정하면 채점이 가능합니다.",
       no_ref: "해당 챌린지의 참조 답변이 없어 채점을 건너뜁니다.",
@@ -65,7 +67,11 @@ export async function POST(req: Request) {
       _gradingHint: hintByReason[grade.reason] ?? grade.reason,
       _gradingReason: grade.reason,
     });
-  } catch {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  } catch (e) {
+    console.error("[submit] Error:", e instanceof Error ? e.message : String(e), e instanceof Error ? e.stack : "");
+    return NextResponse.json(
+      { error: "Invalid request", _debug: process.env.NODE_ENV === "development" ? String(e) : undefined },
+      { status: 400 }
+    );
   }
 }
