@@ -13,6 +13,7 @@ type Challenge = {
   environment: string;
   steps: string;
   allowedResources: string;
+  helpfulCommands: string;
 };
 
 function formatTime(seconds: number) {
@@ -142,6 +143,12 @@ export default function ChallengePage() {
           <h2 className="mb-2 text-base font-semibold text-white">Allowed resources</h2>
           <div className="whitespace-pre-wrap text-zinc-300 text-sm">{challenge.allowedResources || "-"}</div>
         </section>
+        {challenge.helpfulCommands ? (
+          <section className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5">
+            <h2 className="mb-2 text-base font-semibold text-white">Helpful Commands</h2>
+            <div className="whitespace-pre-wrap font-mono text-zinc-300 text-sm">{challenge.helpfulCommands}</div>
+          </section>
+        ) : null}
       </div>
 
       {started && (

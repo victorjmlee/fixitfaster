@@ -44,6 +44,9 @@
 
 ## 각자 환경에서 Agent 띄우고 실습하기
 
+**Agent와 데모 컨테이너는 `agent/` 디렉터리에 있습니다.** (별도 Datadog 계정 repo로 분리 배포 가능.)  
+루트에서 `npm run agent:up` 등은 `agent/` 로 위임됩니다. **Agent용 `.env.local`** 은 `agent/.env.local` 에 두거나, `agent/` 에서만 실습할 때는 `cp agent/.env.example agent/.env.local` 후 키 입력.
+
 **이 레포의 Agent는 트레이스 + 로그 + 메트릭이 수집되도록 설정돼 있습니다.**  
 - **트레이스:** trace-demo → Agent(8126) → APM  
 - **로그:** log-demo (타임존 포맷), correlation-demo (trace 연동) → Agent 수집 → Logs  
@@ -57,7 +60,8 @@
    ```
 
 2. **본인 API 키 설정**
-   - `.env.local` 파일 만들고 `DATADOG_API_KEY=본인_키` 넣기 (앱 + Agent 둘 다 이 파일만 사용)
+   - **앱:** 루트에 `.env.local` (앱 연결 테스트용).
+   - **Agent:** `agent/.env.local` 에 `DATADOG_API_KEY`, (파이프라인용) `DATADOG_APP_KEY` 넣기. 루트 `.env.local` 을 쓰려면 `ln -s ../.env.local agent/.env.local` 로 심볼릭 링크 가능.
 
 3. **Agent + 앱 한 번에 실행** (`.env.local` 참조)
    - `.env.local`에 `DD_AGENT_HOST=localhost` 가 있으면 앱이 트레이스를 Agent로 보냅니다.
@@ -77,10 +81,10 @@
    - Datadog 로그인 → **APM** → **Services** 또는 **Traces**
    - 서비스 이름 `fixitfaster` 로 들어오는 트레이스 확인 (1~2분 지연될 수 있음)
 
-정리하면, **각자 PC에서 Agent + 앱을 돌리고, 각자 Datadog 계정으로 실제 APM을 보면서** 챌린지를 풀 수 있습니다. Agent 끄려면 `npm run agent:down` (또는 `docker compose down`) 하면 됩니다.
+정리하면, **각자 PC에서 Agent + 앱을 돌리고, 각자 Datadog 계정으로 실제 APM을 보면서** 챌린지를 풀 수 있습니다. Agent 끄려면 `npm run agent:down` (또는 `cd agent && docker compose down`) 하면 됩니다.
 
 **컨테이너가 Restarting 이거나 `agent status` 실패 시:**  
-`npm run agent:logs` (또는 `docker compose --env-file .env.local logs agent`) 로 로그를 보세요. `DD_API_KEY` 비어 있음, API 키 오류, 포트 충돌 등이 자주 나옵니다. `.env.local`에 `DATADOG_API_KEY=키`가 있고 따옴표 없이 한 줄로 들어갔는지 확인한 뒤 `npm run agent:down` → `npm run agent:up` 으로 다시 띄우세요.
+`npm run agent:logs` 로 로그를 보세요. `agent/.env.local` 에 `DATADOG_API_KEY` 가 있고 따옴표 없이 한 줄로 들어갔는지 확인한 뒤 `npm run agent:down` → `npm run agent:up` 으로 다시 띄우세요.
 
 ---
 

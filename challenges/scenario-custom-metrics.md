@@ -40,32 +40,7 @@ No `fixitfaster.demo.*` metrics are visible.
 
 ## Submission format (for participants)
 
-- **Root cause summary:**
-- **Resolution steps:**
-- **Documentation / links used:**
-- **Time taken:**
-
----
-
-## For organizers: How to break it & answer key
-
-**How to break it:**
-
-- **A.** Set `DD_DOGSTATSD_NON_LOCAL_TRAFFIC=false` so the Agent does not accept metrics from other containers.
-- **B.** Remove or block port 8125 mapping.
-- **C.** Disable DogStatsD in the Agent (e.g. `dogstatsd_stats_enable: false` or full disable).
-
-**Answer summary:**
-
-- **A:** Set `DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true` and restart the Agent.
-- **B:** Add `8125:8125/udp` port mapping in docker-compose.yml.
-- **C:** Re-enable DogStatsD in the Agent config.
-
-**How to verify:**
-
-```bash
-# Check DogStatsD status in the Agent container
-docker exec fixitfaster-agent agent status | grep -A5 DogStatsD
-```
-
-**Related docs:** DogStatsD, Custom Metrics
+- Root cause summary:
+- Resolution steps:
+- Documentation / links used:
+- Time taken:
