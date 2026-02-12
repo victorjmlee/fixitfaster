@@ -4,6 +4,7 @@ export const translations: Record<Locale, Record<string, string>> = {
   en: {
     "nav.challenges": "Challenges",
     "nav.leaderboard": "Leaderboard",
+    "nav.start": "Setup guide",
     "home.title": "Challenges",
     "home.subtitle": "Pick a challenge to start the timer. Submit when done to appear on the leaderboard.",
     "home.loading": "Loading...",
@@ -55,6 +56,7 @@ export const translations: Record<Locale, Record<string, string>> = {
   ko: {
     "nav.challenges": "챌린지",
     "nav.leaderboard": "리더보드",
+    "nav.start": "설정 가이드",
     "home.title": "챌린지",
     "home.subtitle": "챌린지를 골라 타이머를 시작하세요. 완료 후 제출하면 리더보드에 올라갑니다.",
     "home.loading": "불러오는 중...",
