@@ -14,7 +14,7 @@ type LocaleContextValue = {
 const LocaleContext = createContext<LocaleContextValue | null>(null);
 
 export function LocaleProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>("en");
+  const [locale, setLocaleState] = useState<Locale>("ko");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -36,7 +36,7 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const t = getT(mounted ? locale : "en");
+  const t = getT(mounted ? locale : "ko");
 
   return (
     <LocaleContext.Provider value={{ locale, setLocale, t }}>

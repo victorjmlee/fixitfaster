@@ -14,10 +14,10 @@ export default function Header() {
         </Link>
         <div className="flex items-center gap-4">
           <nav className="flex gap-6 text-sm text-zinc-400">
-            <Link href="/start" className="hover:text-white">
+            <Link href="/" className="hover:text-white">
               {t("nav.start")}
             </Link>
-            <Link href="/" className="hover:text-white">
+            <Link href="/challenges" className="hover:text-white">
               {t("nav.challenges")}
             </Link>
             <Link href="/leaderboard" className="hover:text-white">

@@ -102,7 +102,7 @@ export default function ChallengePage() {
         if (data._gradingSkipped && data._gradingHint) {
           alert(data._gradingHint);
         }
-        setTimeout(() => router.push("/"), 500);
+        setTimeout(() => router.push("/challenges"), 500);
       } else {
         const data = await res.json();
         alert(data.error || t("challenge.submissionFailed"));

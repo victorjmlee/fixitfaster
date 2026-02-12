@@ -1,139 +1,127 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useLocale } from "@/app/LocaleContext";
 
-const PARTICIPANT_NAME_KEY = "fixitfaster-participant-name";
-
-type ChallengeMeta = {
-  id: string;
-  title: string;
-  difficulty: string;
-  estimatedMinutes: string;
-  products: string;
-};
+const REPO_URL = "https://github.com/CrystalBellSound/fixitfaster-agent.git";
 
 export default function HomePage() {
-  const { t } = useLocale();
-  const [challenges, setChallenges] = useState<ChallengeMeta[]>([]);
-  const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 15000);
-    fetch("/api/challenges", { signal: ctrl.signal })
-      .then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      })
-      .then((list) => setChallenges(Array.isArray(list) ? list : []))
-      .catch((e) => setError(e?.message || "Failed to load challenges."))
-      .finally(() => {
-        clearTimeout(t);
-        setLoading(false);
-      });
-  }, []);
-
-  useEffect(() => {
-    try {
-      const name = typeof window !== "undefined" ? localStorage.getItem(PARTICIPANT_NAME_KEY) : null;
-      if (!name) {
-        setCompletedIds(new Set());
-        return;
-      }
-      fetch(`/api/my-submissions?participantName=${encodeURIComponent(name)}`)
-        .then((r) => r.json())
-        .then((data) => setCompletedIds(new Set(Array.isArray(data.challengeIds) ? data.challengeIds : [])))
-        .catch(() => setCompletedIds(new Set()));
-    } catch {
-      setCompletedIds(new Set());
-    }
-  }, []);
-
-  if (loading && !error) {
-    return (
-      <div className="flex justify-center py-16">
-        <span className="text-zinc-500">{t("home.loading")}</span>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-6 text-center">
-        <p className="font-medium text-amber-200">{error}</p>
-        <p className="mt-2 text-sm text-zinc-500">{t("home.errorHint")}</p>
-      </div>
-    );
-  }
+  const { locale, t } = useLocale();
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-bold">{t("home.title")}</h1>
-        <p className="text-zinc-400 text-sm">{t("home.subtitle")}</p>
+      <div>
+        <h1 className="text-2xl font-bold text-white border-b border-[var(--border)] pb-2">
+          Fix It Faster – Agent & Demos
+        </h1>
+        {locale === "en" ? (
+          <p className="mt-2 text-[var(--muted)]">
+            Datadog Agent + demo containers for the <strong className="text-[var(--text)]">Fix It Faster</strong> hands-on. Use the agent repo to run the agent and scenario demos locally.
+          </p>
+        ) : (
+          <p className="mt-2 text-[var(--muted)]">
+            <strong className="text-[var(--text)]">Fix It Faster</strong> 핸즈온용 Datadog Agent와 데모 컨테이너입니다. 에이전트 저장소로 에이전트와 시나리오 데모를 로컬에서 실행할 수 있습니다.
+          </p>
+        )}
       </div>
 
-      {challenges.length === 0 ? (
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-8 text-center text-zinc-500">
-          {t("home.noChallenges")}
-        </div>
-      ) : (
-        <ul className="grid gap-4">
-          {challenges.map((c) => {
-            const completed = completedIds.has(c.id);
-            return (
-              <li key={c.id}>
-                <Link
-                  href={`/challenges/${c.id}`}
-                  className="block rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 transition hover:border-[var(--accent-dim)] hover:bg-[var(--card)]/90"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-3 min-w-0">
-                      <span
-                        className="shrink-0 mt-0.5 flex h-5 w-5 items-center justify-center rounded border border-[var(--border)]"
-                        aria-hidden
-                      >
-                        {completed ? (
-                          <span className="text-[var(--accent)]" title={t("home.submitted")}>✓</span>
-                        ) : (
-                          <span className="w-2 h-2 rounded-full bg-transparent" />
-                        )}
-                      </span>
-                      <div className="min-w-0">
-                        <h2 className="font-semibold text-white">
-                          {t(`scenario.${c.id}`).startsWith("scenario.") ? c.title : t(`scenario.${c.id}`)}
-                        </h2>
-                        <p className="mt-1 text-sm text-zinc-500">
-                          {c.difficulty} · {c.estimatedMinutes} · {c.products}
-                          {completed && (
-                            <span className="ml-2 text-[var(--accent)]">· {t("home.submitted")}</span>
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                    <span className="shrink-0 text-[var(--accent)]">{t("home.start")} →</span>
-                  </div>
-                </Link>
-              </li>
-            );
-          })}
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5">
+        <p className="font-medium text-white">
+          {locale === "en" ? "Leaderboard / challenges:" : "리더보드 / 챌린지:"}
+        </p>
+        <p className="mt-1 text-sm text-[var(--muted)]">
+          {locale === "en"
+            ? "Submit your solutions at the Fix It Faster leaderboard (this app):"
+            : "정답은 Fix It Faster 리더보드(이 앱)에서 제출하세요:"}
+        </p>
+        <p className="mt-2 text-sm text-[var(--muted)]">
+          <Link href="/challenges" className="text-[var(--accent)] hover:underline">{locale === "en" ? "Challenges" : "챌린지"}</Link>
+          {" · "}
+          <Link href="/leaderboard" className="text-[var(--accent)] hover:underline">{t("nav.leaderboard")}</Link>
+        </p>
+      </div>
+
+      <section>
+        <h2 className="text-lg font-semibold text-white mt-8 mb-2">
+          {locale === "en" ? "Quick start" : "빠른 시작"}
+        </h2>
+        <p className="text-[var(--muted)] text-sm">
+          {locale === "en" ? "1. Clone the repo:" : "1. 저장소 클론:"}
+        </p>
+        <pre className="mt-2 p-4 rounded-lg bg-[var(--card)] border border-[var(--border)] text-sm overflow-x-auto">
+          <code>{`git clone ${REPO_URL}\ncd fixitfaster-agent`}</code>
+        </pre>
+        <p className="mt-4 text-[var(--muted)] text-sm">
+          {locale === "en"
+            ? "2. Copy .env.example to .env.local and set:"
+            : "2. .env.example을 .env.local로 복사한 뒤 설정:"}
+        </p>
+        <ul className="mt-1 text-[var(--muted)] text-sm list-disc pl-5 space-y-0.5">
+          <li><code className="bg-[var(--card)] border border-[var(--border)] rounded px-1.5 py-0.5">DATADOG_API_KEY</code> ({locale === "en" ? "required" : "필수"})</li>
+          <li><code className="bg-[var(--card)] border border-[var(--border)] rounded px-1.5 py-0.5">DATADOG_APP_KEY</code> ({locale === "en" ? "required for log pipeline setup" : "로그 파이프라인 설정 시 필수"})</li>
         </ul>
-      )}
+        <p className="mt-4 text-[var(--muted)] text-sm">
+          {locale === "en"
+            ? "3. Start the agent and all demos (including log pipeline setup):"
+            : "3. 에이전트와 모든 데모(로그 파이프라인 설정 포함) 실행:"}
+        </p>
+        <pre className="mt-2 p-4 rounded-lg bg-[var(--card)] border border-[var(--border)] text-sm">
+          <code>npm run up:full</code>
+        </pre>
+      </section>
 
-      <div className="rounded-lg border border-[var(--border)] bg-[var(--card)]/50 p-4 text-sm text-zinc-500">
-        <strong className="text-zinc-400">{t("home.resources")}</strong>{" "}
-        <a href="https://docs.datadoghq.com" target="_blank" rel="noopener noreferrer" className="text-[var(--accent)] hover:underline">
-          {t("home.docDocs")}
-        </a>
-        {" · "}
-        <a href="https://docs.datadoghq.com/agent/troubleshooting/" target="_blank" rel="noopener noreferrer" className="text-[var(--accent)] hover:underline">
-          {t("home.agentTroubleshooting")}
-        </a>
-      </div>
+      <section>
+        <h2 className="text-lg font-semibold text-white mt-8 mb-3">
+          {locale === "en" ? "Commands" : "명령어"}
+        </h2>
+        <div className="overflow-x-auto rounded-lg border border-[var(--border)]">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[var(--border)]">
+                <th className="text-left p-3 text-[var(--muted)] font-semibold">{locale === "en" ? "Command" : "명령어"}</th>
+                <th className="text-left p-3 text-[var(--muted)] font-semibold">{locale === "en" ? "Description" : "설명"}</th>
+              </tr>
+            </thead>
+            <tbody className="text-[var(--muted)]">
+              <tr className="border-b border-[var(--border)] hover:bg-white/5"><td className="p-3"><code className="bg-[var(--card)] px-1.5 py-0.5 rounded">npm run up</code></td><td className="p-3">{locale === "en" ? "Start Agent + all demo containers (builds if needed)" : "Agent + 모든 데모 컨테이너 시작 (필요 시 빌드)"}</td></tr>
+              <tr className="border-b border-[var(--border)] hover:bg-white/5"><td className="p-3"><code className="bg-[var(--card)] px-1.5 py-0.5 rounded">npm run down</code></td><td className="p-3">{locale === "en" ? "Stop and remove all containers" : "모든 컨테이너 중지 및 제거"}</td></tr>
+              <tr className="border-b border-[var(--border)] hover:bg-white/5"><td className="p-3"><code className="bg-[var(--card)] px-1.5 py-0.5 rounded">npm run agent:restart</code></td><td className="p-3">{locale === "en" ? "Restart only the Agent container" : "Agent 컨테이너만 재시작"}</td></tr>
+              <tr className="hover:bg-white/5"><td className="p-3"><code className="bg-[var(--card)] px-1.5 py-0.5 rounded">npm run up:full</code></td><td className="p-3">{locale === "en" ? "Start + run log pipeline setup in Datadog" : "시작 + Datadog 로그 파이프라인 설정 실행"}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-lg font-semibold text-white mt-8 mb-3">
+          {locale === "en" ? "Containers" : "컨테이너"}
+        </h2>
+        <div className="overflow-x-auto rounded-lg border border-[var(--border)]">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[var(--border)]">
+                <th className="text-left p-3 text-[var(--muted)] font-semibold">{locale === "en" ? "Container" : "컨테이너"}</th>
+                <th className="text-left p-3 text-[var(--muted)] font-semibold">{locale === "en" ? "Image / Build" : "이미지 / 빌드"}</th>
+                <th className="text-left p-3 text-[var(--muted)] font-semibold">{locale === "en" ? "Description" : "설명"}</th>
+              </tr>
+            </thead>
+            <tbody className="text-[var(--muted)]">
+              <tr className="border-b border-[var(--border)] hover:bg-white/5"><td className="p-3 font-medium text-white">fixitfaster-agent</td><td className="p-3"><code className="bg-[var(--card)] px-1.5 py-0.5 rounded text-xs">datadog/agent:7</code></td><td className="p-3">{locale === "en" ? "Datadog Agent: APM (8126), Logs, DogStatsD (8125), container discovery. Mounts conf.d/nginx.d/autoconf.yaml for Autodiscovery." : "Datadog Agent: APM(8126), Logs, DogStatsD(8125), 컨테이너 디스커버리. Autodiscovery용 conf.d/nginx.d/autoconf.yaml 마운트."}</td></tr>
+              <tr className="border-b border-[var(--border)] hover:bg-white/5"><td className="p-3 font-medium text-white">fixitfaster-trace-demo</td><td className="p-3"><code className="bg-[var(--card)] px-1.5 py-0.5 rounded text-xs">./trace-demo</code></td><td className="p-3">{locale === "en" ? "Sends APM spans every 5s (APM scenario)." : "5초마다 APM 스팬 전송 (APM 시나리오)."}</td></tr>
+              <tr className="border-b border-[var(--border)] hover:bg-white/5"><td className="p-3 font-medium text-white">fixitfaster-log-demo</td><td className="p-3"><code className="bg-[var(--card)] px-1.5 py-0.5 rounded text-xs">./log-demo</code></td><td className="p-3">{locale === "en" ? "Logs with Asia/Seoul timestamps every 5s (log timezone / pipeline scenario)." : "5초마다 Asia/Seoul 타임스탬프 로그 (로그 타임존/파이프라인 시나리오)."}</td></tr>
+              <tr className="border-b border-[var(--border)] hover:bg-white/5"><td className="p-3 font-medium text-white">fixitfaster-correlation-demo</td><td className="p-3"><code className="bg-[var(--card)] px-1.5 py-0.5 rounded text-xs">./correlation-demo</code></td><td className="p-3">{locale === "en" ? "Node.js + dd-trace; Trace–Log correlation (labels: com.datadoghq.ad.logs)." : "Node.js + dd-trace. Trace–Log correlation (labels: com.datadoghq.ad.logs)."}</td></tr>
+              <tr className="border-b border-[var(--border)] hover:bg-white/5"><td className="p-3 font-medium text-white">fixitfaster-metrics-demo</td><td className="p-3"><code className="bg-[var(--card)] px-1.5 py-0.5 rounded text-xs">./metrics-demo</code></td><td className="p-3">{locale === "en" ? "DogStatsD custom metrics every 5s (custom metrics scenario)." : "5초마다 DogStatsD 커스텀 메트릭 (커스텀 메트릭 시나리오)."}</td></tr>
+              <tr className="hover:bg-white/5"><td className="p-3 font-medium text-white">fixitfaster-ad-demo-nginx</td><td className="p-3"><code className="bg-[var(--card)] px-1.5 py-0.5 rounded text-xs">nginx:alpine</code></td><td className="p-3">{locale === "en" ? "Nginx for Autodiscovery; Agent nginx check via conf.d/nginx.d/autoconf.yaml (ad_identifiers). Serves /nginx_status." : "Autodiscovery용 Nginx. Agent가 conf.d/nginx.d/autoconf.yaml(ad_identifiers)로 nginx 체크. /nginx_status 제공."}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <p className="pt-4">
+        <Link href="/challenges" className="text-[var(--accent)] hover:underline">
+          → {locale === "en" ? "Go to Challenges" : "챌린지로 가기"}
+        </Link>
+      </p>
     </div>
   );
 }

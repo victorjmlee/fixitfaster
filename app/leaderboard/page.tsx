@@ -75,7 +75,7 @@ export default function LeaderboardPage() {
       {list.length === 0 ? (
         <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-8 text-center text-zinc-500">
           {t("leaderboard.noSubmissions")}{" "}
-          <Link href="/" className="text-[var(--accent)] hover:underline">{t("leaderboard.startFromChallenges")}</Link>.
+          <Link href="/challenges" className="text-[var(--accent)] hover:underline">{t("leaderboard.startFromChallenges")}</Link>.
         </div>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-[var(--border)] bg-[var(--card)]">

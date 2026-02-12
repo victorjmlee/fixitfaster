@@ -18,11 +18,10 @@ An nginx container (ad-demo-nginx) is running, but the nginx integration check d
 
 ## Steps to reproduce / What to observe
 
-1. Run the stack (e.g. npm run up) so that the agent and ad-demo-nginx container are up.
-2. Check agent status for the nginx check: the nginx check may be missing or show "No service found with this AD identifier" (or similar).
-3. In Datadog, the nginx integration may report no data for this host/container.
-4. The Docker check in the agent is OK; the nginx container is visible to Docker.
-5. So: the agent sees Docker, but the nginx check is not attached to the nginx container.
+1. Check agent status for the nginx check: the nginx check may be missing or show "No service found with this AD identifier" (or similar).
+2. In Datadog, the nginx integration may report no data for this host/container.
+3. The Docker check in the agent is OK; the nginx container is visible to Docker.
+4. So: the agent sees Docker, but the nginx check is not attached to the nginx container.
 
 
 ## What to investigate (hints)
@@ -50,10 +49,6 @@ docker inspect fixitfaster-ad-demo-nginx --format '{{.Config.Image}}'
 Restart the agent (after editing config):
 cd ~/fixitfaster-agent
 npm run agent:restart
-
-Rebuild/restart ad-demo-nginx if needed:
-cd ~/fixitfaster-agent
-docker compose --env-file .env.local up -d ad-demo-nginx
 
 ## Submission format (for participants)
 
