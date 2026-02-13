@@ -215,20 +215,24 @@ npm run up:full
             : "Enter your API Key and App Key, then copy the commands below and run them in your terminal. Everything runs in the datadog-fix-it-faster directory."}
       </p>
 
-      <p className="text-sm text-[var(--muted)]">
-        {locale === "ko" ? "또는 " : "Or "}
-        <a
-          href={CODESPACES_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-[var(--accent)] underline hover:no-underline"
-        >
-          {locale === "ko" ? "GitHub Codespaces에서 열기" : "Open in GitHub Codespaces"}
-        </a>
-        {locale === "ko"
-          ? " → Codespace 터미널에서 .env.local 만들고 npm run up:full 실행."
-          : " → In the Codespace terminal, create .env.local and run npm run up:full."}
-      </p>
+      <a
+        href={CODESPACES_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-3 rounded-xl border-2 border-[var(--accent)] bg-[var(--accent)]/10 p-4 text-left transition hover:bg-[var(--accent)]/20"
+      >
+        <span className="text-2xl" aria-hidden>⚡</span>
+        <div>
+          <span className="font-semibold text-[var(--accent)]">
+            {locale === "ko" ? "GitHub Codespaces에서 열기" : "Open in GitHub Codespaces"}
+          </span>
+          <p className="mt-0.5 text-sm text-[var(--muted)]">
+            {locale === "ko"
+              ? "브라우저에서 랩 환경 실행 → 터미널에서 .env.local 만들고 npm run up:full"
+              : "Run lab in browser → create .env.local and npm run up:full in terminal"}
+          </p>
+        </div>
+      </a>
 
       {!showCommands ? (
         <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-[var(--border)] bg-[var(--card)] p-5">
