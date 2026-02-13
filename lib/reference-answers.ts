@@ -15,10 +15,11 @@ export const REFERENCE_ANSWERS: Record<
     rootCause: string;
     resolution: string;
     expectedChange: string;
-    /** 채점 시 artifacts에 이 문자열들이 있는지 검사. 조건 하나라도 만족하면 통과. */
     artifactCheck: ArtifactCheck;
-    /** 통과 시 부여 점수 (기본 75). log-timezone은 65 등. */
+    /** 결과(artifact) 통과 시 점수. */
     artifactScore?: number;
+    /** 시나리오별 점수 안내 (UI 표시용). */
+    scoreGuide: { ko: string; en: string };
   }
 > = {
   "scenario-infra": {
@@ -29,18 +30,33 @@ export const REFERENCE_ANSWERS: Record<
       ["fixitfaster-agent", "hostname"],
       ["fixitfaster-agent", "dd_hostname"],
     ],
+    artifactScore: 50,
+    scoreGuide: {
+      ko: "결과 50점 + 솔루션(원인/해결 작성) 20점 = 만점 70점",
+      en: "Result 50 pts + Solution (optional) 20 pts = 70 max",
+    },
   },
   "scenario-autodiscovery": {
     rootCause: "conf.d/nginx.d/autoconf.yaml의 ad_identifiers가 nginx 이미지명과 다름.",
     resolution: "ad_identifiers를 nginx로 수정 후 Agent 재시작.",
     expectedChange: "conf.d 내 nginx yaml에 ad_identifiers에 nginx 포함.",
     artifactCheck: [["ad_identifiers", "nginx"]],
+    artifactScore: 60,
+    scoreGuide: {
+      ko: "결과 60점 + 솔루션 20점 = 만점 80점",
+      en: "Result 60 pts + Solution 20 pts = 80 max",
+    },
   },
   "scenario-apm": {
     rootCause: "trace-demo가 트레이스를 보내는 포트가 Agent(8126)와 다름.",
     resolution: "trace-demo에서 dd-trace port를 8126으로 수정 후 재빌드·재시작.",
     expectedChange: "trace-demo 관련 파일에서 port 8126.",
     artifactCheck: [["trace-demo", "8126"]],
+    artifactScore: 80,
+    scoreGuide: {
+      ko: "결과 80점 + 솔루션 20점 = 만점 100점",
+      en: "Result 80 pts + Solution 20 pts = 100 max",
+    },
   },
   "scenario-correlation": {
     rootCause: "correlation-demo에 DD_LOGS_INJECTION이 false라 trace_id 주입 안 됨.",
@@ -50,12 +66,22 @@ export const REFERENCE_ANSWERS: Record<
       ["correlation", "dd_logs_injection", "true"],
       ["correlation", "logs_injection", "true"],
     ],
+    artifactScore: 50,
+    scoreGuide: {
+      ko: "결과 50점 + 솔루션 20점 = 만점 70점",
+      en: "Result 50 pts + Solution 20 pts = 70 max",
+    },
   },
   "scenario-custom-metrics": {
     rootCause: "metrics-demo가 DogStatsD를 잘못된 호스트로 보냄.",
     resolution: "metrics-demo에서 StatsD host를 agent로 수정 후 재빌드·재시작.",
     expectedChange: "metrics-demo 코드에서 host를 agent(또는 agent 서비스명)로.",
     artifactCheck: [["metrics-demo", "agent"]],
+    artifactScore: 80,
+    scoreGuide: {
+      ko: "결과 80점 + 솔루션 20점 = 만점 100점",
+      en: "Result 80 pts + Solution 20 pts = 100 max",
+    },
   },
   "scenario-log-timezone": {
     rootCause: "log-demo 파이프라인에 Date Remapper 타임존(Asia/Seoul) 없음.",
@@ -68,6 +94,10 @@ export const REFERENCE_ANSWERS: Record<
       ["date", "remapper"],
       ["log-demo", "seoul"],
     ],
-    artifactScore: 65,
+    artifactScore: 70,
+    scoreGuide: {
+      ko: "결과 70점 + 솔루션 20점 = 만점 90점",
+      en: "Result 70 pts + Solution 20 pts = 90 max",
+    },
   },
 };

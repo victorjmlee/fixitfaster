@@ -66,6 +66,27 @@ Example:
 원인은 비슷하나 호스트명 등 구체적 표현 부족. 해결 단계는 일부만 맞음.`;
 }
 
+/** 솔루션(원인/해결) 텍스트만 0~100으로 채점. 20점 만점 배점용. */
+function buildPromptForSolution(
+  ref: { rootCause: string; resolution: string },
+  causeSummary: string,
+  steps: string
+): string {
+  return `You are a grader. Score ONLY the participant's written solution (root cause + resolution) from 0 to 100.
+Reference (what we expect):
+- Root cause: ${ref.rootCause}
+- Resolution: ${ref.resolution}
+
+Participant's written answer:
+- Cause summary: ${causeSummary || "(empty)"}
+- Resolution steps: ${steps || "(empty)"}
+
+Give 0-100: 0 = wrong or empty, 50-70 = partial, 71-85 = good match, 86-100 = clear and accurate.
+Respond with exactly two lines:
+Line 1: A single integer 0-100.
+Line 2: One-line feedback in Korean or "-"`;
+}
+
 function parseScoreFromText(text: string): { score: number; feedback?: string } {
   const lines = text.split("\n").map((s) => s.trim()).filter(Boolean);
   // Prompt asks "Line 1: single integer 0-100" — use first line; avoid taking "0" from "0-100"
@@ -196,10 +217,12 @@ function gradeFromArtifactPatterns(
   return null;
 }
 
+const SOLUTION_MAX_POINTS = 20;
+
 /**
- * 참가자 답변을 정답과 비교해 0~100 점수 반환.
- * artifacts 가 있으면 (Codespace에서 보낸 config/diff) 채점 시 함께 참고.
- * 텍스트 없이 artifacts만 있으면 먼저 패턴 검사로 75점 부여 시도, 통과 못 하면 Gemini 호출.
+ * 참가자 채점: 결과(artifact) 점수 + 솔루션(원인/해결 작성) 0~20점.
+ * - artifact만: 패턴 통과 시 시나리오별 점수(50~80), 미통과 시 65.
+ * - artifact + 솔루션 작성: 결과 점수 + Gemini로 솔루션 0~20점, 합산(캡 100).
  */
 export async function gradeSubmission(
   challengeId: string,
@@ -211,31 +234,29 @@ export async function gradeSubmission(
   if (!ref) return { success: false, reason: "no_ref" };
 
   const textEmpty = !(causeSummary?.trim() || steps?.trim());
+
+  // 1) artifact만 제출: 패턴으로 결과 점수만 부여
   if (textEmpty && artifacts?.trim()) {
     const patternScore = gradeFromArtifactPatterns(challengeId, artifacts, ref);
     if (patternScore != null) return { success: true, score: patternScore };
-    // 텍스트 없이 artifacts만 있으면 Gemini 호출 없이 참여 점수 부여 (0점 방지)
-    console.log("[grade] Artifact-only, pattern miss → 65 (no Gemini) challengeId=%s", challengeId);
+    console.log("[grade] Artifact-only, pattern miss → 65 challengeId=%s", challengeId);
     return { success: true, score: 65 };
   }
 
-  const prompt = buildPrompt(ref, causeSummary, steps, artifacts);
+  // 2) 솔루션 작성함: 결과 점수(패턴) + 솔루션 0~20
+  const artifactPart = artifacts?.trim()
+    ? (gradeFromArtifactPatterns(challengeId, artifacts, ref) ?? 0)
+    : 0;
+  const prompt = buildPromptForSolution(ref, causeSummary, steps);
   let text: string | null = null;
   let firstStatus: number | null = null;
 
   const hasAiGateway = !!(process.env.AI_GATEWAY_BASE_URL?.trim() && process.env.AI_GATEWAY_TOKEN?.trim());
-  console.log("[grade] Config: AI_GATEWAY=" + (hasAiGateway ? "yes" : "no") + " GEMINI_KEY=" + (process.env.GEMINI_API_KEY?.trim() ? "yes" : "no"));
-
-  // 1) Try AI Gateway if configured
   if (hasAiGateway) {
     const out = await callAiGateway(prompt);
-    if (out.ok) {
-      text = out.text;
-      console.log("[grade] Used AI Gateway");
-    } else if (out.status) firstStatus = out.status;
+    if (out.ok) text = out.text;
+    else if (out.status) firstStatus = out.status;
   }
-
-  // 2) Fallback to Gemini
   if (!text) {
     const apiKey = process.env.GEMINI_API_KEY?.trim();
     if (!apiKey) {
@@ -246,22 +267,18 @@ export async function gradeSubmission(
       const out = await callGemini(apiKey, modelId, prompt);
       if (out.ok) {
         text = out.text;
-        console.log(`[grade] Used Gemini: ${modelId}`);
         break;
       }
       if (firstStatus === null) firstStatus = out.status;
     }
   }
-
   if (!text) {
-    console.error("[grade] All backends failed");
     return { success: false, reason: firstStatus === 429 ? "quota" : "api_error" };
   }
 
-  let { score, feedback } = parseScoreFromText(text);
-  if (textEmpty && artifacts?.trim() && score === 0) {
-    console.log("[grade] Gemini returned 0 but artifacts present; overriding to 60");
-    score = 60;
-  }
-  return { success: true, score, feedback };
+  const { score: solution100, feedback } = parseScoreFromText(text);
+  const solutionPart = Math.round((solution100 / 100) * SOLUTION_MAX_POINTS);
+  const total = Math.min(100, artifactPart + solutionPart);
+  console.log("[grade] challengeId=%s artifactPart=%d solutionPart=%d total=%d", challengeId, artifactPart, solutionPart, total);
+  return { success: true, score: total, feedback };
 }

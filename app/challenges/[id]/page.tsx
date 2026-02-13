@@ -99,6 +99,9 @@ type Challenge = {
   steps: string;
   allowedResources: string;
   helpfulCommands: string;
+  /** 시나리오별 점수 안내 (결과 50점 + 솔루션 20점 = 만점 70점 등) */
+  scoreGuide?: string;
+  artifactScore?: number;
 };
 
 function formatTime(seconds: number) {
@@ -121,6 +124,8 @@ export default function ChallengePage() {
   const [savedName, setSavedName] = useState("");
   const [showArtifactsStep, setShowArtifactsStep] = useState(false);
   const [nameInput, setNameInput] = useState("");
+  const [causeSummary, setCauseSummary] = useState("");
+  const [steps, setSteps] = useState("");
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const tick = useCallback(() => setElapsed((s) => s + 1), []);
@@ -156,7 +161,7 @@ export default function ChallengePage() {
     e.preventDefault();
     const form = e.currentTarget;
     const participantName = savedName.trim();
-    const solution = "";
+    const solution = causeSummary.trim() || steps.trim() ? `${causeSummary.trim()}\n\n${steps.trim()}`.trim() : "";
 
     if (!participantName) {
       alert(t("challenge.pleaseEnterName"));
@@ -177,6 +182,8 @@ export default function ChallengePage() {
           challengeId: id,
           participantName,
           solution,
+          causeSummary: causeSummary.trim(),
+          steps: steps.trim(),
           elapsedSeconds: elapsed,
         }),
       });
@@ -259,6 +266,11 @@ export default function ChallengePage() {
       {started && (
         <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-[var(--border)] bg-[var(--card)] p-5">
           <h2 className="text-base font-semibold text-white">{t("challenge.submit")}</h2>
+          {challenge.scoreGuide ? (
+            <div className="rounded-lg border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-3 py-2 text-sm text-[var(--accent)]">
+              {challenge.scoreGuide}
+            </div>
+          ) : null}
           {!savedName ? (
             <div className="flex flex-wrap items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] p-3">
               <label className="text-sm text-zinc-400">{locale === "ko" ? "이름 (최초 1회):" : "Name (first time):"}</label>
@@ -287,6 +299,25 @@ export default function ChallengePage() {
             </div>
           ) : null}
           <ArtifactsCommandBlock challengeId={id} locale={locale} />
+          <p className="text-sm text-zinc-400">{t("challenge.optionalSolutionHint")}</p>
+          <div className="grid gap-2">
+            <label className="text-sm text-zinc-400">{t("challenge.causeLabel")}</label>
+            <textarea
+              value={causeSummary}
+              onChange={(e) => setCauseSummary(e.target.value)}
+              placeholder={locale === "ko" ? "원인을 한두 줄로 요약 (선택)" : "Brief cause (optional)"}
+              rows={2}
+              className="rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-white placeholder-zinc-600 w-full resize-y"
+            />
+            <label className="text-sm text-zinc-400">{t("challenge.stepsLabel")}</label>
+            <textarea
+              value={steps}
+              onChange={(e) => setSteps(e.target.value)}
+              placeholder={locale === "ko" ? "해결 방법 요약 (선택)" : "Brief resolution (optional)"}
+              rows={2}
+              className="rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-white placeholder-zinc-600 w-full resize-y"
+            />
+          </div>
           <div className="flex flex-col gap-2">
             {showArtifactsStep ? (
               <>
