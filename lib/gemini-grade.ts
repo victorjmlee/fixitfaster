@@ -10,7 +10,23 @@ export type GradeOutcome =
   | { success: true; score: number; feedback?: string }
   | { success: false; reason: GradeSkipReason };
 
-function buildPrompt(ref: { rootCause: string; resolution: string }, causeSummary: string, steps: string): string {
+function buildPrompt(
+  ref: { rootCause: string; resolution: string },
+  causeSummary: string,
+  steps: string,
+  artifacts?: string | null
+): string {
+  const artifactsBlock =
+    artifacts && artifacts.trim()
+      ? `
+
+Participant's environment changes (config/diff from their lab environment; use this to verify their resolution):
+\`\`\`
+${artifacts.slice(0, 15000)}
+\`\`\`
+`
+      : "";
+
   return `You are a strict grader for a troubleshooting challenge. Compare the participant's answer to the reference and give a score from 0 to 100.
 
 Grading criteria (be strict):
@@ -27,6 +43,7 @@ Reference answer (Korean):
 Participant's answer:
 - Root cause summary: ${causeSummary || "(empty)"}
 - Resolution steps: ${steps || "(empty)"}
+${artifactsBlock}
 
 Respond with exactly two lines:
 Line 1: A single integer from 0 to 100 (the score). No other text.
@@ -144,17 +161,19 @@ async function callGemini(
 
 /**
  * 참가자 답변을 정답과 비교해 0~100 점수 반환.
+ * artifacts 가 있으면 (Codespace에서 보낸 config/diff) 채점 시 함께 참고.
  * AI Gateway 설정 시 우선 사용, 없으면 Gemini. 실패 시 reason 반환.
  */
 export async function gradeSubmission(
   challengeId: string,
   causeSummary: string,
-  steps: string
+  steps: string,
+  artifacts?: string | null
 ): Promise<GradeOutcome> {
   const ref = REFERENCE_ANSWERS[challengeId];
   if (!ref) return { success: false, reason: "no_ref" };
 
-  const prompt = buildPrompt(ref, causeSummary, steps);
+  const prompt = buildPrompt(ref, causeSummary, steps, artifacts);
   let text: string | null = null;
   let firstStatus: number | null = null;
 

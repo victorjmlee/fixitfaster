@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { addSubmission, updateSubmission } from "@/lib/store";
+import { getAndConsumeArtifacts } from "@/lib/artifacts-store";
 import { gradeSubmission } from "@/lib/gemini-grade";
 
 export async function POST(req: Request) {
@@ -33,19 +34,22 @@ export async function POST(req: Request) {
     const cause = typeof causeSummary === "string" ? causeSummary : text;
     const step = typeof steps === "string" ? steps : text;
 
+    const participantNameTrimmed = String(participantName).trim();
     const submission = addSubmission({
       challengeId: String(challengeId),
-      participantName: String(participantName).trim(),
+      participantName: participantNameTrimmed,
       causeSummary: cause || text,
       steps: step || text,
       docLinks: String(docLinks ?? ""),
       elapsedSeconds: Math.floor(Number(elapsedSeconds)),
     });
 
+    const artifacts = getAndConsumeArtifacts(submission.challengeId, participantNameTrimmed);
     const grade = await gradeSubmission(
       submission.challengeId,
       submission.causeSummary,
-      submission.steps
+      submission.steps,
+      artifacts ?? undefined
     );
     if (grade.success) {
       updateSubmission(submission.id, { score: grade.score });

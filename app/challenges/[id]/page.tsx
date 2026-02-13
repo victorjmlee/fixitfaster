@@ -175,6 +175,9 @@ export default function ChallengePage() {
       {started && (
         <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-[var(--border)] bg-[var(--card)] p-5">
           <h2 className="text-base font-semibold text-white">{t("challenge.submit")}</h2>
+          <p className="text-xs text-zinc-500">
+            {t("challenge.codespaceArtifactsHint")}
+          </p>
           <div>
             <label className="block text-sm text-zinc-400">{t("challenge.nameLabel")}</label>
             <input

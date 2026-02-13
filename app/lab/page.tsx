@@ -6,6 +6,7 @@ import { useLocale } from "@/app/LocaleContext";
 const REPO_URL = "https://github.com/CrystalBellSound/fixitfaster-agent.git";
 const LAB_DIR = "~/datadog-fix-it-faster";
 const DEFAULT_LAB_URL = "http://localhost:3001";
+const CODESPACES_URL = "https://codespaces.new/CrystalBellSound/fixitfaster-agent";
 
 function escapeShell(key: string): string {
   return key.replace(/'/g, "'\"'\"'");
@@ -212,6 +213,21 @@ npm run up:full
           : locale === "ko"
             ? "API Key와 App Key를 입력한 뒤, 아래 명령어를 복사해서 내 터미널에서 실행하세요. 모든 작업은 디렉터리 datadog-fix-it-faster에서 이루어집니다."
             : "Enter your API Key and App Key, then copy the commands below and run them in your terminal. Everything runs in the datadog-fix-it-faster directory."}
+      </p>
+
+      <p className="text-sm text-[var(--muted)]">
+        {locale === "ko" ? "또는 " : "Or "}
+        <a
+          href={CODESPACES_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[var(--accent)] underline hover:no-underline"
+        >
+          {locale === "ko" ? "GitHub Codespaces에서 열기" : "Open in GitHub Codespaces"}
+        </a>
+        {locale === "ko"
+          ? " → Codespace 터미널에서 .env.local 만들고 npm run up:full 실행."
+          : " → In the Codespace terminal, create .env.local and run npm run up:full."}
       </p>
 
       {!showCommands ? (

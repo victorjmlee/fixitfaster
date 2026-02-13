@@ -1,0 +1,10 @@
+# Codespace 터미널에서 실행할 명령어
+# YOUR_API_KEY, YOUR_APP_KEY 를 Lab 페이지에서 입력한 값으로 바꾼 뒤 복사해서 터미널에 붙여넣기.
+
+# 한 줄로 실행 (권장)
+echo 'DATADOG_API_KEY=YOUR_API_KEY' > .env.local && echo 'DATADOG_APP_KEY=YOUR_APP_KEY' >> .env.local && npm run up:full
+
+# 한 줄씩 실행
+echo 'DATADOG_API_KEY=YOUR_API_KEY' > .env.local
+echo 'DATADOG_APP_KEY=YOUR_APP_KEY' >> .env.local
+npm run up:full
