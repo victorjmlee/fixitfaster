@@ -26,25 +26,31 @@ Codespaces를 쓰면 **EC2/도메인 없이** 브라우저에서 랩 환경(터�
 
 ### Codespace 터미널에서 실행할 명령어 (복사용)
 
-**1) .env.local 만들기 + npm run up:full**  
-아래에서 `YOUR_API_KEY`, `YOUR_APP_KEY` 를 Lab 페이지에서 입력한 값으로 바꾼 뒤 터미널에 붙여넣기.
+**API/App Key는 Codespace 생성 시점에 우리가 알 수 없어서, “미리” 자동 수행은 불가능합니다.**  
+대신 **한 번만** 아래 중 하나를 실행하면 됩니다.
+
+**방법 A – 한 줄로 (키 직접 넣기)**  
+`YOUR_API_KEY`, `YOUR_APP_KEY` 를 본인 값으로 바꾼 뒤 붙여넣기.
 
 ```bash
 echo 'DATADOG_API_KEY=YOUR_API_KEY' > .env.local && echo 'DATADOG_APP_KEY=YOUR_APP_KEY' >> .env.local && npm run up:full
 ```
 
-**2) 한 줄씩 실행하고 싶을 때:**
+**방법 B – 설정 스크립트 (키 입력 프롬프트)**  
+fixitfaster-agent에 `scripts/setup-lab.sh` 가 있으면, 한 번만 실행해서 키 입력 후 자동으로 .env.local + npm run up:full 실행.
+
+```bash
+curl -sL "https://raw.githubusercontent.com/victorjmlee/fixitfaster/main/lab-server/scripts/setup-lab.sh" -o /tmp/setup-lab.sh && bash /tmp/setup-lab.sh
+```
+
+(스크립트가 API Key / App Key를 물어보면 입력 후 엔터. 비밀문자는 화면에 안 보임.)
+
+**방법 C – 한 줄씩 실행**
 
 ```bash
 echo 'DATADOG_API_KEY=YOUR_API_KEY' > .env.local
 echo 'DATADOG_APP_KEY=YOUR_APP_KEY' >> .env.local
 npm run up:full
-```
-
-실제 예시 (키는 본인 것으로 교체):
-
-```bash
-echo 'DATADOG_API_KEY=abc123...' > .env.local && echo 'DATADOG_APP_KEY=xyz789...' >> .env.local && npm run up:full
 ```
 
 ---
