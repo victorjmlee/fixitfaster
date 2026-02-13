@@ -30,8 +30,8 @@ echo "=== git status ===" >> "$OUT"
 git status --short 2>/dev/null || true >> "$OUT"
 echo "" >> "$OUT"
 
-echo "=== git diff (excluding .env.local) ===" >> "$OUT"
-git diff -- . ':(exclude).env.local' 2>/dev/null >> "$OUT" || true
+echo "=== git diff (excluding .env.local, staged + unstaged) ===" >> "$OUT"
+git diff HEAD -- . ':(exclude).env.local' 2>/dev/null >> "$OUT" || true
 echo "" >> "$OUT"
 
 if [ -f "docker-compose.yml" ]; then
