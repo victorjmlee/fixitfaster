@@ -28,19 +28,24 @@ ${artifacts.slice(0, 15000)}
       : "";
 
   const textEmpty = !(causeSummary?.trim() || steps?.trim());
-  const gradeFromArtifactsNote =
+  const gradeFromArtifactsOnly =
     textEmpty && artifactsBlock
-      ? "\nWhen participant's text answer is empty, grade primarily from the environment changes (artifacts): do the config/diff show the correct fix? Give 0 only if artifacts are missing or clearly wrong.\n"
+      ? `
+IMPORTANT: Participant did not write a text answer. Grade ONLY from the artifacts (config/diff) below.
+- If the artifacts show the correct fix (docker-compose, conf.d, or code changes matching the reference resolution), give 51–100. Do NOT give 0.
+- Give 0 only if artifacts are empty, show the wrong fix, or are unrelated to the reference.
+- Match the reference "Resolution" against what was actually changed in the diff/config.
+`
       : "";
 
   return `You are a strict grader for a troubleshooting challenge. Compare the participant's answer to the reference and give a score from 0 to 100.
-${gradeFromArtifactsNote}
+${gradeFromArtifactsOnly}
 Grading criteria (be strict):
-- 0–25: Wrong or missing root cause; resolution unrelated or absent (or artifacts show wrong/no fix).
+- 0–25: Wrong or missing root cause; resolution unrelated or absent. With artifacts only: give 0 only if artifacts show wrong/no fix or are irrelevant.
 - 26–50: Root cause only vaguely or partially correct; resolution incomplete or incorrect.
-- 51–70: Root cause roughly correct but key details missing; resolution partly correct. With artifacts only: config changes partly match the reference fix.
-- 71–85: Root cause and resolution mostly correct with minor gaps. With artifacts only: config/diff mostly match the reference.
-- 86–100: Root cause and resolution clearly match the reference (specific terms, steps, and intent). With artifacts only: config/diff clearly show the correct fix. Use sparingly.
+- 51–70: Root cause roughly correct but key details missing; resolution partly correct. With artifacts only: config/diff partly match the reference fix → give at least 51.
+- 71–85: Root cause and resolution mostly correct with minor gaps. With artifacts only: config/diff mostly match the reference → give 71–85.
+- 86–100: Root cause and resolution clearly match the reference. With artifacts only: config/diff clearly show the correct fix → give 86–100. Use sparingly.
 
 Reference answer (Korean):
 - Root cause: ${ref.rootCause}
