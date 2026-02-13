@@ -35,7 +35,7 @@ function writeAll(data: Record<string, ArtifactEntry>) {
   }
 }
 
-function key(callengeId: string, participantName: string): string {
+function key(challengeId: string, participantName: string): string {
   return `${challengeId}:${participantName.trim()}`;
 }
 
