@@ -13,8 +13,11 @@ export async function POST(req: Request) {
       );
     }
 
+    const cid = String(challengeId);
+    const name = String(participantName).trim();
     const text = typeof artifacts === "string" ? artifacts : String(artifacts ?? "");
-    saveArtifacts(String(challengeId), String(participantName).trim(), text);
+    await saveArtifacts(cid, name, text);
+    console.log("[artifacts] Saved key=%s:%s len=%d", cid, name, text.length);
 
     return NextResponse.json({ ok: true });
   } catch (e) {

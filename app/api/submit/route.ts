@@ -44,7 +44,7 @@ export async function POST(req: Request) {
       elapsedSeconds: Math.floor(Number(elapsedSeconds)),
     });
 
-    const artifacts = getAndConsumeArtifacts(submission.challengeId, participantNameTrimmed);
+    const artifacts = await getAndConsumeArtifacts(submission.challengeId, participantNameTrimmed);
 
     if (artifacts?.trim()) {
       const sample = artifacts.slice(0, 200).replace(/\n/g, " ");
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
 
     // 채점은 Codespace에서 보낸 artifacts가 있을 때만 수행
     if (!artifacts || !artifacts.trim()) {
-      console.log("[submit] No artifacts — grading skipped (Codespace-only)");
+      console.log("[submit] No artifacts — grading skipped (Codespace-only) lookupKey=%s:%s", submission.challengeId, participantNameTrimmed);
       return NextResponse.json({
         ...submission,
         _gradingSkipped: true,
