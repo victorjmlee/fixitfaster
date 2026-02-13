@@ -1,5 +1,7 @@
 # Vercel 배포용 Push 가이드
 
+**Vercel URL:** https://dd-tse-fix-it-faster.vercel.app/
+
 ## 1. 로컬에서 커밋 & Push
 
 ```bash
@@ -14,12 +16,8 @@ git status
 # 커밋 (한 번에)
 git commit -m "Lab: Codespaces 연동, artifacts 채점 반영, EC2/HTTPS/Codespaces 문서"
 
-# Vercel이 배포하는 리포로 push
-# - Vercel이 fixitfaster-improve 를 배포 중이면:
-git push improve main
-
-# - Vercel이 fixitfaster (origin) 를 배포 중이면:
-# git push origin main
+# fixitfaster 리포(origin)로 push → Vercel 자동 배포
+git push origin main
 ```
 
 ## 2. Push 후

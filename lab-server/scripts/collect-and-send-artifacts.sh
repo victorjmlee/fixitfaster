@@ -14,7 +14,7 @@
 set -e
 if [ -z "$FIXITFASTER_URL" ] || [ -z "$CHALLENGE_ID" ] || [ -z "$PARTICIPANT_NAME" ]; then
   echo "Usage: FIXITFASTER_URL=... CHALLENGE_ID=... PARTICIPANT_NAME=... $0"
-  echo "Example: FIXITFASTER_URL=https://fixitfaster.vercel.app CHALLENGE_ID=apm PARTICIPANT_NAME=MyName $0"
+  echo "Example: FIXITFASTER_URL=https://dd-tse-fix-it-faster.vercel.app CHALLENGE_ID=apm PARTICIPANT_NAME=MyName $0"
   exit 1
 fi
 

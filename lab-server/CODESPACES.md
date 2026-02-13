@@ -159,7 +159,7 @@ Codespace에서 수정한 **config, docker-compose, git diff** 를 채점 시 �
 
 **환경 변수**를 본인 값으로 바꾼 뒤 실행합니다.
 
-- `FIXITFASTER_URL`: fixitfaster 웹 주소 (예: `https://fixitfaster.vercel.app`)
+- `FIXITFASTER_URL`: fixitfaster 웹 주소 (예: `https://dd-tse-fix-it-faster.vercel.app`)
 - `CHALLENGE_ID`: 챌린지 ID (예: `apm`, `infra`, `custom-metrics`, `correlation`, `log-timezone`, `autodiscovery`, `metrics-monitor`)
 - `PARTICIPANT_NAME`: 제출 시 쓸 **동일한** 이름 (영문/한글 모두 가능)
 
@@ -168,8 +168,8 @@ Codespace에서 수정한 **config, docker-compose, git diff** 를 채점 시 �
 Codespace는 fixitfaster-agent 리포이므로, 스크립트를 먼저 가져와야 합니다. 한 줄로 받아서 실행:
 
 ```bash
-curl -sL "https://raw.githubusercontent.com/CrystalBellSound/fixitfaster/main/lab-server/scripts/collect-and-send-artifacts.sh" -o /tmp/send-artifacts.sh
-FIXITFASTER_URL="https://fixitfaster.vercel.app" CHALLENGE_ID="apm" PARTICIPANT_NAME="MyName" bash /tmp/send-artifacts.sh
+curl -sL "https://raw.githubusercontent.com/victorjmlee/fixitfaster/main/lab-server/scripts/collect-and-send-artifacts.sh" -o /tmp/send-artifacts.sh
+FIXITFASTER_URL="https://dd-tse-fix-it-faster.vercel.app" CHALLENGE_ID="apm" PARTICIPANT_NAME="MyName" bash /tmp/send-artifacts.sh
 ```
 
 (위 `FIXITFASTER_URL`, `CHALLENGE_ID`, `PARTICIPANT_NAME` 만 본인 값으로 바꿔서 실행.)
@@ -179,7 +179,7 @@ FIXITFASTER_URL="https://fixitfaster.vercel.app" CHALLENGE_ID="apm" PARTICIPANT_
 fixitfaster-agent 리포에 `scripts/collect-and-send-artifacts.sh` 를 복사해 두었다면:
 
 ```bash
-export FIXITFASTER_URL="https://fixitfaster.vercel.app"
+export FIXITFASTER_URL="https://dd-tse-fix-it-faster.vercel.app"
 export CHALLENGE_ID="apm"
 export PARTICIPANT_NAME="MyName"
 bash scripts/collect-and-send-artifacts.sh
