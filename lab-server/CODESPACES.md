@@ -36,9 +36,19 @@ Codespaces를 쓰면 **EC2/도메인 없이** 브라우저에서 랩 환경(터�
 2. GitHub 로그인 후 **Create codespace** (기본 머신으로 생성).
    - **처음 생성 시 2~5분** 걸릴 수 있음 (VM + 이미지 + npm ci). 기다리면 됨.
    - 같은 Codespace를 **Resume** 하면 더 빨리 열림.
-3. Codespace가 뜨면 **Simple Browser**가 Vercel URL(`https://dd-tse-fix-it-faster.vercel.app`)로 자동으로 열리도록 설정되어 있습니다. 처음 한 번 **"Allow Automatic Tasks in Folder"** 를 묻면 허용하면 됩니다. (안 열리면 Cmd+Shift+P → "Simple Browser: Show" → URL 입력.)
+3. Codespace가 뜨면 **Simple Browser**가 Vercel URL로 자동으로 열리도록 되어 있습니다. **README만 보이고 Simple Browser가 안 열리면** 아래 "Simple Browser가 안 열릴 때" 참고.
 4. 터미널에서 아래 **"Codespace 터미널에서 실행할 명령어"** 블록을 복사한 뒤, API Key·App Key·이름을 넣어 실행.
 5. 이후 챌린지 진행하면 됨.
+
+---
+
+### Simple Browser가 안 열릴 때 (README만 보일 때)
+
+1. **자동 작업 허용:** `Cmd+Shift+P`(Mac) / `Ctrl+Shift+P`(Win) → **"Tasks: Manage Automatic Tasks in Folder"** 입력 후 선택 → **"Allow Automatic Tasks in Folder"** 선택.
+2. **창 다시 로드:** `Cmd+Shift+P` → **"Developer: Reload Window"** 실행. 다시 열리면 폴더 열 때 Simple Browser가 뜨도록 설정된 태스크가 실행될 수 있음.
+3. **수동으로 열기:** `Cmd+Shift+P` → **"Tasks: Run Task"** → **"Open Fix It Faster (Vercel) in Simple Browser"** 선택. 또는 **"Simple Browser: Show"** 선택 후 URL에 `https://dd-tse-fix-it-faster.vercel.app` 입력.
+
+fixitfaster-agent 리포에 `.vscode/tasks.json`이 있어야 위 태스크가 보입니다. 없으면 fixitfaster 쪽 설정 스크립트를 다시 실행해 `.devcontainer`와 `.vscode`를 복사한 뒤 fixitfaster-agent에서 커밋·푸시하고 Codespace를 **리빌드**하세요.
 
 ---
 
@@ -95,14 +105,15 @@ git clone https://github.com/CrystalBellSound/fixitfaster-agent.git
 ./fixitfaster/lab-server/setup-codespaces-devcontainer.sh
 ```
 
-**옵션 B – 수동 복사:** 이 리포의 `lab-server/devcontainer-example/` 내용을 **fixitfaster-agent** 리포의 `.devcontainer/` 로 복사합니다. (Simple Browser 자동 열기용 스크립트·템플릿 포함.)
+**옵션 B – 수동 복사:** 이 리포의 `lab-server/devcontainer-example/` 내용을 **fixitfaster-agent** 리포에 복사합니다. `.vscode/tasks.json`까지 넣어야 Simple Browser 자동 열기가 동작합니다.
 
 ```bash
 # fixitfaster-agent 클론 후
-mkdir -p fixitfaster-agent/.devcontainer
+mkdir -p fixitfaster-agent/.devcontainer fixitfaster-agent/.vscode
 cp fixitfaster/lab-server/devcontainer-example/devcontainer.json fixitfaster-agent/.devcontainer/
 cp fixitfaster/lab-server/devcontainer-example/setup-simple-browser-task.sh fixitfaster-agent/.devcontainer/
 cp fixitfaster/lab-server/devcontainer-example/tasks.json.template fixitfaster-agent/.devcontainer/
+cp fixitfaster/lab-server/devcontainer-example/tasks.json.template fixitfaster-agent/.vscode/tasks.json
 chmod +x fixitfaster-agent/.devcontainer/setup-simple-browser-task.sh
 ```
 

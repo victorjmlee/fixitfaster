@@ -21,15 +21,17 @@ if [ ! -d "$AGENT_DIR" ]; then
 fi
 
 mkdir -p "$AGENT_DIR/.devcontainer"
+mkdir -p "$AGENT_DIR/.vscode"
 cp "$SOURCE_JSON" "$AGENT_DIR/.devcontainer/devcontainer.json"
 cp "${SCRIPT_DIR}/devcontainer-example/setup-simple-browser-task.sh" "$AGENT_DIR/.devcontainer/"
 cp "${SCRIPT_DIR}/devcontainer-example/tasks.json.template" "$AGENT_DIR/.devcontainer/"
+cp "${SCRIPT_DIR}/devcontainer-example/tasks.json.template" "$AGENT_DIR/.vscode/tasks.json"
 chmod +x "$AGENT_DIR/.devcontainer/setup-simple-browser-task.sh"
-echo "Done: $AGENT_DIR/.devcontainer/ (devcontainer.json + Simple Browser auto-open task)"
+echo "Done: $AGENT_DIR/.devcontainer/ + .vscode/tasks.json (Simple Browser auto-open on folder open)"
 
 echo ""
 echo "이제 fixitfaster-agent 리포에서 커밋 & 푸시하세요:"
 echo "  cd $AGENT_DIR"
-echo "  git add .devcontainer/"
-echo "  git commit -m 'Add devcontainer for Codespaces'"
+echo "  git add .devcontainer/ .vscode/"
+echo "  git commit -m 'Add devcontainer + Simple Browser task for Codespaces'"
 echo "  git push"
