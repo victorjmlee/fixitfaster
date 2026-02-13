@@ -46,12 +46,33 @@ function writeAllFile(data: Record<string, ArtifactEntry>) {
 }
 
 // --- KV backend (Vercel: persists across serverless invocations)
-async function getKv(): Promise<typeof import("@vercel/kv").kv | null> {
-  const url = process.env.KV_REST_API_URL?.trim();
-  const token = process.env.KV_REST_API_TOKEN?.trim();
+// 1) REDIS_URL (Redis Cloud 등 redis:// 연결 문자열)
+// 2) KV_REST_API_URL + KV_REST_API_TOKEN (Vercel KV)
+// 3) UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN (Upstash)
+async function getKv() {
+  const redisUrl = process.env.REDIS_URL?.trim();
+  if (redisUrl) {
+    try {
+      const { createClient } = await import("redis");
+      const client = createClient({ url: redisUrl });
+      await client.connect();
+      return {
+        set: async (k: string, v: string, opts?: { ex?: number }) => {
+          await client.set(k, v, opts?.ex ? { EX: opts.ex } : {});
+        },
+        get: async (k: string) => client.get(k),
+        del: async (k: string) => client.del(k),
+      };
+    } catch (e) {
+      console.warn("[artifacts] REDIS_URL connect failed:", e instanceof Error ? e.message : String(e));
+      return null;
+    }
+  }
+  const url = process.env.KV_REST_API_URL?.trim() || process.env.UPSTASH_REDIS_REST_URL?.trim();
+  const token = process.env.KV_REST_API_TOKEN?.trim() || process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
   if (!url || !token) return null;
-  const { kv } = await import("@vercel/kv");
-  return kv;
+  const { createClient } = await import("@vercel/kv");
+  return createClient({ url, token });
 }
 
 /** Save artifacts (Codespace script). Overwrites previous. Use KV on Vercel so they persist. */
