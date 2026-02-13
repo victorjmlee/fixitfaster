@@ -172,9 +172,43 @@ async function callGemini(
 }
 
 /**
+ * artifacts만 있을 때 서버에서 패턴으로 채점. 통과하면 75점 (Gemini 호출 안 함).
+ */
+function gradeFromArtifactPatterns(challengeId: string, artifacts: string): number | null {
+  const a = artifacts.toLowerCase();
+  switch (challengeId) {
+    case "scenario-infra":
+      if ((a.includes("docker-compose") || a.includes("docker_compose")) && a.includes("fixitfaster-agent") && (a.includes("hostname") || a.includes("dd_hostname")))
+        return 75;
+      break;
+    case "scenario-autodiscovery":
+      if (a.includes("conf.d") && a.includes("nginx") && a.includes("ad_identifiers") && a.includes("nginx"))
+        return 75;
+      break;
+    case "scenario-apm":
+      if (a.includes("trace-demo") && (a.includes("8126") || a.includes("port")))
+        return 75;
+      break;
+    case "scenario-correlation":
+      if (a.includes("docker-compose") && a.includes("correlation") && (a.includes("dd_logs_injection") || a.includes("logs_injection")) && a.includes("true"))
+        return 75;
+      break;
+    case "scenario-custom-metrics":
+      if (a.includes("metrics-demo") && (a.includes("agent") || a.includes("host")) && !a.includes("127.0.0.1"))
+        return 75;
+      break;
+    case "scenario-log-timezone":
+      if (a.includes("pipeline") || a.includes("asia/seoul") || a.includes("timezone") || a.includes("date remapper") || a.includes("log-demo"))
+        return 65;
+      break;
+  }
+  return null;
+}
+
+/**
  * 참가자 답변을 정답과 비교해 0~100 점수 반환.
  * artifacts 가 있으면 (Codespace에서 보낸 config/diff) 채점 시 함께 참고.
- * AI Gateway 설정 시 우선 사용, 없으면 Gemini. 실패 시 reason 반환.
+ * 텍스트 없이 artifacts만 있으면 먼저 패턴 검사로 75점 부여 시도, 통과 못 하면 Gemini 호출.
  */
 export async function gradeSubmission(
   challengeId: string,
@@ -184,6 +218,15 @@ export async function gradeSubmission(
 ): Promise<GradeOutcome> {
   const ref = REFERENCE_ANSWERS[challengeId];
   if (!ref) return { success: false, reason: "no_ref" };
+
+  const textEmpty = !(causeSummary?.trim() || steps?.trim());
+  if (textEmpty && artifacts?.trim()) {
+    const patternScore = gradeFromArtifactPatterns(challengeId, artifacts);
+    if (patternScore != null) {
+      console.log("[grade] Artifact pattern match, score=" + patternScore + " (Gemini skipped)");
+      return { success: true, score: patternScore };
+    }
+  }
 
   const prompt = buildPrompt(ref, causeSummary, steps, artifacts);
   let text: string | null = null;

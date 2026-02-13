@@ -15,27 +15,70 @@ function artifactsCommand(challengeId: string): string {
 
 function ArtifactsCommandBlock({ challengeId, locale }: { challengeId: string; locale: string }) {
   const [copied, setCopied] = useState(false);
+  const preRef = useRef<HTMLPreElement>(null);
   const cmd = artifactsCommand(challengeId);
+
   const copy = useCallback(() => {
-    navigator.clipboard.writeText(cmd).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
+    const doCopy = (text: string) => {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand("copy");
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } finally {
+        document.body.removeChild(ta);
+      }
+    };
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(cmd).then(
+        () => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        },
+        () => doCopy(cmd)
+      );
+    } else {
+      doCopy(cmd);
+    }
   }, [cmd]);
+
+  const selectAll = useCallback(() => {
+    if (preRef.current) {
+      const range = document.createRange();
+      range.selectNodeContents(preRef.current);
+      const sel = window.getSelection();
+      sel?.removeAllRanges();
+      sel?.addRange(range);
+    }
+  }, []);
+
   return (
     <div className="rounded-lg border border-[var(--border)] bg-[var(--bg)] p-3 space-y-2">
       <p className="text-xs text-white">
         {locale === "ko"
-          ? "채점은 Codespace에서 보낸 결과만 사용합니다. 제출 전에 Codespace 터미널에서 아래 명령을 실행하세요 (이름은 최초 1회 설정 시 저장해 두면 자동 사용). 브라우저에서는 터미널을 실행할 수 없어, 복사 후 터미널에 붙여넣기 해 주세요."
-          : "Grading uses only results sent from Codespace. Before submitting, run the command below in the Codespace terminal (name is read from your first-run setup). Copy and paste into the terminal."}
+          ? "채점은 Codespace에서 보낸 결과만 사용합니다. 제출 전에 Codespace 터미널에서 아래 명령을 실행하세요 (이름은 최초 1회 설정 시 저장해 두면 자동 사용). 아래 영역 클릭 후 Cmd+C(복사) 또는 복사 버튼을 누르세요."
+          : "Grading uses only results sent from Codespace. Before submitting, run the command below in the Codespace terminal. Click the command to select, then Cmd+C or use Copy button."}
       </p>
       <div className="flex items-center gap-2">
-        <pre className="flex-1 p-3 rounded bg-black/30 border border-[var(--border)] text-xs overflow-x-auto text-white font-mono whitespace-pre-wrap break-all">
+        <pre
+          ref={preRef}
+          role="button"
+          tabIndex={0}
+          onClick={selectAll}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectAll(); } }}
+          className="flex-1 p-3 rounded bg-black/30 border border-[var(--border)] text-xs overflow-x-auto text-white font-mono whitespace-pre-wrap break-all cursor-text select-text"
+          aria-label={locale === "ko" ? "클릭하면 전체 선택, Cmd+C로 복사" : "Click to select all, then Cmd+C to copy"}
+        >
           <code>{cmd}</code>
         </pre>
         <button
           type="button"
-          onClick={copy}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); copy(); }}
           className="shrink-0 rounded border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-xs text-white hover:bg-white/10"
         >
           {copied ? (locale === "ko" ? "복사됨" : "Copied") : (locale === "ko" ? "복사" : "Copy")}
