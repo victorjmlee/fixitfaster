@@ -214,6 +214,9 @@ export async function gradeSubmission(
   if (textEmpty && artifacts?.trim()) {
     const patternScore = gradeFromArtifactPatterns(challengeId, artifacts, ref);
     if (patternScore != null) return { success: true, score: patternScore };
+    // 텍스트 없이 artifacts만 있으면 Gemini 호출 없이 참여 점수 부여 (0점 방지)
+    console.log("[grade] Artifact-only, pattern miss → 65 (no Gemini) challengeId=%s", challengeId);
+    return { success: true, score: 65 };
   }
 
   const prompt = buildPrompt(ref, causeSummary, steps, artifacts);

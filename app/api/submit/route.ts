@@ -46,6 +46,11 @@ export async function POST(req: Request) {
 
     const artifacts = getAndConsumeArtifacts(submission.challengeId, participantNameTrimmed);
 
+    if (artifacts?.trim()) {
+      const sample = artifacts.slice(0, 200).replace(/\n/g, " ");
+      console.log("[submit] Artifacts present challengeId=%s name=%s len=%d sample=%s", submission.challengeId, participantNameTrimmed, artifacts.length, sample);
+    }
+
     // 채점은 Codespace에서 보낸 artifacts가 있을 때만 수행
     if (!artifacts || !artifacts.trim()) {
       console.log("[submit] No artifacts — grading skipped (Codespace-only)");
