@@ -85,6 +85,8 @@ npm run up:full
 
 ## 3. 리포 쪽 설정 (fixitfaster-agent에 .devcontainer 추가)
 
+> **참가자는 이 섹션을 할 필요 없습니다.** fixitfaster-agent 리포를 관리하는 사람이 한 번만 설정해 두면, 참가자는 "Codespaces에서 열기"만 누르면 됩니다.
+
 **fixitfaster-agent** 리포에 개발 환경 정의를 넣어두면, Codespaces가 그 설정으로 컨테이너를 띄웁니다.
 
 ### 3-1. fixitfaster-agent 루트에 폴더/파일 생성

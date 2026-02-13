@@ -10,7 +10,7 @@ Datadog 트러블슈팅 챌린지와 리더보드 앱입니다. 참가자는 랩
 
 - **GitHub Codespaces** 또는 별도 랩(EC2 등)에서 `fixitfaster-agent` 리포를 사용합니다.
 - 챌린지 페이지(예: Vercel에 배포된 URL)에서 시나리오를 고르고 타이머를 시작한 뒤, 랩에서 원인을 찾고 수정합니다.
-- 랩 설정·상세 절차는 **랩 문서**([lab-server/CODESPACES.md](lab-server/CODESPACES.md) 등)를 참고하세요.
+- 랩 설정·상세 절차는 랩 문서를 참고하세요.
 
 ### 2. 제출 전에: 결과(artifact) 전송
 
@@ -70,7 +70,7 @@ Datadog troubleshooting challenges and leaderboard app. You solve issues in a la
 
 - Use the **fixitfaster-agent** repo in **GitHub Codespaces** or your own lab (e.g. EC2).
 - On the challenge page (e.g. the Vercel URL), pick a scenario, start the timer, then find and fix the issue in the lab.
-- See **lab docs** ([lab-server/CODESPACES.md](lab-server/CODESPACES.md)) for setup and steps.
+- See lab docs for setup and steps.
 
 ### 2. Before submitting: Send your results (artifacts)
 
