@@ -1,22 +1,22 @@
 "use client";
 
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useLocale } from "@/app/LocaleContext";
 
-const PARTICIPANT_NAME_KEY = "fixitfaster-participant-name";
 const FIXITFASTER_URL = "https://dd-tse-fix-it-faster.vercel.app";
-const ARTIFACTS_SCRIPT_URL = "https://raw.githubusercontent.com/victorjmlee/fixitfaster/main/lab-server/scripts/collect-and-send-artifacts.sh";
+const SUBMIT_SCRIPT_URL = "https://raw.githubusercontent.com/victorjmlee/fixitfaster/main/lab-server/scripts/submit-from-codespace.sh";
 
-/** 명령어: 이름은 Codespace에서 ~/.fixitfaster-participant 에 저장된 값 사용. */
-function artifactsCommand(challengeId: string): string {
-  return `curl -sL "${ARTIFACTS_SCRIPT_URL}" -o /tmp/send-artifacts.sh && FIXITFASTER_URL="${FIXITFASTER_URL}" CHALLENGE_ID="${challengeId}" bash /tmp/send-artifacts.sh`;
+/** 제출 명령 (Codespace 터미널에서만). ELAPSED_SECONDS 생략 시 스크립트가 물어봄. */
+function submitCommand(challengeId: string): string {
+  const base = typeof window !== "undefined" ? window.location.origin : FIXITFASTER_URL;
+  return `curl -sL "${SUBMIT_SCRIPT_URL}" -o /tmp/submit.sh && FIXITFASTER_URL="${base}" CHALLENGE_ID="${challengeId}" bash /tmp/submit.sh`;
 }
 
-function ArtifactsCommandBlock({ challengeId, locale }: { challengeId: string; locale: string }) {
+function SubmitCommandBlock({ challengeId, locale }: { challengeId: string; locale: string }) {
   const [copied, setCopied] = useState(false);
   const preRef = useRef<HTMLPreElement>(null);
-  const cmd = artifactsCommand(challengeId);
+  const cmd = submitCommand(challengeId);
 
   const copy = useCallback(() => {
     const doCopy = (text: string) => {
@@ -61,8 +61,8 @@ function ArtifactsCommandBlock({ challengeId, locale }: { challengeId: string; l
     <div className="rounded-lg border border-[var(--border)] bg-[var(--bg)] p-3 space-y-2">
       <p className="text-xs text-white">
         {locale === "ko"
-          ? "채점은 Codespace에서 보낸 결과만 사용합니다. 제출 전에 Codespace 터미널에서 아래 명령을 실행하세요 (이름은 최초 1회 설정 시 저장해 두면 자동 사용). 아래 영역 클릭 후 Cmd+C(복사) 또는 복사 버튼을 누르세요."
-          : "Grading uses only results sent from Codespace. Before submitting, run the command below in the Codespace terminal. Click the command to select, then Cmd+C or use Copy button."}
+          ? "제출은 Codespace 터미널에서만 가능합니다. 아래 명령을 실행하면 아티팩트 전송 + 제출이 한 번에 됩니다. 이름은 ~/.fixitfaster-participant 에서 자동 사용."
+          : "Submit only from the Codespace terminal. Run the command below to send artifacts and submit in one step. Name is read from ~/.fixitfaster-participant."}
       </p>
       <div className="flex items-center gap-2">
         <pre
@@ -113,20 +113,11 @@ function formatTime(seconds: number) {
 export default function ChallengePage() {
   const { t, locale } = useLocale();
   const params = useParams();
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const id = params.id as string;
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [loading, setLoading] = useState(true);
   const [elapsed, setElapsed] = useState(0);
   const [started, setStarted] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [submitOk, setSubmitOk] = useState(false);
-  const [savedName, setSavedName] = useState("");
-  const [showArtifactsStep, setShowArtifactsStep] = useState(false);
-  const [nameInput, setNameInput] = useState("");
-  const [causeSummary, setCauseSummary] = useState("");
-  const [steps, setSteps] = useState("");
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const tick = useCallback(() => setElapsed((s) => s + 1), []);
@@ -139,21 +130,6 @@ export default function ChallengePage() {
   }, [id, locale]);
 
   useEffect(() => {
-    try {
-      const fromUrl = typeof window !== "undefined" ? searchParams.get("participantName")?.trim() : "";
-      if (fromUrl) {
-        setSavedName(fromUrl);
-        localStorage.setItem(PARTICIPANT_NAME_KEY, fromUrl);
-      } else {
-        const name = typeof window !== "undefined" ? localStorage.getItem(PARTICIPANT_NAME_KEY) ?? "" : "";
-        setSavedName(name);
-      }
-    } catch {
-      setSavedName("");
-    }
-  }, [searchParams]);
-
-  useEffect(() => {
     if (started) {
       intervalRef.current = setInterval(tick, 1000);
       return () => {
@@ -163,54 +139,6 @@ export default function ChallengePage() {
   }, [started, tick]);
 
   const handleStart = () => setStarted(true);
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const form = e.currentTarget;
-    const participantName = savedName.trim();
-    const solution = causeSummary.trim() || steps.trim() ? `${causeSummary.trim()}\n\n${steps.trim()}`.trim() : "";
-
-    if (!participantName) {
-      alert(t("challenge.pleaseEnterName"));
-      return;
-    }
-    try {
-      localStorage.setItem(PARTICIPANT_NAME_KEY, participantName);
-    } catch {
-      /* ignore */
-    }
-
-    setSubmitting(true);
-    try {
-      const res = await fetch("/api/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          challengeId: id,
-          participantName,
-          solution,
-          causeSummary: causeSummary.trim(),
-          steps: steps.trim(),
-          elapsedSeconds: elapsed,
-        }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setSubmitOk(true);
-        if (data._gradingSkipped && data._gradingHint) {
-          alert(data._gradingHint);
-        }
-        setTimeout(() => router.push("/challenges"), 500);
-      } else {
-        const data = await res.json();
-        alert(data.error || t("challenge.submissionFailed"));
-      }
-    } catch {
-      alert(t("challenge.submitError"));
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   if (loading || !challenge) {
     return (
@@ -271,89 +199,23 @@ export default function ChallengePage() {
       </div>
 
       {started && (
-        <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-[var(--border)] bg-[var(--card)] p-5">
+        <div className="space-y-4 rounded-xl border border-[var(--border)] bg-[var(--card)] p-5">
           <h2 className="text-base font-semibold text-white">{t("challenge.submit")}</h2>
           {challenge.scoreGuide ? (
             <div className="rounded-lg border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-3 py-2 text-sm text-[var(--accent)]">
               {challenge.scoreGuide}
             </div>
           ) : null}
-          {!savedName ? (
-            <div className="flex flex-wrap items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] p-3">
-              <label className="text-sm text-zinc-400">{locale === "ko" ? "이름 (최초 1회):" : "Name (first time):"}</label>
-              <input
-                type="text"
-                value={nameInput}
-                onChange={(e) => setNameInput(e.target.value)}
-                className="rounded border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-white placeholder-zinc-600 w-40"
-                placeholder={t("challenge.namePlaceholder")}
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  const n = nameInput.trim();
-                  if (n) {
-                    try {
-                      localStorage.setItem(PARTICIPANT_NAME_KEY, n);
-                      setSavedName(n);
-                    } catch {}
-                  }
-                }}
-                className="rounded border border-[var(--border)] bg-[var(--accent)]/20 px-3 py-1.5 text-sm text-white hover:bg-[var(--accent)]/30"
-              >
-                {locale === "ko" ? "저장" : "Save"}
-              </button>
-            </div>
-          ) : null}
-          <ArtifactsCommandBlock challengeId={id} locale={locale} />
-          <p className="text-sm text-zinc-400">{t("challenge.optionalSolutionHint")}</p>
-          <div className="grid gap-2">
-            <label className="text-sm text-zinc-400">{t("challenge.causeLabel")}</label>
-            <textarea
-              value={causeSummary}
-              onChange={(e) => setCauseSummary(e.target.value)}
-              placeholder={locale === "ko" ? "원인을 한두 줄로 요약 (선택)" : "Brief cause (optional)"}
-              rows={2}
-              className="rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-white placeholder-zinc-600 w-full resize-y"
-            />
-            <label className="text-sm text-zinc-400">{t("challenge.stepsLabel")}</label>
-            <textarea
-              value={steps}
-              onChange={(e) => setSteps(e.target.value)}
-              placeholder={locale === "ko" ? "해결 방법 요약 (선택)" : "Brief resolution (optional)"}
-              rows={2}
-              className="rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-white placeholder-zinc-600 w-full resize-y"
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            {showArtifactsStep ? (
-              <>
-                <p className="text-sm text-white/90">
-                  {locale === "ko"
-                    ? "터미널에서 위 명령을 실행한 뒤 아래 버튼을 눌러 제출하세요."
-                    : "Run the command above in the terminal, then click below to submit."}
-                </p>
-                <button
-                  type="submit"
-                  disabled={submitting || submitOk}
-                  className="rounded-lg bg-[var(--accent)] px-5 py-2 font-medium text-[var(--bg)] hover:opacity-90 disabled:opacity-50 w-fit"
-                >
-                  {submitOk ? t("challenge.submittedGoingToChallenges") : submitting ? t("challenge.submitting") : (locale === "ko" ? "실행했으면 제출하기" : "Submit (after running command)")}
-                </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setShowArtifactsStep(true)}
-                disabled={submitting || submitOk || !savedName}
-                className="rounded-lg bg-[var(--accent)] px-5 py-2 font-medium text-[var(--bg)] hover:opacity-90 disabled:opacity-50 w-fit"
-              >
-                {`${t("challenge.submit")} (${formatTime(elapsed)})`}
-              </button>
-            )}
-            <span className="text-sm text-zinc-500">{t("challenge.elapsedRecorded")}</span>
-          </div>
-        </form>
+          <p className="text-sm text-zinc-400">
+            {locale === "ko" ? "걸린 시간(초)은 스크립트 실행 시 물어봅니다. 입력하거나 명령에 ELAPSED_SECONDS=300 형태로 넣으세요." : "Elapsed seconds: script will prompt, or add ELAPSED_SECONDS=300 to the command."}
+          </p>
+          <SubmitCommandBlock challengeId={id} locale={locale} />
+          <p className="text-sm text-zinc-500">
+            {locale === "ko" ? "실행이 끝나면 리더보드에서 점수를 확인하세요." : "When done, check your score on the leaderboard."}
+            {" "}
+            <a href="/leaderboard" className="text-[var(--accent)] hover:underline">/leaderboard</a>
+          </p>
+        </div>
       )}
     </div>
   );

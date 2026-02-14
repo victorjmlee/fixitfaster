@@ -1,6 +1,6 @@
 # Fix It Faster
 
-Datadog 트러블슈팅 챌린지와 리더보드 앱입니다. 참가자는 랩 환경에서 문제를 해결한 뒤 **결과(artifact)** 를 제출하고, **선택적으로 원인/해결 요약**을 작성해 점수를 받습니다. 동점일 때는 **총 소요 시간**으로 순위가 갈립니다.
+Datadog 트러블슈팅 챌린지와 리더보드 앱입니다. 참가자는 Codespace(랩)에서 문제를 해결한 뒤 **터미널에서 한 번에 제출**합니다. 동점일 때는 **총 소요 시간**으로 순위가 갈립니다.
 
 ---
 
@@ -12,25 +12,20 @@ Datadog 트러블슈팅 챌린지와 리더보드 앱입니다. 참가자는 랩
 - 챌린지 페이지(예: Vercel에 배포된 URL)에서 시나리오를 고르고 타이머를 시작한 뒤, 랩에서 원인을 찾고 수정합니다.
 - 랩 설정·상세 절차는 랩 문서를 참고하세요.
 
-### 2. 제출 전에: 결과(artifact) 전송
+### 2. 제출 (Codespace 권장: 터미널 한 번에)
 
-채점은 **Codespace/랩에서 보낸 결과만** 사용합니다. 제출 **전에** 터미널에서 아래처럼 한 번 실행하세요.
+**Codespace에서는 아래 한 줄이면** 아티팩트 전송 + 제출까지 끝납니다. 브라우저에서 제출할 필요 없습니다.
 
 ```bash
-curl -sL "https://raw.githubusercontent.com/victorjmlee/fixitfaster/main/lab-server/scripts/collect-and-send-artifacts.sh" -o /tmp/send-artifacts.sh
-FIXITFASTER_URL="https://여기에-배포된-앱-URL" CHALLENGE_ID="scenario-apm" bash /tmp/send-artifacts.sh
+curl -sL "https://raw.githubusercontent.com/victorjmlee/fixitfaster/main/lab-server/scripts/submit-from-codespace.sh" -o /tmp/submit.sh
+FIXITFASTER_URL="https://여기에-배포된-앱-URL" CHALLENGE_ID="scenario-infra" ELAPSED_SECONDS=300 bash /tmp/submit.sh
 ```
 
-- `FIXITFASTER_URL`: 이 앱이 배포된 URL (예: `https://dd-tse-fix-it-faster.vercel.app`)
-- `CHALLENGE_ID`: 지금 풀고 있는 챌린지 ID (예: `scenario-infra`, `scenario-apm`)
-- 참가자 이름은 최초 설정 시 `~/.fixitfaster-participant`에 저장해 두면 스크립트가 자동으로 사용합니다.
+- `CHALLENGE_ID`: 지금 푼 챌린지 (예: `scenario-infra`, `scenario-apm`)
+- `ELAPSED_SECONDS`: 걸린 초. 생략하면 스크립트가 물어봅니다.
+- 참가자 이름은 `~/.fixitfaster-participant`에서 자동으로 읽습니다.
 
-**중요:** 제출할 때 쓰는 **이름**이 artifact 전송 시 사용한 이름과 **완전히 같아야** 채점됩니다.
-
-### 3. 웹에서 제출
-
-- 챌린지 페이지에서 **같은 이름**을 선택/입력한 뒤 제출합니다.
-- **선택:** 「원인 요약」「해결 방법」을 작성하면 **솔루션 20점 만점**(AI 채점)을 받을 수 있습니다. 비우면 결과(artifact)만으로 채점됩니다.
+끝나면 리더보드 URL을 알려 주니, 브라우저에서 확인하면 됩니다.
 
 ---
 
@@ -60,7 +55,7 @@ FIXITFASTER_URL="https://여기에-배포된-앱-URL" CHALLENGE_ID="scenario-apm
 
 # Fix It Faster (English)
 
-Datadog troubleshooting challenges and leaderboard app. You solve issues in a lab environment, submit **results (artifacts)**, and optionally write a **cause/resolution summary** for extra points. Ties are broken by **total time** (faster wins).
+Datadog troubleshooting challenges and leaderboard app. You solve in the lab and **submit from the terminal in one step**. Ties are broken by **total time** (faster wins).
 
 ---
 
@@ -72,25 +67,21 @@ Datadog troubleshooting challenges and leaderboard app. You solve issues in a la
 - On the challenge page (e.g. the Vercel URL), pick a scenario, start the timer, then find and fix the issue in the lab.
 - See lab docs for setup and steps.
 
-### 2. Before submitting: Send your results (artifacts)
+### 2. Submit (Codespace: one command in terminal)
 
-Grading uses **only** the results sent from your Codespace/lab. **Before** you submit, run this once in the terminal:
+**In Codespace, one command** sends artifacts and submits. No need to open the browser to submit:
 
 ```bash
-curl -sL "https://raw.githubusercontent.com/victorjmlee/fixitfaster/main/lab-server/scripts/collect-and-send-artifacts.sh" -o /tmp/send-artifacts.sh
-FIXITFASTER_URL="https://your-deployed-app-url" CHALLENGE_ID="scenario-apm" bash /tmp/send-artifacts.sh
+curl -sL "https://raw.githubusercontent.com/victorjmlee/fixitfaster/main/lab-server/scripts/submit-from-codespace.sh" -o /tmp/submit.sh
+FIXITFASTER_URL="https://your-deployed-app-url" CHALLENGE_ID="scenario-infra" ELAPSED_SECONDS=300 bash /tmp/submit.sh
 ```
 
-- `FIXITFASTER_URL`: The URL where this app is deployed (e.g. `https://dd-tse-fix-it-faster.vercel.app`)
-- `CHALLENGE_ID`: The challenge you’re on (e.g. `scenario-infra`, `scenario-apm`)
-- Your participant name is read from `~/.fixitfaster-participant` if you set it during initial setup.
+- `CHALLENGE_ID`: The challenge you just did (e.g. `scenario-infra`, `scenario-apm`)
+- `ELAPSED_SECONDS`: Time taken in seconds. Omit to be prompted.
+- Your name is read from `~/.fixitfaster-participant`.
 
-**Important:** The **name** you use when submitting must **exactly match** the name used when sending artifacts.
+Then open the leaderboard URL to see your score.
 
-### 3. Submit on the web
-
-- On the challenge page, enter or select the **same name** and submit.
-- **Optional:** If you fill in “Cause summary” and “Resolution”, you can earn up to **20 solution points** (AI-graded). Leave them blank to be graded on results only.
 
 ---
 
