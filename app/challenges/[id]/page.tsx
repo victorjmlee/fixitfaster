@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useSearchParams } from "next/navigation";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { Suspense, useEffect, useState, useRef, useCallback } from "react";
 import { useLocale } from "@/app/LocaleContext";
 
 const FIXITFASTER_URL = "https://dd-tse-fix-it-faster.vercel.app";
@@ -143,7 +143,7 @@ function formatTime(seconds: number) {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-export default function ChallengePage() {
+function ChallengePageContent() {
   const { t, locale } = useLocale();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -298,5 +298,22 @@ export default function ChallengePage() {
         </div>
       )}
     </div>
+  );
+}
+
+function ChallengePageFallback() {
+  const { t } = useLocale();
+  return (
+    <div className="flex justify-center py-16">
+      <span className="text-zinc-500">{t("challenge.loading")}</span>
+    </div>
+  );
+}
+
+export default function ChallengePage() {
+  return (
+    <Suspense fallback={<ChallengePageFallback />}>
+      <ChallengePageContent />
+    </Suspense>
   );
 }

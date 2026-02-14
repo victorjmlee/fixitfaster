@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale } from "@/app/LocaleContext";
@@ -13,7 +13,7 @@ type ChallengeMeta = {
   products: string;
 };
 
-export default function ChallengesListPage() {
+function ChallengesListContent() {
   const { t, locale } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -174,5 +174,28 @@ export default function ChallengesListPage() {
         </a>
       </div>
     </div>
+  );
+}
+
+function ChallengesListFallback() {
+  const { t } = useLocale();
+  return (
+    <div className="space-y-8">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-2xl font-bold">{t("home.title")}</h1>
+        <p className="text-zinc-400 text-sm">{t("home.subtitle")}</p>
+      </div>
+      <div className="flex justify-center py-16">
+        <span className="text-zinc-500">{t("home.loading")}</span>
+      </div>
+    </div>
+  );
+}
+
+export default function ChallengesListPage() {
+  return (
+    <Suspense fallback={<ChallengesListFallback />}>
+      <ChallengesListContent />
+    </Suspense>
   );
 }
