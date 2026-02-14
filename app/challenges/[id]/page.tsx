@@ -7,18 +7,32 @@ import { useLocale } from "@/app/LocaleContext";
 const FIXITFASTER_URL = "https://dd-tse-fix-it-faster.vercel.app";
 const SUBMIT_SCRIPT_URL = "https://raw.githubusercontent.com/victorjmlee/fixitfaster/main/lab-server/scripts/submit-from-codespace.sh";
 
-/** 제출 명령 (Codespace 터미널에서만). ELAPSED_SECONDS 생략 시 스크립트가 물어봄. */
-function submitCommand(challengeId: string): string {
+/** 제출 명령. 맨 뒤에 걸린 초를 넣으면 입력 프롬프트 없이 실행됨. 예: ... bash /tmp/submit.sh 300 */
+function submitCommand(challengeId: string, elapsedSeconds?: number): string {
   const base = typeof window !== "undefined" ? window.location.origin : FIXITFASTER_URL;
-  return `curl -sL "${SUBMIT_SCRIPT_URL}" -o /tmp/submit.sh && FIXITFASTER_URL="${base}" CHALLENGE_ID="${challengeId}" bash /tmp/submit.sh`;
+  const baseCmd = `curl -sL "${SUBMIT_SCRIPT_URL}" -o /tmp/submit.sh && FIXITFASTER_URL="${base}" CHALLENGE_ID="${challengeId}" bash /tmp/submit.sh`;
+  if (elapsedSeconds != null && elapsedSeconds >= 0) return `${baseCmd} ${elapsedSeconds}`;
+  return baseCmd;
 }
 
-function SubmitCommandBlock({ challengeId, locale }: { challengeId: string; locale: string }) {
+function SubmitCommandBlock({
+  challengeId,
+  locale,
+  elapsedSeconds,
+  onCopyClick,
+}: {
+  challengeId: string;
+  locale: string;
+  elapsedSeconds: number;
+  onCopyClick: () => void;
+}) {
   const [copied, setCopied] = useState(false);
   const preRef = useRef<HTMLPreElement>(null);
-  const cmd = submitCommand(challengeId);
+  const baseCmd = submitCommand(challengeId);
 
   const copy = useCallback(() => {
+    onCopyClick();
+    const cmdWithTime = submitCommand(challengeId, elapsedSeconds);
     const doCopy = (text: string) => {
       const ta = document.createElement("textarea");
       ta.value = text;
@@ -35,17 +49,17 @@ function SubmitCommandBlock({ challengeId, locale }: { challengeId: string; loca
       }
     };
     if (navigator.clipboard?.writeText) {
-      navigator.clipboard.writeText(cmd).then(
+      navigator.clipboard.writeText(cmdWithTime).then(
         () => {
           setCopied(true);
           setTimeout(() => setCopied(false), 2000);
         },
-        () => doCopy(cmd)
+        () => doCopy(cmdWithTime)
       );
     } else {
-      doCopy(cmd);
+      doCopy(cmdWithTime);
     }
-  }, [cmd]);
+  }, [challengeId, elapsedSeconds, onCopyClick]);
 
   const selectAll = useCallback(() => {
     if (preRef.current) {
@@ -74,7 +88,7 @@ function SubmitCommandBlock({ challengeId, locale }: { challengeId: string; loca
           className="flex-1 p-3 rounded bg-black/30 border border-[var(--border)] text-xs overflow-x-auto text-white font-mono whitespace-pre-wrap break-all cursor-text select-text"
           aria-label={locale === "ko" ? "클릭하면 전체 선택, Cmd+C로 복사" : "Click to select all, then Cmd+C to copy"}
         >
-          <code>{cmd}</code>
+          <code>{baseCmd}</code>
         </pre>
         <button
           type="button"
@@ -118,6 +132,7 @@ export default function ChallengePage() {
   const [loading, setLoading] = useState(true);
   const [elapsed, setElapsed] = useState(0);
   const [started, setStarted] = useState(false);
+  const [timerStopped, setTimerStopped] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const tick = useCallback(() => setElapsed((s) => s + 1), []);
@@ -130,15 +145,23 @@ export default function ChallengePage() {
   }, [id, locale]);
 
   useEffect(() => {
-    if (started) {
+    if (started && !timerStopped) {
       intervalRef.current = setInterval(tick, 1000);
       return () => {
         if (intervalRef.current) clearInterval(intervalRef.current);
       };
     }
-  }, [started, tick]);
+  }, [started, timerStopped, tick]);
 
   const handleStart = () => setStarted(true);
+
+  const stopTimerOnCopy = useCallback(() => {
+    setTimerStopped(true);
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
 
   if (loading || !challenge) {
     return (
@@ -173,7 +196,9 @@ export default function ChallengePage() {
       ) : (
         <div className="sticky top-2 z-10 flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--card)] px-4 py-3">
           <span className="font-mono text-lg text-[var(--accent)]">{formatTime(elapsed)}</span>
-          <span className="text-sm text-zinc-500">{t("challenge.elapsed")}</span>
+          <span className="text-sm text-zinc-500">
+            {timerStopped ? (locale === "ko" ? "기록된 시간" : "Recorded time") : t("challenge.elapsed")}
+          </span>
         </div>
       )}
 
@@ -207,9 +232,16 @@ export default function ChallengePage() {
             </div>
           ) : null}
           <p className="text-sm text-zinc-400">
-            {locale === "ko" ? "걸린 시간(초)은 스크립트 실행 시 물어봅니다. 입력하거나 명령에 ELAPSED_SECONDS=300 형태로 넣으세요." : "Elapsed seconds: script will prompt, or add ELAPSED_SECONDS=300 to the command."}
+            {locale === "ko"
+              ? "복사 버튼을 누르면 타이머가 멈추고, 그 시점의 시간(초)이 명령 맨 뒤에 자동으로 들어갑니다. 터미널에 붙여넣기만 하면 됩니다."
+              : "Click Copy to stop the timer and copy the command with that time (seconds) at the end. Just paste in the terminal."}
           </p>
-          <SubmitCommandBlock challengeId={id} locale={locale} />
+          <SubmitCommandBlock
+            challengeId={id}
+            locale={locale}
+            elapsedSeconds={elapsed}
+            onCopyClick={stopTimerOnCopy}
+          />
           <p className="text-sm text-zinc-500">
             {locale === "ko" ? "실행이 끝나면 리더보드에서 점수를 확인하세요." : "When done, check your score on the leaderboard."}
             {" "}

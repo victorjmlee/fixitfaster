@@ -8,7 +8,8 @@
     "build": "npx next build",
     "start": "node scripts/start-server.js",
     "lint": "npx next lint",
-    "deploy": "./scripts/deploy-eb.sh"
+    "deploy": "./scripts/deploy-eb.sh",
+    "push": "git push origin main"
   },
   "dependencies": {
     "@vercel/kv": "^3.0.0",

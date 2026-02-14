@@ -18,11 +18,11 @@ Datadog 트러블슈팅 챌린지와 리더보드 앱입니다. 참가자는 Cod
 
 ```bash
 curl -sL "https://raw.githubusercontent.com/victorjmlee/fixitfaster/main/lab-server/scripts/submit-from-codespace.sh" -o /tmp/submit.sh
-FIXITFASTER_URL="https://여기에-배포된-앱-URL" CHALLENGE_ID="scenario-infra" ELAPSED_SECONDS=300 bash /tmp/submit.sh
+FIXITFASTER_URL="https://여기에-배포된-앱-URL" CHALLENGE_ID="scenario-infra" bash /tmp/submit.sh 300
 ```
 
 - `CHALLENGE_ID`: 지금 푼 챌린지 (예: `scenario-infra`, `scenario-apm`)
-- `ELAPSED_SECONDS`: 걸린 초. 생략하면 스크립트가 물어봅니다.
+- 맨 뒤 `300`: 걸린 초. 넣으면 물어보지 않음. 생략하면 스크립트가 "Elapsed seconds"를 물어봅니다.
 - 참가자 이름은 `~/.fixitfaster-participant`에서 자동으로 읽습니다.
 
 끝나면 리더보드 URL을 알려 주니, 브라우저에서 확인하면 됩니다.
@@ -73,11 +73,11 @@ Datadog troubleshooting challenges and leaderboard app. You solve in the lab and
 
 ```bash
 curl -sL "https://raw.githubusercontent.com/victorjmlee/fixitfaster/main/lab-server/scripts/submit-from-codespace.sh" -o /tmp/submit.sh
-FIXITFASTER_URL="https://your-deployed-app-url" CHALLENGE_ID="scenario-infra" ELAPSED_SECONDS=300 bash /tmp/submit.sh
+FIXITFASTER_URL="https://your-deployed-app-url" CHALLENGE_ID="scenario-infra" bash /tmp/submit.sh 300
 ```
 
 - `CHALLENGE_ID`: The challenge you just did (e.g. `scenario-infra`, `scenario-apm`)
-- `ELAPSED_SECONDS`: Time taken in seconds. Omit to be prompted.
+- The trailing `300`: elapsed seconds. Include it to skip the prompt; omit to be asked.
 - Your name is read from `~/.fixitfaster-participant`.
 
 Then open the leaderboard URL to see your score.

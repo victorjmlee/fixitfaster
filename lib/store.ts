@@ -131,12 +131,13 @@ export function getLeaderboardAggregated(): LeaderboardRow[] {
       lastAt: s.submittedAt,
       scores: {},
     };
-    const score = s.score ?? 0;
+    const nextScores = { ...cur.scores };
+    if (s.score != null) nextScores[s.challengeId] = s.score;
     byName.set(key, {
       totalTime: cur.totalTime + s.elapsedSeconds,
       count: cur.count + 1,
       lastAt: s.submittedAt > cur.lastAt ? s.submittedAt : cur.lastAt,
-      scores: { ...cur.scores, [s.challengeId]: score },
+      scores: nextScores,
     });
   }
   return Array.from(byName.entries())

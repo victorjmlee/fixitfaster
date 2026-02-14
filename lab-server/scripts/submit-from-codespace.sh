@@ -2,32 +2,35 @@
 # Codespace에서 "아티팩트 전송 + 제출" 한 번에. 브라우저에서 제출할 필요 없음.
 #
 # 사용법:
-#   FIXITFASTER_URL="https://your-app.vercel.app" CHALLENGE_ID="scenario-infra" ELAPSED_SECONDS=300 bash submit-from-codespace.sh
-# ELAPSED_SECONDS 생략 시 물어봄. PARTICIPANT_NAME은 ~/.fixitfaster-participant 사용.
+#   FIXITFASTER_URL="..." CHALLENGE_ID="scenario-infra" bash /tmp/submit.sh
+#   또는 경과 초를 맨 뒤에: bash /tmp/submit.sh 300  → 물어보지 않음
+# ELAPSED_SECONDS env 또는 첫 번째 인자. 없으면 물어봄.
 
 set -e
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COLLECT_SCRIPT="${SCRIPT_DIR}/collect-and-send-artifacts.sh"
+COLLECT_URL="https://raw.githubusercontent.com/victorjmlee/fixitfaster/main/lab-server/scripts/collect-and-send-artifacts.sh"
 
 if [ -z "$PARTICIPANT_NAME" ] && [ -f "$HOME/.fixitfaster-participant" ]; then
   PARTICIPANT_NAME=$(head -1 "$HOME/.fixitfaster-participant" | tr -d '\n\r')
 fi
 if [ -z "$FIXITFASTER_URL" ] || [ -z "$CHALLENGE_ID" ] || [ -z "$PARTICIPANT_NAME" ]; then
-  echo "Usage: FIXITFASTER_URL=... CHALLENGE_ID=... [PARTICIPANT_NAME=...] [ELAPSED_SECONDS=...] $0"
-  echo "  PARTICIPANT_NAME: env or ~/.fixitfaster-participant"
-  echo "  ELAPSED_SECONDS: optional, will prompt if not set"
+  echo "Usage: FIXITFASTER_URL=... CHALLENGE_ID=... [PARTICIPANT_NAME=...] $0 [ELAPSED_SECONDS]"
+  echo "  Example: FIXITFASTER_URL=... CHALLENGE_ID=scenario-infra bash /tmp/submit.sh 300"
   exit 1
 fi
 
-if [ -z "$ELAPSED_SECONDS" ]; then
+# 경과 초: 첫 번째 인자 → 물어보지 않음. 없으면 프롬프트.
+if [ -n "$1" ]; then
+  ELAPSED_SECONDS="$1"
+elif [ -z "$ELAPSED_SECONDS" ]; then
   read -p "Elapsed seconds (Enter=0): " ELAPSED_SECONDS
   ELAPSED_SECONDS=${ELAPSED_SECONDS:-0}
 fi
 ELAPSED_SECONDS=$(printf '%d' "$ELAPSED_SECONDS" 2>/dev/null || echo "0")
 
-# 1) 아티팩트 전송
+# 1) 아티팩트 스크립트 받아서 실행
 echo "Sending artifacts..."
-FIXITFASTER_URL="$FIXITFASTER_URL" CHALLENGE_ID="$CHALLENGE_ID" PARTICIPANT_NAME="$PARTICIPANT_NAME" bash "$COLLECT_SCRIPT" || exit 1
+curl -sL "$COLLECT_URL" -o /tmp/collect-and-send-artifacts.sh
+bash /tmp/collect-and-send-artifacts.sh || exit 1
 
 # 2) 제출
 BASE_URL="${FIXITFASTER_URL%/}"
