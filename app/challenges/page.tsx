@@ -28,6 +28,17 @@ function ChallengesListContent() {
     setNameInput(participantNameFromUrl);
   }, [participantNameFromUrl]);
 
+  // URL에 이름 없는데 sessionStorage에 있으면 복원 (리더보드→챌린지 돌아올 때 제출함 유지)
+  useEffect(() => {
+    if (participantNameFromUrl) return;
+    try {
+      const name = sessionStorage.getItem("fixitfaster-participant-name")?.trim();
+      if (name) router.replace(`/challenges?participantName=${encodeURIComponent(name)}`);
+    } catch {
+      /* ignore */
+    }
+  }, [participantNameFromUrl, router]);
+
   useEffect(() => {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 15000);

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useLocale } from "./LocaleContext";
 
@@ -50,9 +50,29 @@ function HeaderContent({ challengesHref }: { challengesHref: string }) {
   );
 }
 
+const PARTICIPANT_NAME_SESSION_KEY = "fixitfaster-participant-name";
+
 function HeaderWithSearchParams() {
   const searchParams = useSearchParams();
-  const participantName = searchParams.get("participantName")?.trim();
+  const fromUrl = searchParams.get("participantName")?.trim();
+  const [sessionName, setSessionName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (fromUrl) {
+      try {
+        sessionStorage.setItem(PARTICIPANT_NAME_SESSION_KEY, fromUrl);
+      } catch {
+        /* ignore */
+      }
+    }
+    try {
+      setSessionName(sessionStorage.getItem(PARTICIPANT_NAME_SESSION_KEY)?.trim() || null);
+    } catch {
+      setSessionName(null);
+    }
+  }, [fromUrl]);
+
+  const participantName = fromUrl || sessionName;
   const challengesHref = participantName
     ? `/challenges?participantName=${encodeURIComponent(participantName)}`
     : "/challenges";
