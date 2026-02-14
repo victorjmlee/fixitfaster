@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useLocale } from "@/app/LocaleContext";
 
@@ -114,6 +114,7 @@ export default function ChallengePage() {
   const { t, locale } = useLocale();
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const id = params.id as string;
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [loading, setLoading] = useState(true);
@@ -139,12 +140,18 @@ export default function ChallengePage() {
 
   useEffect(() => {
     try {
-      const name = typeof window !== "undefined" ? localStorage.getItem(PARTICIPANT_NAME_KEY) ?? "" : "";
-      setSavedName(name);
+      const fromUrl = typeof window !== "undefined" ? searchParams.get("participantName")?.trim() : "";
+      if (fromUrl) {
+        setSavedName(fromUrl);
+        localStorage.setItem(PARTICIPANT_NAME_KEY, fromUrl);
+      } else {
+        const name = typeof window !== "undefined" ? localStorage.getItem(PARTICIPANT_NAME_KEY) ?? "" : "";
+        setSavedName(name);
+      }
     } catch {
       setSavedName("");
     }
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     if (started) {

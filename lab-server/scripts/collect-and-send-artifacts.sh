@@ -67,7 +67,12 @@ HTTP_CODE=$(curl -s -w "%{http_code}" -o /tmp/artifacts-response -X POST \
   -d "$PAYLOAD")
 
 if [ "$HTTP_CODE" = "200" ]; then
-  echo "Artifacts sent. Submit your answer on the challenge page with the same participant name: $PARTICIPANT_NAME"
+  ENCODED_NAME=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1]))" "$PARTICIPANT_NAME" 2>/dev/null)
+  [ -n "$ENCODED_NAME" ] || ENCODED_NAME=$(node -e "console.log(encodeURIComponent(process.argv[1]))" "$PARTICIPANT_NAME" 2>/dev/null)
+  [ -n "$ENCODED_NAME" ] || ENCODED_NAME=$(printf '%s' "$PARTICIPANT_NAME" | sed 's/ /%20/g')
+  SUBMIT_URL="${FIXITFASTER_URL%/}/challenges/${CHALLENGE_ID}?participantName=${ENCODED_NAME}"
+  echo "Artifacts sent. Submit with the same name: $PARTICIPANT_NAME"
+  echo "Open this link so the form shows your name: $SUBMIT_URL"
 else
   echo "Failed to send artifacts (HTTP $HTTP_CODE). Check FIXITFASTER_URL and network."
   cat /tmp/artifacts-response 2>/dev/null || true
