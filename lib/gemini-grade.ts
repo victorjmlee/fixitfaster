@@ -195,6 +195,12 @@ async function callGemini(
 /** 아티팩트가 실제 제출처럼 보이는지 (너무 짧으면 curl만 날린 걸로 간주) */
 const MIN_ARTIFACT_LENGTH = 300;
 
+/** Word-boundary match: escapes regex special chars, then wraps with \b */
+function wordMatch(text: string, pattern: string): boolean {
+  const escaped = pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`\\b${escaped}\\b`, "i").test(text);
+}
+
 /**
  * artifacts만 있을 때 정답지(artifactCheck)로 채점. 조건 하나라도 만족하면 점수 부여 (Gemini 호출 안 함).
  * 패턴 미충족 또는 아티팩트가 너무 짧으면 null → 상위에서 0점 처리.
@@ -213,10 +219,9 @@ function gradeFromArtifactPatterns(
   const check = ref?.artifactCheck;
   if (!check?.length) return null;
 
-  const a = trimmed.toLowerCase();
   for (const condition of check) {
     if (condition.length === 0) continue;
-    const allPresent = condition.every((s) => a.includes(s.toLowerCase()));
+    const allPresent = condition.every((s) => wordMatch(trimmed, s));
     if (allPresent) {
       const score = ref.artifactScore ?? 75;
       console.log("[grade] Artifact check pass challengeId=%s condition=%s score=%d", challengeId, condition.join(","), score);
