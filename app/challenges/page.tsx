@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale } from "@/app/LocaleContext";
-
-const PARTICIPANT_NAME_KEY = "fixitfaster-participant-name";
 
 type ChallengeMeta = {
   id: string;
@@ -15,11 +14,19 @@ type ChallengeMeta = {
 };
 
 export default function ChallengesListPage() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const participantNameFromUrl = searchParams.get("participantName")?.trim() ?? "";
   const [challenges, setChallenges] = useState<ChallengeMeta[]>([]);
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [nameInput, setNameInput] = useState(participantNameFromUrl);
+
+  useEffect(() => {
+    setNameInput(participantNameFromUrl);
+  }, [participantNameFromUrl]);
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -37,21 +44,18 @@ export default function ChallengesListPage() {
       });
   }, []);
 
+  // 제출함 표시: URL의 participantName만 사용 (localStorage 사용 안 함 → 공용 브라우저에서 이름 섞임 방지)
   useEffect(() => {
-    try {
-      const name = typeof window !== "undefined" ? localStorage.getItem(PARTICIPANT_NAME_KEY) : null;
-      if (!name) {
-        setCompletedIds(new Set());
-        return;
-      }
-      fetch(`/api/my-submissions?participantName=${encodeURIComponent(name)}`)
-        .then((r) => r.json())
-        .then((data) => setCompletedIds(new Set(Array.isArray(data.challengeIds) ? data.challengeIds : [])))
-        .catch(() => setCompletedIds(new Set()));
-    } catch {
+    const name = participantNameFromUrl;
+    if (!name) {
       setCompletedIds(new Set());
+      return;
     }
-  }, []);
+    fetch(`/api/my-submissions?participantName=${encodeURIComponent(name)}`)
+      .then((r) => r.json())
+      .then((data) => setCompletedIds(new Set(Array.isArray(data.challengeIds) ? data.challengeIds : [])))
+      .catch(() => setCompletedIds(new Set()));
+  }, [participantNameFromUrl]);
 
   if (loading && !error) {
     return (
@@ -70,11 +74,46 @@ export default function ChallengesListPage() {
     );
   }
 
+  const applyName = () => {
+    const name = nameInput.trim();
+    if (name) router.push(`/challenges?participantName=${encodeURIComponent(name)}`);
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold">{t("home.title")}</h1>
         <p className="text-zinc-400 text-sm">{t("home.subtitle")}</p>
+      </div>
+
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4">
+        <p className="text-sm text-zinc-300 mb-2">
+          {locale === "ko"
+            ? "공용 환경에서는 내 이름을 입력한 뒤 이동하세요. 제출함 표시와 제출 시 사용할 이름이 이 값으로 고정됩니다."
+            : "On shared devices, enter your name then go. This fixes whose submissions and name are used."}
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="text"
+            value={nameInput}
+            onChange={(e) => setNameInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && applyName()}
+            placeholder={locale === "ko" ? "내 이름 (예: Aaron)" : "Your name (e.g. Aaron)"}
+            className="rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-white placeholder:text-zinc-500 w-48"
+          />
+          <button
+            type="button"
+            onClick={applyName}
+            className="rounded border border-[var(--accent)] bg-[var(--accent)]/20 px-3 py-2 text-sm text-[var(--accent)] hover:bg-[var(--accent)]/30"
+          >
+            {locale === "ko" ? "이름으로 이동" : "Go with this name"}
+          </button>
+        </div>
+        {participantNameFromUrl && (
+          <p className="mt-2 text-xs text-[var(--accent)]">
+            {locale === "ko" ? `현재: ${participantNameFromUrl} (제출함·제출 이름 모두 이 이름 기준)` : `Current: ${participantNameFromUrl}`}
+          </p>
+        )}
       </div>
 
       {challenges.length === 0 ? (
@@ -88,7 +127,7 @@ export default function ChallengesListPage() {
             return (
               <li key={c.id}>
                 <Link
-                  href={`/challenges/${c.id}`}
+                  href={participantNameFromUrl ? `/challenges/${c.id}?participantName=${encodeURIComponent(participantNameFromUrl)}` : `/challenges/${c.id}`}
                   className="block rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 transition hover:border-[var(--accent-dim)] hover:bg-[var(--card)]/90"
                 >
                   <div className="flex items-start justify-between gap-4">

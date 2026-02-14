@@ -6,7 +6,6 @@ import { useLocale } from "@/app/LocaleContext";
 
 const FIXITFASTER_URL = "https://dd-tse-fix-it-faster.vercel.app";
 const SUBMIT_SCRIPT_URL = "https://raw.githubusercontent.com/victorjmlee/fixitfaster/main/lab-server/scripts/submit-from-codespace.sh";
-const PARTICIPANT_NAME_KEY = "fixitfaster-participant-name";
 
 /** 셸에서 안전하게 쓰기 위해 이름 이스케이프 (쌍따옴표 안) */
 function shellEscapeName(name: string): string {
@@ -154,39 +153,15 @@ export default function ChallengePage() {
   const [elapsed, setElapsed] = useState(0);
   const [started, setStarted] = useState(false);
   const [timerStopped, setTimerStopped] = useState(false);
-  const [participantName, setParticipantName] = useState<string | null>(null);
+  // 참가자 이름: URL에서만 사용 (localStorage 사용 안 함 → 공용 브라우저에서 Aaron/이종민 섞임 방지)
+  const participantNameFromUrl = searchParams.get("participantName")?.trim() ?? null;
+  const [participantNameLocal, setParticipantNameLocal] = useState(participantNameFromUrl ?? "");
+  const participantName = participantNameFromUrl ?? (participantNameLocal.trim() || null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // URL ?participantName= 또는 localStorage에서 참가자 이름 (복사 명령에 넣어서 공용 Codespace에서 이름 섞임 방지)
   useEffect(() => {
-    const fromUrl = searchParams.get("participantName")?.trim();
-    if (fromUrl) {
-      setParticipantName(fromUrl);
-      try {
-        localStorage.setItem(PARTICIPANT_NAME_KEY, fromUrl);
-      } catch {
-        /* ignore */
-      }
-      return;
-    }
-    try {
-      const fromStorage = localStorage.getItem(PARTICIPANT_NAME_KEY)?.trim();
-      setParticipantName(fromStorage || null);
-    } catch {
-      setParticipantName(null);
-    }
-  }, [searchParams]);
-
-  const setParticipantNameAndSave = useCallback((name: string | null) => {
-    const v = name?.trim() || null;
-    setParticipantName(v);
-    try {
-      if (v) localStorage.setItem(PARTICIPANT_NAME_KEY, v);
-      else localStorage.removeItem(PARTICIPANT_NAME_KEY);
-    } catch {
-      /* ignore */
-    }
-  }, []);
+    setParticipantNameLocal(participantNameFromUrl ?? "");
+  }, [participantNameFromUrl]);
 
   const tick = useCallback(() => setElapsed((s) => s + 1), []);
 
@@ -284,19 +259,25 @@ export default function ChallengePage() {
               {challenge.scoreGuide}
             </div>
           ) : null}
-          <div className="flex flex-wrap items-center gap-2">
-            <label className="text-sm text-zinc-400">
-              {locale === "ko" ? "제출할 때 사용할 이름 (공용 Codespace에서 꼭 설정):" : "Your name for submission (set this on shared Codespace):"}
-            </label>
-            <input
-              type="text"
-              value={participantName ?? ""}
-              onChange={(e) => setParticipantNameAndSave(e.target.value || null)}
-              onBlur={(e) => setParticipantNameAndSave(e.target.value || null)}
-              placeholder={locale === "ko" ? "예: Aaron" : "e.g. Aaron"}
-              className="rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-1.5 text-sm text-white placeholder:text-zinc-500 w-40"
-            />
-          </div>
+          {!participantNameFromUrl && (
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="text-sm text-zinc-400">
+                {locale === "ko" ? "제출할 때 사용할 이름 (URL에 없으면 여기 입력, 복사 명령에 포함됨):" : "Your name for submission (included in copy command if not in URL):"}
+              </label>
+              <input
+                type="text"
+                value={participantNameLocal}
+                onChange={(e) => setParticipantNameLocal(e.target.value)}
+                placeholder={locale === "ko" ? "예: Aaron" : "e.g. Aaron"}
+                className="rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-1.5 text-sm text-white placeholder:text-zinc-500 w-40"
+              />
+            </div>
+          )}
+          {participantNameFromUrl && (
+            <p className="text-sm text-[var(--accent)]">
+              {locale === "ko" ? `제출 이름: ${participantNameFromUrl} (URL 기준, 복사 명령에 포함됨)` : `Submitting as: ${participantNameFromUrl}`}
+            </p>
+          )}
           <p className="text-sm text-zinc-400">
             {locale === "ko"
               ? "복사 버튼을 누르면 타이머가 멈추고, 그 시점의 시간(초)이 명령 맨 뒤에 자동으로 들어갑니다. 터미널에 붙여넣기만 하면 됩니다."

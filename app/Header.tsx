@@ -1,10 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useLocale } from "./LocaleContext";
 
 export default function Header() {
   const { locale, setLocale, t } = useLocale();
+  const searchParams = useSearchParams();
+  const participantName = searchParams.get("participantName")?.trim();
+  const challengesHref = participantName
+    ? `/challenges?participantName=${encodeURIComponent(participantName)}`
+    : "/challenges";
 
   return (
     <header className="border-b border-[var(--border)] bg-[var(--card)]/80 backdrop-blur">
@@ -17,7 +23,7 @@ export default function Header() {
             <Link href="/" className="hover:text-white">
               {t("nav.start")}
             </Link>
-            <Link href="/challenges" className="hover:text-white">
+            <Link href={challengesHref} className="hover:text-white">
               {t("nav.challenges")}
             </Link>
             <Link href="/leaderboard" className="hover:text-white">
