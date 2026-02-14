@@ -1,16 +1,30 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useLocale } from "@/app/LocaleContext";
 
 const FIXITFASTER_URL = "https://dd-tse-fix-it-faster.vercel.app";
 const SUBMIT_SCRIPT_URL = "https://raw.githubusercontent.com/victorjmlee/fixitfaster/main/lab-server/scripts/submit-from-codespace.sh";
+const PARTICIPANT_NAME_KEY = "fixitfaster-participant-name";
 
-/** 제출 명령. 맨 뒤에 걸린 초를 넣으면 입력 프롬프트 없이 실행됨. 예: ... bash /tmp/submit.sh 300 */
-function submitCommand(challengeId: string, elapsedSeconds?: number): string {
+/** 셸에서 안전하게 쓰기 위해 이름 이스케이프 (쌍따옴표 안) */
+function shellEscapeName(name: string): string {
+  return name.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+
+/** 제출 명령. participantName 있으면 PARTICIPANT_NAME= 넣어서 ~/.fixitfaster-participant 덮어씀(공용 Codespace에서 이름 섞임 방지). */
+function submitCommand(
+  challengeId: string,
+  elapsedSeconds?: number,
+  participantName?: string | null
+): string {
   const base = typeof window !== "undefined" ? window.location.origin : FIXITFASTER_URL;
-  const baseCmd = `curl -sL "${SUBMIT_SCRIPT_URL}" -o /tmp/submit.sh && FIXITFASTER_URL="${base}" CHALLENGE_ID="${challengeId}" bash /tmp/submit.sh`;
+  const namePart =
+    participantName?.trim()
+      ? ` PARTICIPANT_NAME="${shellEscapeName(participantName.trim())}"`
+      : "";
+  const baseCmd = `curl -sL "${SUBMIT_SCRIPT_URL}" -o /tmp/submit.sh && FIXITFASTER_URL="${base}" CHALLENGE_ID="${challengeId}"${namePart} bash /tmp/submit.sh`;
   if (elapsedSeconds != null && elapsedSeconds >= 0) return `${baseCmd} ${elapsedSeconds}`;
   return baseCmd;
 }
@@ -19,20 +33,22 @@ function SubmitCommandBlock({
   challengeId,
   locale,
   elapsedSeconds,
+  participantName,
   onCopyClick,
 }: {
   challengeId: string;
   locale: string;
   elapsedSeconds: number;
+  participantName: string | null;
   onCopyClick: () => void;
 }) {
   const [copied, setCopied] = useState(false);
   const preRef = useRef<HTMLPreElement>(null);
-  const baseCmd = submitCommand(challengeId);
+  const baseCmd = submitCommand(challengeId, undefined, participantName);
 
   const copy = useCallback(() => {
     onCopyClick();
-    const cmdWithTime = submitCommand(challengeId, elapsedSeconds);
+    const cmdWithTime = submitCommand(challengeId, elapsedSeconds, participantName);
     const doCopy = (text: string) => {
       const ta = document.createElement("textarea");
       ta.value = text;
@@ -59,7 +75,7 @@ function SubmitCommandBlock({
     } else {
       doCopy(cmdWithTime);
     }
-  }, [challengeId, elapsedSeconds, onCopyClick]);
+  }, [challengeId, elapsedSeconds, participantName, onCopyClick]);
 
   const selectAll = useCallback(() => {
     if (preRef.current) {
@@ -74,9 +90,13 @@ function SubmitCommandBlock({
   return (
     <div className="rounded-lg border border-[var(--border)] bg-[var(--bg)] p-3 space-y-2">
       <p className="text-xs text-white">
-        {locale === "ko"
-          ? "제출은 Codespace 터미널에서만 가능합니다. 아래 명령을 실행하면 아티팩트 전송 + 제출이 한 번에 됩니다. 이름은 ~/.fixitfaster-participant 에서 자동 사용."
-          : "Submit only from the Codespace terminal. Run the command below to send artifacts and submit in one step. Name is read from ~/.fixitfaster-participant."}
+        {participantName?.trim()
+          ? (locale === "ko"
+              ? `제출 시 이름이 \"${participantName.trim()}\"로 고정됩니다 (공용 환경에서 다른 사람 이름으로 섞이는 것 방지).`
+              : `Submissions will use the name \"${participantName.trim()}\" (avoids mix-up on shared Codespace).`)
+          : locale === "ko"
+            ? "제출은 Codespace 터미널에서만 가능합니다. 아래 명령을 실행하면 아티팩트 전송 + 제출이 한 번에 됩니다. 이름은 ~/.fixitfaster-participant 에서 자동 사용. 같은 환경을 쓰면 URL에 ?participantName=내이름 을 넣어 주세요."
+            : "Submit only from the Codespace terminal. Name is read from ~/.fixitfaster-participant. On shared env, open this page with ?participantName=YourName in the URL."}
       </p>
       <div className="flex items-center gap-2">
         <pre
@@ -127,13 +147,46 @@ function formatTime(seconds: number) {
 export default function ChallengePage() {
   const { t, locale } = useLocale();
   const params = useParams();
+  const searchParams = useSearchParams();
   const id = params.id as string;
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [loading, setLoading] = useState(true);
   const [elapsed, setElapsed] = useState(0);
   const [started, setStarted] = useState(false);
   const [timerStopped, setTimerStopped] = useState(false);
+  const [participantName, setParticipantName] = useState<string | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // URL ?participantName= 또는 localStorage에서 참가자 이름 (복사 명령에 넣어서 공용 Codespace에서 이름 섞임 방지)
+  useEffect(() => {
+    const fromUrl = searchParams.get("participantName")?.trim();
+    if (fromUrl) {
+      setParticipantName(fromUrl);
+      try {
+        localStorage.setItem(PARTICIPANT_NAME_KEY, fromUrl);
+      } catch {
+        /* ignore */
+      }
+      return;
+    }
+    try {
+      const fromStorage = localStorage.getItem(PARTICIPANT_NAME_KEY)?.trim();
+      setParticipantName(fromStorage || null);
+    } catch {
+      setParticipantName(null);
+    }
+  }, [searchParams]);
+
+  const setParticipantNameAndSave = useCallback((name: string | null) => {
+    const v = name?.trim() || null;
+    setParticipantName(v);
+    try {
+      if (v) localStorage.setItem(PARTICIPANT_NAME_KEY, v);
+      else localStorage.removeItem(PARTICIPANT_NAME_KEY);
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   const tick = useCallback(() => setElapsed((s) => s + 1), []);
 
@@ -231,6 +284,19 @@ export default function ChallengePage() {
               {challenge.scoreGuide}
             </div>
           ) : null}
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="text-sm text-zinc-400">
+              {locale === "ko" ? "제출할 때 사용할 이름 (공용 Codespace에서 꼭 설정):" : "Your name for submission (set this on shared Codespace):"}
+            </label>
+            <input
+              type="text"
+              value={participantName ?? ""}
+              onChange={(e) => setParticipantNameAndSave(e.target.value || null)}
+              onBlur={(e) => setParticipantNameAndSave(e.target.value || null)}
+              placeholder={locale === "ko" ? "예: Aaron" : "e.g. Aaron"}
+              className="rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-1.5 text-sm text-white placeholder:text-zinc-500 w-40"
+            />
+          </div>
           <p className="text-sm text-zinc-400">
             {locale === "ko"
               ? "복사 버튼을 누르면 타이머가 멈추고, 그 시점의 시간(초)이 명령 맨 뒤에 자동으로 들어갑니다. 터미널에 붙여넣기만 하면 됩니다."
@@ -240,6 +306,7 @@ export default function ChallengePage() {
             challengeId={id}
             locale={locale}
             elapsedSeconds={elapsed}
+            participantName={participantName}
             onCopyClick={stopTimerOnCopy}
           />
           <p className="text-sm text-zinc-500">
