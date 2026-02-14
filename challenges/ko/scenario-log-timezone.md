@@ -40,11 +40,3 @@ log-demo 로그가 예전에는 Datadog에 정상적으로 보였는데, 어느 
 
 log-demo 컨테이너 로그 확인:
 docker logs -f fixitfaster-log-demo
-
-log-demo 재빌드 및 재시작:
-cd ~/fixitfaster-agent
-docker compose --env-file .env.local build log-demo && docker compose --env-file .env.local up -d log-demo
-
-Agent 재시작:
-cd ~/fixitfaster-agent
-npm run agent:restart

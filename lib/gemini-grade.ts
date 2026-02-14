@@ -134,43 +134,52 @@ async function callGemini(
   }
 }
 
-/** 아티팩트가 실제 제출처럼 보이는지 (너무 짧으면 curl만 날린 걸로 간주) */
-const MIN_ARTIFACT_LENGTH = 300;
-
 /** Word-boundary match: escapes regex special chars, then wraps with \b */
 function wordMatch(text: string, pattern: string): boolean {
   const escaped = pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return new RegExp(`\\b${escaped}\\b`, "i").test(text);
 }
 
+/** Extract the git diff section from the artifact blob. */
+function extractDiffSection(artifacts: string): string {
+  const diffStart = artifacts.indexOf("=== git diff");
+  if (diffStart < 0) return "";
+  const afterHeader = artifacts.indexOf("\n", diffStart);
+  if (afterHeader < 0) return "";
+  const nextSection = artifacts.indexOf("\n===", afterHeader);
+  return nextSection < 0
+    ? artifacts.slice(afterHeader)
+    : artifacts.slice(afterHeader, nextSection);
+}
+
 /**
  * artifacts만 있을 때 정답지(artifactCheck)로 채점. 조건 하나라도 만족하면 점수 부여 (Gemini 호출 안 함).
- * 패턴 미충족 또는 아티팩트가 너무 짧으면 null → 상위에서 0점 처리.
+ * git diff 섹션만 검사하여 변경 없는 제출로 점수 받는 것 방지.
  */
 function gradeFromArtifactPatterns(
   challengeId: string,
   artifacts: string,
   ref: { artifactCheck?: string[][]; artifactScore?: number }
 ): number | null {
-  const trimmed = artifacts?.trim() ?? "";
-  if (trimmed.length < MIN_ARTIFACT_LENGTH) {
-    console.log("[grade] Artifact too short (len=%d), treat as no fix challengeId=%s", trimmed.length, challengeId);
-    return null;
-  }
-
   const check = ref?.artifactCheck;
   if (!check?.length) return null;
 
+  const diff = extractDiffSection(artifacts);
+  if (!diff.trim()) {
+    console.log("[grade] No git diff found in artifacts, skip pattern check challengeId=%s", challengeId);
+    return null;
+  }
+
   for (const condition of check) {
     if (condition.length === 0) continue;
-    const allPresent = condition.every((s) => wordMatch(trimmed, s));
+    const allPresent = condition.every((s) => wordMatch(diff, s));
     if (allPresent) {
       const score = ref.artifactScore ?? 75;
       console.log("[grade] Artifact check pass challengeId=%s condition=%s score=%d", challengeId, condition.join(","), score);
       return score;
     }
   }
-  console.log("[grade] Artifact check miss challengeId=%s artifactLen=%d sample=%s", challengeId, trimmed.length, trimmed.slice(0, 400).replace(/\n/g, " "));
+  console.log("[grade] Artifact check miss challengeId=%s diffLen=%d sample=%s", challengeId, diff.length, diff.slice(0, 400).replace(/\n/g, " "));
   return null;
 }
 

@@ -143,17 +143,20 @@ function formatTime(seconds: number) {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-/** 선택: 솔루션(원인/해결) 작성 후 제출 → 0~20점 추가 채점 */
+/** 솔루션(원인/해결) 작성 후 제출 채점 */
 function SolutionForm({
   challengeId,
   participantName,
   locale,
   scoreGuide,
+  isSolutionOnly,
 }: {
   challengeId: string;
   participantName: string | null;
   locale: string;
   scoreGuide?: string;
+  /** true이면 artifact 없이 솔루션만 채점하는 보너스 시나리오 */
+  isSolutionOnly?: boolean;
 }) {
   const [causeSummary, setCauseSummary] = useState("");
   const [steps, setSteps] = useState("");
@@ -193,15 +196,21 @@ function SolutionForm({
   return (
     <div className="rounded-xl border border-[var(--border)] bg-[var(--bg)]/50 p-4 space-y-3">
       <h3 className="text-sm font-semibold text-white">
-        {locale === "ko" ? "선택: 솔루션 작성 (0~20점 추가)" : "Optional: Add solution (0–20 pts)"}
+        {isSolutionOnly
+          ? (locale === "ko" ? "솔루션 작성 (보너스 채점)" : "Submit solution (bonus)")
+          : (locale === "ko" ? "선택: 솔루션 작성 (0~20점 추가)" : "Optional: Add solution (0–20 pts)")}
       </h3>
       {scoreGuide && (
         <p className="text-xs text-[var(--accent)]">{scoreGuide}</p>
       )}
       <p className="text-xs text-zinc-400">
-        {locale === "ko"
-          ? "터미널로 제출한 뒤, 원인·해결을 적어 보내면 AI가 채점해 최대 20점을 더해 줍니다. 이름이 URL/입력에 있어야 합니다."
-          : "After submitting from the terminal, add cause and resolution here for up to 20 extra points."}
+        {isSolutionOnly
+          ? (locale === "ko"
+              ? "원인과 해결 방법을 적어 보내면 AI가 채점합니다. 이름이 URL/입력에 있어야 합니다."
+              : "Write the cause and resolution below. AI will grade your answer.")
+          : (locale === "ko"
+              ? "터미널로 제출한 뒤, 원인·해결을 적어 보내면 AI가 채점해 최대 20점을 더해 줍니다. 이름이 URL/입력에 있어야 합니다."
+              : "After submitting from the terminal, add cause and resolution here for up to 20 extra points.")}
       </p>
       <div className="grid gap-2">
         <label className="text-xs text-zinc-400">
@@ -368,7 +377,7 @@ function ChallengePageContent() {
           {!participantNameFromUrl && (
             <div className="flex flex-wrap items-center gap-2">
               <label className="text-sm text-zinc-400">
-                {locale === "ko" ? "제출할 때 사용할 이름 (URL에 없으면 여기 입력, 복사 명령에 포함됨):" : "Your name for submission (included in copy command if not in URL):"}
+                {locale === "ko" ? "제출할 때 사용할 이름 (URL에 없으면 여기 입력):" : "Your name for submission (if not in URL, enter here):"}
               </label>
               <input
                 type="text"
@@ -381,23 +390,28 @@ function ChallengePageContent() {
           )}
           {participantNameFromUrl && (
             <p className="text-sm text-[var(--accent)]">
-              {locale === "ko" ? `제출 이름: ${participantNameFromUrl} (URL 기준, 복사 명령에 포함됨)` : `Submitting as: ${participantNameFromUrl}`}
+              {locale === "ko" ? `제출 이름: ${participantNameFromUrl}` : `Submitting as: ${participantNameFromUrl}`}
             </p>
           )}
-          <p className="text-sm text-zinc-400">
-            {locale === "ko"
-              ? "복사 버튼을 누르면 타이머가 멈추고, 그 시점의 시간(초)이 명령 맨 뒤에 자동으로 들어갑니다. 터미널에 붙여넣기만 하면 됩니다."
-              : "Click Copy to stop the timer and copy the command with that time (seconds) at the end. Just paste in the terminal."}
-          </p>
-          <SubmitCommandBlock
-            challengeId={id}
-            locale={locale}
-            elapsedSeconds={elapsed}
-            participantName={participantName}
-            onCopyClick={stopTimerOnCopy}
-          />
+          {/* 솔루션 전용 시나리오(보너스)는 터미널 제출 블록 숨김 */}
+          {challenge.artifactScore !== 0 && (
+            <>
+              <p className="text-sm text-zinc-400">
+                {locale === "ko"
+                  ? "복사 버튼을 누르면 타이머가 멈추고, 그 시점의 시간(초)이 명령 맨 뒤에 자동으로 들어갑니다. 터미널에 붙여넣기만 하면 됩니다."
+                  : "Click Copy to stop the timer and copy the command with that time (seconds) at the end. Just paste in the terminal."}
+              </p>
+              <SubmitCommandBlock
+                challengeId={id}
+                locale={locale}
+                elapsedSeconds={elapsed}
+                participantName={participantName}
+                onCopyClick={stopTimerOnCopy}
+              />
+            </>
+          )}
           <p className="text-sm text-zinc-500">
-            {locale === "ko" ? "실행이 끝나면 리더보드에서 점수를 확인하세요." : "When done, check your score on the leaderboard."}
+            {locale === "ko" ? "채점 후 리더보드에서 점수를 확인하세요." : "Check your score on the leaderboard after grading."}
             {" "}
             <a href="/leaderboard" className="text-[var(--accent)] hover:underline">/leaderboard</a>
           </p>
@@ -407,6 +421,7 @@ function ChallengePageContent() {
             participantName={participantName}
             locale={locale}
             scoreGuide={challenge.scoreGuide}
+            isSolutionOnly={challenge.artifactScore === 0}
           />
         </div>
       )}

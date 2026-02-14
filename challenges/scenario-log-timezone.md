@@ -40,12 +40,3 @@ log-demo logs used to show up correctly in Datadog, but at some point they start
 
 Check log-demo container logs:
 docker logs -f fixitfaster-log-demo
-
-Rebuild and restart log-demo container:
-cd ~/fixitfaster-agent
-docker compose --env-file .env.local build log-demo && docker compose --env-file .env.local up -d log-demo
-
-Restart the agent:
-cd ~/fixitfaster-agent
-npm run agent:restart
-

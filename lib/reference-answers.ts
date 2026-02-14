@@ -25,13 +25,12 @@ export const REFERENCE_ANSWERS: Record<
   }
 > = {
   "scenario-infra": {
-    rootCause: "Agent의 hostname 또는 DD_HOSTNAME이 잘못 설정되어 있음.",
-    resolution: "docker-compose.yml에서 agent 서비스의 hostname/DD_HOSTNAME을 fixitfaster-agent로 설정.",
-    expectedChange: "docker-compose.yml 내 agent 서비스에 hostname 또는 DD_HOSTNAME = fixitfaster-agent.",
-    /* docker-compose + agent 서비스에서 hostname/dd_hostname 값으로 fixitfaster-agent 있어야 함 */
+    rootCause: "Agent의 hostname과 DD_HOSTNAME이 잘못 설정되어 있음.",
+    resolution: "docker-compose.yml에서 agent 서비스의 hostname과 DD_HOSTNAME을 모두 fixitfaster-agent로 설정 후 Agent 재시작.",
+    expectedChange: "docker-compose.yml 내 agent 서비스에 hostname = fixitfaster-agent, DD_HOSTNAME = fixitfaster-agent.",
+    /* hostname과 DD_HOSTNAME 둘 다 fixitfaster-agent로 변경해야 통과 */
     artifactCheck: [
-      ["docker-compose", "fixitfaster-agent", "hostname"],
-      ["docker-compose", "fixitfaster-agent", "dd_hostname"],
+      ["docker-compose", "fixitfaster-agent", "hostname", "dd_hostname"],
     ],
     artifactScore: 50,
     scoreGuide: {

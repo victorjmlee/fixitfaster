@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import {
   getLatestSubmissionByParticipantAndChallenge,
   updateSubmission,
+  addSubmission,
 } from "@/lib/store";
 import { gradeSolutionOnly } from "@/lib/gemini-grade";
+import { REFERENCE_ANSWERS } from "@/lib/reference-answers";
 
 /** 기존 제출에 솔루션(원인/해결) 추가 + 솔루션 0~20점 채점 후 합산 반영 */
 export async function POST(req: Request) {
@@ -19,12 +21,29 @@ export async function POST(req: Request) {
     }
 
     const name = String(participantName).trim();
-    const submission = getLatestSubmissionByParticipantAndChallenge(name, String(challengeId));
+    const cid = String(challengeId);
+    let submission = getLatestSubmissionByParticipantAndChallenge(name, cid);
+
+    // 솔루션 전용 시나리오(보너스)는 터미널 제출 없이도 제출 가능 — 자동 생성
     if (!submission) {
-      return NextResponse.json(
-        { error: "No submission found for this participant and challenge. Submit from the terminal first." },
-        { status: 404 }
-      );
+      const ref = REFERENCE_ANSWERS[cid];
+      const isSolutionOnly = ref && (!ref.artifactCheck || ref.artifactCheck.length === 0);
+      if (!isSolutionOnly) {
+        return NextResponse.json(
+          { error: "No submission found for this participant and challenge. Submit from the terminal first." },
+          { status: 404 }
+        );
+      }
+      submission = addSubmission({
+        challengeId: cid,
+        participantName: name,
+        causeSummary: "",
+        steps: "",
+        docLinks: "",
+        elapsedSeconds: 0,
+        score: 0,
+        artifactScore: 0,
+      });
     }
 
     const cause = typeof causeSummary === "string" ? causeSummary.trim() : "";
