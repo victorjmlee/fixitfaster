@@ -3,27 +3,22 @@
 import Link from "next/link";
 import { useLocale } from "@/app/LocaleContext";
 
-const REPO_URL = "https://github.com/CrystalBellSound/fixitfaster-agent.git";
 const CODESPACES_URL = "https://codespaces.new/CrystalBellSound/fixitfaster-agent";
 
 export default function HomePage() {
-  const { locale, t } = useLocale();
+  const { locale } = useLocale();
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-white border-b border-[var(--border)] pb-2">
-          Fix It Faster – Agent & Demos
+          Fix It Faster
         </h1>
-        {locale === "en" ? (
-          <p className="mt-2 text-white">
-            Datadog Agent + demo containers for the <strong className="text-white">Fix It Faster</strong> hands-on. Use the agent repo to run the agent and scenario demos in Codespaces.
-          </p>
-        ) : (
-          <p className="mt-2 text-white">
-            <strong className="text-white">Fix It Faster</strong> 핸즈온용 Datadog Agent와 데모 컨테이너입니다. Codespaces에서 에이전트와 시나리오 데모를 실행할 수 있습니다.
-          </p>
-        )}
+        <p className="mt-2 text-white">
+          {locale === "en"
+            ? "Datadog troubleshooting challenges and leaderboard. Solve issues in Codespace and submit."
+            : "Datadog 트러블슈팅 챌린지와 리더보드입니다. Codespace에서 문제를 해결하고 제출하세요."}
+        </p>
       </div>
 
       <section>
@@ -31,38 +26,47 @@ export default function HomePage() {
           {locale === "en" ? "Quick start" : "빠른 시작"}
         </h2>
         <p className="text-white text-sm mb-2">
-          {locale === "en" ? "Start in the browser (recommended):" : "브라우저에서 시작 (권장):"}
+          {locale === "en" ? "Open the lab in Codespace:" : "Codespace에서 랩 열기:"}
         </p>
         <p>
           <a href={CODESPACES_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-lg border-2 border-[var(--accent)] bg-[var(--accent)]/10 px-4 py-2 text-[var(--accent)] font-medium hover:bg-[var(--accent)]/20">
             <span aria-hidden>⚡</span>
-            {locale === "en" ? "Open in GitHub Codespaces (Lab)" : "랩 – GitHub Codespaces에서 열기"}
+            {locale === "en" ? "Open in GitHub Codespaces" : "GitHub Codespaces에서 열기"}
           </a>
         </p>
-        <p className="mt-6 text-white text-sm font-medium">
-          {locale === "en" ? "In Codespace, do the following:" : "Codespace에서 할 일:"}
+        <p className="mt-4 text-white text-sm font-medium">
+          {locale === "en" ? "First time only — set API keys and start (replace YOUR_KEY):" : "최초 1회 — API Key 넣고 시작 (YOUR_KEY만 바꿔서):"}
         </p>
-        <ol className="mt-2 text-white text-sm list-decimal pl-5 space-y-2">
+        <pre className="mt-1.5 p-3 rounded-lg bg-[var(--card)] border border-[var(--border)] text-xs overflow-x-auto text-white">
+          <code>{`echo 'DATADOG_API_KEY=YOUR_KEY' > .env.local && echo 'DATADOG_APP_KEY=YOUR_KEY' >> .env.local && npm run up:full`}</code>
+        </pre>
+      </section>
+
+      <section>
+        <h2 className="text-lg font-semibold text-white mt-8 mb-3">
+          {locale === "en" ? "How to play" : "진행 방법"}
+        </h2>
+        <ol className="text-white text-sm list-decimal pl-5 space-y-3">
           <li>
+            <strong>{locale === "en" ? "Solve" : "풀기"}</strong>
+            {" — "}
             {locale === "en"
-              ? "First time only: set API Key and App Key, then start the lab. Run (replace YOUR_KEY):"
-              : "최초 1회: API Key, App Key 넣고 랩 실행. 아래 한 줄 실행 (YOUR_KEY만 바꿔서):"}
-            <pre className="mt-1.5 p-3 rounded-lg bg-[var(--card)] border border-[var(--border)] text-xs overflow-x-auto text-white">
-              <code>{`echo 'DATADOG_API_KEY=YOUR_KEY' > .env.local && echo 'DATADOG_APP_KEY=YOUR_KEY' >> .env.local && npm run up:full`}</code>
-            </pre>
-            {locale === "en" ? (
-              <p className="mt-1 text-zinc-400 text-xs">Optional: <code className="bg-[var(--card)] px-1 rounded">echo &apos;YourName&apos; &gt; ~/.fixitfaster-participant</code> if you run submit without copying the command from the challenge page.</p>
-            ) : (
-              <p className="mt-1 text-zinc-400 text-xs">선택: 챌린지 페이지에서 복사한 명령 대신 직접 제출할 때만 <code className="bg-[var(--card)] px-1 rounded">echo &apos;내이름&apos; &gt; ~/.fixitfaster-participant</code> 추가.</p>
-            )}
+              ? "Pick a scenario on the challenge page, start the timer, and fix the issue in Codespace."
+              : "챌린지 페이지에서 시나리오를 고르고 타이머를 시작한 뒤, Codespace에서 원인을 찾고 수정합니다."}
           </li>
           <li>
+            <strong>{locale === "en" ? "Submit" : "제출"}</strong>
+            {" — "}
             {locale === "en"
-              ? "Before submitting: run the artifacts script in your Codespace terminal."
-              : "제출 전: Codespace 터미널에서 아래 명령 실행."}
-            <pre className="mt-1.5 p-3 rounded-lg bg-[var(--card)] border border-[var(--border)] text-xs overflow-x-auto text-white">
-              <code>{`curl -sL "https://raw.githubusercontent.com/victorjmlee/fixitfaster/main/lab-server/scripts/collect-and-send-artifacts.sh" -o /tmp/send-artifacts.sh && FIXITFASTER_URL="https://dd-tse-fix-it-faster.vercel.app" CHALLENGE_ID="scenario-apm" bash /tmp/send-artifacts.sh`}</code>
-            </pre>
+              ? "Click Copy on the challenge page (timer stops), then paste in the Codespace terminal. Artifacts + submission in one step."
+              : "챌린지 페이지에서 복사 버튼을 누르면 타이머가 멈추고, Codespace 터미널에 붙여넣기만 하면 아티팩트 전송 + 제출이 한 번에 끝납니다."}
+          </li>
+          <li>
+            <strong>{locale === "en" ? "Solution (optional)" : "솔루션 (선택)"}</strong>
+            {" — "}
+            {locale === "en"
+              ? "Write cause and resolution on the same page for up to 20 extra points (AI-graded)."
+              : "같은 페이지에서 원인과 해결 방법을 작성하면 AI가 추가 채점합니다 (최대 20점)."}
           </li>
         </ol>
       </section>
