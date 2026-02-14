@@ -1,17 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useLocale } from "./LocaleContext";
 
-export default function Header() {
+function HeaderContent({ challengesHref }: { challengesHref: string }) {
   const { locale, setLocale, t } = useLocale();
-  const searchParams = useSearchParams();
-  const participantName = searchParams.get("participantName")?.trim();
-  const challengesHref = participantName
-    ? `/challenges?participantName=${encodeURIComponent(participantName)}`
-    : "/challenges";
-
   return (
     <header className="border-b border-[var(--border)] bg-[var(--card)]/80 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4">
@@ -52,5 +47,22 @@ export default function Header() {
         </div>
       </div>
     </header>
+  );
+}
+
+function HeaderWithSearchParams() {
+  const searchParams = useSearchParams();
+  const participantName = searchParams.get("participantName")?.trim();
+  const challengesHref = participantName
+    ? `/challenges?participantName=${encodeURIComponent(participantName)}`
+    : "/challenges";
+  return <HeaderContent challengesHref={challengesHref} />;
+}
+
+export default function Header() {
+  return (
+    <Suspense fallback={<HeaderContent challengesHref="/challenges" />}>
+      <HeaderWithSearchParams />
+    </Suspense>
   );
 }
