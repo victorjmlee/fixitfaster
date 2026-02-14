@@ -234,12 +234,7 @@ function SolutionForm({
           className="rounded border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm text-white placeholder:text-zinc-500 w-full resize-y"
         />
       </div>
-      {!participantName?.trim() && (
-        <p className="text-xs text-amber-400">
-          {locale === "ko" ? "위에서 제출 이름을 입력하거나 URL에 ?participantName=이름 을 넣어 주세요." : "Set your name above or in the URL (?participantName=...)."}
-        </p>
-      )}
-      <button
+<button
         type="button"
         disabled={!canSubmit || loading}
         onClick={submit}
