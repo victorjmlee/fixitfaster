@@ -2,71 +2,13 @@ import { REFERENCE_ANSWERS } from "./reference-answers";
 
 const GEMINI_MODEL_IDS = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.0-pro", "gemini-pro"];
 
-export type GradeResult = { score: number; feedback?: string };
-
 export type GradeSkipReason = "no_key" | "no_ref" | "quota" | "api_error";
 
 export type GradeOutcome =
   | { success: true; score: number; artifactScore?: number; feedback?: string }
   | { success: false; reason: GradeSkipReason };
 
-function buildPrompt(
-  ref: { rootCause: string; resolution: string; expectedChange: string },
-  causeSummary: string,
-  steps: string,
-  artifacts?: string | null
-): string {
-  const artifactsBlock =
-    artifacts && artifacts.trim()
-      ? `
-
-Participant's environment changes (config/diff from their lab environment; use this to verify their resolution):
-\`\`\`
-${artifacts.slice(0, 15000)}
-\`\`\`
-`
-      : "";
-
-  const textEmpty = !(causeSummary?.trim() || steps?.trim());
-  const gradeFromArtifactsOnly =
-    textEmpty && artifactsBlock
-      ? `
-IMPORTANT: Participant did not write a text answer. Grade ONLY from the artifacts (git diff, docker-compose, conf.d) below.
-- Compare artifacts to "Expected change" below. If the diff/config SHOWS that change (correct file, correct value), give 71–100. Do NOT give 0.
-- Give 51–70 if the right file is changed but detail slightly off; give 0 only if wrong file, wrong fix, or no relevant change.
-`
-      : "";
-
-  return `You are a strict grader for a troubleshooting challenge. Compare the participant's artifacts to the expected change and give a score from 0 to 100.
-${gradeFromArtifactsOnly}
-Grading criteria:
-- 0: Artifacts do not show the expected change (wrong file, wrong value, or no relevant diff).
-- 51–70: Right file touched but change only partly matches expected (e.g. typo, wrong key). With artifacts only: give at least 51 if the intended fix is visible.
-- 71–85: Artifacts show the expected change in the right file with correct value. Minor formatting/name difference OK.
-- 86–100: Artifacts clearly show the exact expected change. Use sparingly.
-
-Expected change (check this against the participant's git diff / docker-compose / conf.d):
-${ref.expectedChange}
-
-Reference (context only):
-- Root cause: ${ref.rootCause}
-- Resolution: ${ref.resolution}
-
-Participant's answer:
-- Root cause summary: ${causeSummary || "(empty)"}
-- Resolution steps: ${steps || "(empty)"}
-${artifactsBlock}
-
-Respond with exactly two lines:
-Line 1: A single integer from 0 to 100 (the score). No other text.
-Line 2: Optional one-line feedback in Korean (what was good or missing). If none, write "-"
-
-Example:
-62
-원인은 비슷하나 호스트명 등 구체적 표현 부족. 해결 단계는 일부만 맞음.`;
-}
-
-/** 솔루션(원인/해결) 텍스트만 0~100으로 채점. 20점 만점 배점용. */
+/** 솔루션(원인/해결) 텍스트만 0~100으로 채점. */
 function buildPromptForSolution(
   ref: { rootCause: string; resolution: string },
   causeSummary: string,
@@ -292,7 +234,8 @@ export async function gradeSubmission(
   }
 
   const { score: solution100, feedback } = parseScoreFromText(text);
-  const solutionPart = Math.round((solution100 / 100) * SOLUTION_MAX_POINTS);
+  const maxSolution = ref.solutionMaxPoints ?? SOLUTION_MAX_POINTS;
+  const solutionPart = Math.round((solution100 / 100) * maxSolution);
   const total = Math.min(100, artifactPart + solutionPart);
   console.log("[grade] challengeId=%s artifactPart=%d solutionPart=%d total=%d", challengeId, artifactPart, solutionPart, total);
   return { success: true, score: total, artifactScore: artifactPart, feedback };
@@ -339,7 +282,8 @@ export async function gradeSolutionOnly(
     return { success: false, reason: firstStatus === 429 ? "quota" : "api_error" };
   }
   const { score: solution100 } = parseScoreFromText(text);
-  const solutionPart = Math.round((solution100 / 100) * SOLUTION_MAX_POINTS);
+  const maxSolution = ref.solutionMaxPoints ?? SOLUTION_MAX_POINTS;
+  const solutionPart = Math.round((solution100 / 100) * maxSolution);
   console.log("[grade] Solution-only challengeId=%s solutionPart=%d", challengeId, solutionPart);
   return { success: true, score: solutionPart };
 }

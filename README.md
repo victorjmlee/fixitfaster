@@ -41,15 +41,18 @@ FIXITFASTER_URL="https://여기에-배포된-앱-URL" CHALLENGE_ID="scenario-inf
   | APM | 80 | 100 |
   | Correlation | 50 | 70 |
   | Custom metrics | 80 | 100 |
-  | Log timezone | 70 | 90 |
+  | Log timezone (보너스) | — | 20 |
 
-- **솔루션(선택)**  
+- **솔루션(선택)**
   원인/해결을 작성하면 AI가 0~20점으로 채점합니다. 비우면 0점입니다.
 
-- **총점**  
+- **보너스: Log timezone**
+  Datadog UI에서 파이프라인을 수정하는 시나리오입니다. artifact 채점 없이 솔루션(원인/해결 작성)만으로 최대 20점을 받을 수 있습니다.
+
+- **총점**
   `결과 점수 + 솔루션 점수` (최대 100점). 동점이면 **총 소요 시간이 짧은 사람**이 위로 올라갑니다.
 
-각 챌린지 페이지 상단에 해당 시나리오의 「결과 ○점 + 솔루션 20점 = 만점 ○점」 안내가 표시됩니다.
+각 챌린지 페이지 상단에 해당 시나리오의 점수 안내가 표시됩니다.
 
 ---
 
@@ -97,12 +100,15 @@ Then open the leaderboard URL to see your score.
   | APM | 80 | 100 |
   | Correlation | 50 | 70 |
   | Custom metrics | 80 | 100 |
-  | Log timezone | 70 | 90 |
+  | Log timezone (Bonus) | — | 20 |
 
-- **Solution (optional)**  
+- **Solution (optional)**
   If you write cause and resolution, AI scores them 0–20. Empty = 0.
 
-- **Total**  
+- **Bonus: Log timezone**
+  This scenario is fixed in the Datadog UI (pipeline configuration). No artifact grading — submit a written solution (cause/resolution) for up to 20 bonus points.
+
+- **Total**
   `Result score + Solution score` (capped at 100). Ties are ranked by **shorter total time**.
 
-Each challenge page shows that scenario’s “Result ○ pts + Solution 20 pts = ○ max” at the top.
+Each challenge page shows that scenario's scoring guide at the top.

@@ -18,6 +18,8 @@ export const REFERENCE_ANSWERS: Record<
     artifactCheck: ArtifactCheck;
     /** 결과(artifact) 통과 시 점수. */
     artifactScore?: number;
+    /** 솔루션 채점 만점 (기본 20). 솔루션 전용 시나리오는 높게 설정. */
+    solutionMaxPoints?: number;
     /** 시나리오별 점수 안내 (UI 표시용). */
     scoreGuide: { ko: string; en: string };
   }
@@ -93,20 +95,16 @@ export const REFERENCE_ANSWERS: Record<
     },
   },
   "scenario-log-timezone": {
-    rootCause: "log-demo 파이프라인에 Date Remapper 타임존(Asia/Seoul) 없음.",
-    resolution: "Datadog 로그 파이프라인에 Grok Parser + Date Remapper, Timezone Asia/Seoul. 또는 npm run pipeline:setup.",
-    expectedChange: "파이프라인 설정은 artifacts에 없을 수 있음. pipeline/timezone/asia/seoul 등 관련 흔적 있으면 인정.",
-    /* 단일 단어 제거: "pipeline"만 있으면 통과되던 문제. 2단어 이상 조합만 인정 */
-    artifactCheck: [
-      ["timezone", "asia", "seoul"],
-      ["date", "remapper", "seoul"],
-      ["pipeline", "timezone"],
-      ["log-demo", "seoul", "timezone"],
-    ],
-    artifactScore: 70,
+    rootCause: "log-demo 로그의 타임스탬프가 Asia/Seoul인데 Datadog 파이프라인에 올바른 Grok Parser와 Date Remapper(timezone Asia/Seoul)가 없음.",
+    resolution: "Datadog 로그 파이프라인에서 Grok Parser로 타임스탬프를 파싱하고, Date Remapper에 timezone Asia/Seoul을 설정.",
+    expectedChange: "",
+    /* 보너스: Datadog UI에서 파이프라인을 수정하므로 artifact 채점 불가. 솔루션만 채점. */
+    artifactCheck: [],
+    artifactScore: 0,
+    solutionMaxPoints: 20,
     scoreGuide: {
-      ko: "결과 70점 + 솔루션 20점 = 만점 90점",
-      en: "Result 70 pts + Solution 20 pts = 90 max",
+      ko: "보너스 시나리오 — 솔루션(원인/해결 작성) 만점 20점",
+      en: "Bonus scenario — Solution (cause/resolution) 20 pts max",
     },
   },
 };
