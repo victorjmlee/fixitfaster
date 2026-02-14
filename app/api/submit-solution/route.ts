@@ -47,8 +47,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const currentScore = submission.score ?? 0;
-    const newScore = Math.min(100, currentScore + grade.score);
+    const baseScore = submission.artifactScore ?? submission.score ?? 0;
+    const newScore = Math.min(100, baseScore + grade.score);
     updateSubmission(submission.id, {
       causeSummary: cause || submission.causeSummary,
       steps: step || submission.steps,
@@ -58,7 +58,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       ok: true,
       submissionId: submission.id,
-      previousScore: currentScore,
+      previousScore: submission.score ?? 0,
       solutionPoints: grade.score,
       newScore,
     });

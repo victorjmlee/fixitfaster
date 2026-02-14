@@ -12,6 +12,8 @@ export type Submission = {
   submittedAt: string;
   /** 0–100, Gemini 채점 결과. 없으면 미채점 */
   score?: number;
+  /** artifact 패턴 매칭으로 받은 점수 (솔루션 재제출 시 base로 사용) */
+  artifactScore?: number;
 };
 
 const DATA_DIR = path.join(process.cwd(), "data");
@@ -68,7 +70,7 @@ export function addSubmission(s: Omit<Submission, "id" | "submittedAt">): Submis
 
 export function updateSubmission(
   id: string,
-  patch: Partial<Pick<Submission, "score" | "causeSummary" | "steps">>
+  patch: Partial<Pick<Submission, "score" | "artifactScore" | "causeSummary" | "steps">>
 ): Submission | null {
   const list = readSubmissions();
   const i = list.findIndex((s) => s.id === id);

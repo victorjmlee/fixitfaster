@@ -26,9 +26,10 @@ export const REFERENCE_ANSWERS: Record<
     rootCause: "Agent의 hostname 또는 DD_HOSTNAME이 잘못 설정되어 있음.",
     resolution: "docker-compose.yml에서 agent 서비스의 hostname/DD_HOSTNAME을 fixitfaster-agent로 설정.",
     expectedChange: "docker-compose.yml 내 agent 서비스에 hostname 또는 DD_HOSTNAME = fixitfaster-agent.",
+    /* docker-compose + agent 서비스에서 hostname/dd_hostname 값으로 fixitfaster-agent 있어야 함 */
     artifactCheck: [
-      ["fixitfaster-agent", "hostname"],
-      ["fixitfaster-agent", "dd_hostname"],
+      ["docker-compose", "fixitfaster-agent", "hostname"],
+      ["docker-compose", "fixitfaster-agent", "dd_hostname"],
     ],
     artifactScore: 50,
     scoreGuide: {
@@ -40,7 +41,7 @@ export const REFERENCE_ANSWERS: Record<
     rootCause: "conf.d/nginx.d/autoconf.yaml의 ad_identifiers가 nginx 이미지명과 다름.",
     resolution: "ad_identifiers를 nginx로 수정 후 Agent 재시작.",
     expectedChange: "conf.d 내 nginx yaml에 ad_identifiers에 nginx 포함.",
-    artifactCheck: [["ad_identifiers", "nginx"]],
+    artifactCheck: [["conf.d", "ad_identifiers", "nginx"]],
     artifactScore: 60,
     scoreGuide: {
       ko: "결과 60점 + 솔루션 20점 = 만점 80점",
@@ -51,7 +52,11 @@ export const REFERENCE_ANSWERS: Record<
     rootCause: "trace-demo가 트레이스를 보내는 포트가 Agent(8126)와 다름.",
     resolution: "trace-demo에서 dd-trace port를 8126으로 수정 후 재빌드·재시작.",
     expectedChange: "trace-demo 관련 파일에서 port 8126.",
-    artifactCheck: [["trace-demo", "8126"]],
+    /* trace-demo 코드/설정에서 8126 포트 설정이 있어야 함 (diff 또는 docker-compose) */
+    artifactCheck: [
+      ["trace-demo", "8126"],
+      ["ddtrace", "8126"],
+    ],
     artifactScore: 80,
     scoreGuide: {
       ko: "결과 80점 + 솔루션 20점 = 만점 100점",
@@ -63,8 +68,8 @@ export const REFERENCE_ANSWERS: Record<
     resolution: "docker-compose.yml에서 correlation-demo의 DD_LOGS_INJECTION을 true로.",
     expectedChange: "docker-compose에서 correlation-demo에 DD_LOGS_INJECTION: true.",
     artifactCheck: [
-      ["correlation", "dd_logs_injection", "true"],
-      ["correlation", "logs_injection", "true"],
+      ["docker-compose", "correlation", "dd_logs_injection", "true"],
+      ["docker-compose", "correlation", "logs_injection", "true"],
     ],
     artifactScore: 50,
     scoreGuide: {
@@ -76,7 +81,11 @@ export const REFERENCE_ANSWERS: Record<
     rootCause: "metrics-demo가 DogStatsD를 잘못된 호스트로 보냄.",
     resolution: "metrics-demo에서 StatsD host를 agent로 수정 후 재빌드·재시작.",
     expectedChange: "metrics-demo 코드에서 host를 agent(또는 agent 서비스명)로.",
-    artifactCheck: [["metrics-demo", "agent"]],
+    /* metrics-demo에서 host/StatsD 설정으로 agent 지정한 흔적 */
+    artifactCheck: [
+      ["metrics-demo", "agent", "host"],
+      ["metrics-demo", "statsd", "agent"],
+    ],
     artifactScore: 80,
     scoreGuide: {
       ko: "결과 80점 + 솔루션 20점 = 만점 100점",
@@ -87,12 +96,12 @@ export const REFERENCE_ANSWERS: Record<
     rootCause: "log-demo 파이프라인에 Date Remapper 타임존(Asia/Seoul) 없음.",
     resolution: "Datadog 로그 파이프라인에 Grok Parser + Date Remapper, Timezone Asia/Seoul. 또는 npm run pipeline:setup.",
     expectedChange: "파이프라인 설정은 artifacts에 없을 수 있음. pipeline/timezone/asia/seoul 등 관련 흔적 있으면 인정.",
+    /* 단일 단어 제거: "pipeline"만 있으면 통과되던 문제. 2단어 이상 조합만 인정 */
     artifactCheck: [
-      ["pipeline"],
-      ["timezone", "log"],
-      ["asia", "seoul"],
-      ["date", "remapper"],
-      ["log-demo", "seoul"],
+      ["timezone", "asia", "seoul"],
+      ["date", "remapper", "seoul"],
+      ["pipeline", "timezone"],
+      ["log-demo", "seoul", "timezone"],
     ],
     artifactScore: 70,
     scoreGuide: {

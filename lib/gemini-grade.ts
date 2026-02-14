@@ -7,7 +7,7 @@ export type GradeResult = { score: number; feedback?: string };
 export type GradeSkipReason = "no_key" | "no_ref" | "quota" | "api_error";
 
 export type GradeOutcome =
-  | { success: true; score: number; feedback?: string }
+  | { success: true; score: number; artifactScore?: number; feedback?: string }
   | { success: false; reason: GradeSkipReason };
 
 function buildPrompt(
@@ -192,18 +192,28 @@ async function callGemini(
   }
 }
 
+/** 아티팩트가 실제 제출처럼 보이는지 (너무 짧으면 curl만 날린 걸로 간주) */
+const MIN_ARTIFACT_LENGTH = 300;
+
 /**
  * artifacts만 있을 때 정답지(artifactCheck)로 채점. 조건 하나라도 만족하면 점수 부여 (Gemini 호출 안 함).
+ * 패턴 미충족 또는 아티팩트가 너무 짧으면 null → 상위에서 0점 처리.
  */
 function gradeFromArtifactPatterns(
   challengeId: string,
   artifacts: string,
   ref: { artifactCheck?: string[][]; artifactScore?: number }
 ): number | null {
+  const trimmed = artifacts?.trim() ?? "";
+  if (trimmed.length < MIN_ARTIFACT_LENGTH) {
+    console.log("[grade] Artifact too short (len=%d), treat as no fix challengeId=%s", trimmed.length, challengeId);
+    return null;
+  }
+
   const check = ref?.artifactCheck;
   if (!check?.length) return null;
 
-  const a = artifacts.toLowerCase();
+  const a = trimmed.toLowerCase();
   for (const condition of check) {
     if (condition.length === 0) continue;
     const allPresent = condition.every((s) => a.includes(s.toLowerCase()));
@@ -213,7 +223,7 @@ function gradeFromArtifactPatterns(
       return score;
     }
   }
-  console.log("[grade] Artifact check miss challengeId=%s artifactLen=%d sample=%s", challengeId, artifacts.length, artifacts.slice(0, 400).replace(/\n/g, " "));
+  console.log("[grade] Artifact check miss challengeId=%s artifactLen=%d sample=%s", challengeId, trimmed.length, trimmed.slice(0, 400).replace(/\n/g, " "));
   return null;
 }
 
@@ -235,12 +245,12 @@ export async function gradeSubmission(
 
   const textEmpty = !(causeSummary?.trim() || steps?.trim());
 
-  // 1) artifact만 제출: 패턴으로 결과 점수만 부여
+  // 1) artifact만 제출: 패턴으로 결과 점수만 부여. 패턴 미충족/아티팩트 너무 짧으면 0점.
   if (textEmpty && artifacts?.trim()) {
     const patternScore = gradeFromArtifactPatterns(challengeId, artifacts, ref);
-    if (patternScore != null) return { success: true, score: patternScore };
-    console.log("[grade] Artifact-only, pattern miss → 65 challengeId=%s", challengeId);
-    return { success: true, score: 65 };
+    if (patternScore != null) return { success: true, score: patternScore, artifactScore: patternScore };
+    console.log("[grade] Artifact-only, pattern miss or too short → 0 challengeId=%s", challengeId);
+    return { success: true, score: 0, artifactScore: 0 };
   }
 
   // 2) 솔루션 작성함: 결과 점수(패턴) + 솔루션 0~20
@@ -280,7 +290,7 @@ export async function gradeSubmission(
   const solutionPart = Math.round((solution100 / 100) * SOLUTION_MAX_POINTS);
   const total = Math.min(100, artifactPart + solutionPart);
   console.log("[grade] challengeId=%s artifactPart=%d solutionPart=%d total=%d", challengeId, artifactPart, solutionPart, total);
-  return { success: true, score: total, feedback };
+  return { success: true, score: total, artifactScore: artifactPart, feedback };
 }
 
 /**

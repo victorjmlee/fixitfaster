@@ -70,7 +70,7 @@ export async function POST(req: Request) {
       artifacts
     );
     if (grade.success) {
-      updateSubmission(submission.id, { score: grade.score });
+      updateSubmission(submission.id, { score: grade.score, artifactScore: grade.artifactScore });
       submission.score = grade.score;
       console.log("[submit] Grading ok challengeId=%s score=%s", submission.challengeId, grade.score);
       return NextResponse.json(submission);
