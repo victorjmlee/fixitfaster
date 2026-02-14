@@ -68,7 +68,7 @@ export function addSubmission(s: Omit<Submission, "id" | "submittedAt">): Submis
 
 export function updateSubmission(
   id: string,
-  patch: Partial<Pick<Submission, "score">>
+  patch: Partial<Pick<Submission, "score" | "causeSummary" | "steps">>
 ): Submission | null {
   const list = readSubmissions();
   const i = list.findIndex((s) => s.id === id);
@@ -76,6 +76,19 @@ export function updateSubmission(
   list[i] = { ...list[i], ...patch };
   writeSubmissions(list);
   return list[i];
+}
+
+/** 참가자+챌린지 기준 가장 최근 제출 1건 */
+export function getLatestSubmissionByParticipantAndChallenge(
+  participantName: string,
+  challengeId: string
+): Submission | null {
+  const name = participantName?.trim();
+  if (!name) return null;
+  const list = readSubmissions()
+    .filter((s) => s.challengeId === challengeId && s.participantName.trim() === name)
+    .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
+  return list[0] ?? null;
 }
 
 export function getSubmissionsByChallenge(challengeId: string): Submission[] {

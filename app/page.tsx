@@ -44,10 +44,17 @@ export default function HomePage() {
         </p>
         <ol className="mt-2 text-white text-sm list-decimal pl-5 space-y-2">
           <li>
-            {locale === "en" ? "First time only: set API Key, App Key, and your name, then start the lab. Run (replace YOUR_KEY and YourName):" : "최초 1회: API Key, App Key, 제출할 이름을 넣고 랩 실행. 아래 한 줄 실행 (YOUR_KEY·내이름만 바꿔서):"}
+            {locale === "en"
+              ? "First time only: set API Key and App Key, then start the lab. Name is optional (set on the challenge page when you submit). Run (replace YOUR_KEY):"
+              : "최초 1회: API Key, App Key 넣고 랩 실행. 이름은 생략 가능 (제출 시 챌린지 페이지에서 입력). 아래 한 줄 실행 (YOUR_KEY만 바꿔서):"}
             <pre className="mt-1.5 p-3 rounded-lg bg-[var(--card)] border border-[var(--border)] text-xs overflow-x-auto text-white">
-              <code>{`echo 'DATADOG_API_KEY=YOUR_KEY' > .env.local && echo 'DATADOG_APP_KEY=YOUR_KEY' >> .env.local && echo '내이름' > ~/.fixitfaster-participant && npm run up:full`}</code>
+              <code>{`echo 'DATADOG_API_KEY=YOUR_KEY' > .env.local && echo 'DATADOG_APP_KEY=YOUR_KEY' >> .env.local && npm run up:full`}</code>
             </pre>
+            {locale === "en" ? (
+              <p className="mt-1 text-zinc-400 text-xs">Optional: <code className="bg-[var(--card)] px-1 rounded">echo &apos;YourName&apos; &gt; ~/.fixitfaster-participant</code> if you run submit without copying the command from the challenge page.</p>
+            ) : (
+              <p className="mt-1 text-zinc-400 text-xs">선택: 챌린지 페이지에서 복사한 명령 대신 직접 제출할 때만 <code className="bg-[var(--card)] px-1 rounded">echo &apos;내이름&apos; &gt; ~/.fixitfaster-participant</code> 추가.</p>
+            )}
           </li>
           <li>
             {locale === "en"

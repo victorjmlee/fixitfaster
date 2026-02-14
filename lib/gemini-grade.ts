@@ -282,3 +282,49 @@ export async function gradeSubmission(
   console.log("[grade] challengeId=%s artifactPart=%d solutionPart=%d total=%d", challengeId, artifactPart, solutionPart, total);
   return { success: true, score: total, feedback };
 }
+
+/**
+ * 솔루션(원인/해결) 텍스트만 0~20점으로 채점. 기존 제출에 솔루션 추가 시 사용.
+ */
+export async function gradeSolutionOnly(
+  challengeId: string,
+  causeSummary: string,
+  steps: string
+): Promise<GradeOutcome> {
+  const ref = REFERENCE_ANSWERS[challengeId];
+  if (!ref) return { success: false, reason: "no_ref" };
+  if (!(causeSummary?.trim() || steps?.trim())) {
+    return { success: true, score: 0 };
+  }
+  const prompt = buildPromptForSolution(ref, causeSummary, steps);
+  let text: string | null = null;
+  let firstStatus: number | null = null;
+  const hasAiGateway = !!(process.env.AI_GATEWAY_BASE_URL?.trim() && process.env.AI_GATEWAY_TOKEN?.trim());
+  if (hasAiGateway) {
+    const out = await callAiGateway(prompt);
+    if (out.ok) text = out.text;
+    else if (out.status) firstStatus = out.status;
+  }
+  if (!text) {
+    const apiKey = process.env.GEMINI_API_KEY?.trim();
+    if (!apiKey) {
+      if (firstStatus === null) return { success: false, reason: "no_key" };
+      return { success: false, reason: firstStatus === 429 ? "quota" : "api_error" };
+    }
+    for (const modelId of GEMINI_MODEL_IDS) {
+      const out = await callGemini(apiKey, modelId, prompt);
+      if (out.ok) {
+        text = out.text;
+        break;
+      }
+      if (firstStatus === null) firstStatus = out.status;
+    }
+  }
+  if (!text) {
+    return { success: false, reason: firstStatus === 429 ? "quota" : "api_error" };
+  }
+  const { score: solution100 } = parseScoreFromText(text);
+  const solutionPart = Math.round((solution100 / 100) * SOLUTION_MAX_POINTS);
+  console.log("[grade] Solution-only challengeId=%s solutionPart=%d", challengeId, solutionPart);
+  return { success: true, score: solutionPart };
+}

@@ -143,6 +143,112 @@ function formatTime(seconds: number) {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
+/** 선택: 솔루션(원인/해결) 작성 후 제출 → 0~20점 추가 채점 */
+function SolutionForm({
+  challengeId,
+  participantName,
+  locale,
+  scoreGuide,
+}: {
+  challengeId: string;
+  participantName: string | null;
+  locale: string;
+  scoreGuide?: string;
+}) {
+  const [causeSummary, setCauseSummary] = useState("");
+  const [steps, setSteps] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<{ ok: boolean; newScore?: number; solutionPoints?: number; error?: string } | null>(null);
+
+  const canSubmit = (causeSummary.trim() || steps.trim()) && participantName?.trim();
+
+  const submit = async () => {
+    if (!canSubmit) return;
+    setLoading(true);
+    setResult(null);
+    try {
+      const res = await fetch("/api/submit-solution", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          challengeId,
+          participantName: participantName!.trim(),
+          causeSummary: causeSummary.trim(),
+          steps: steps.trim(),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.ok) {
+        setResult({ ok: true, newScore: data.newScore, solutionPoints: data.solutionPoints });
+      } else {
+        setResult({ ok: false, error: data.error || (res.status === 404 ? (locale === "ko" ? "먼저 터미널에서 제출해 주세요." : "Submit from the terminal first.") : "Failed") });
+      }
+    } catch {
+      setResult({ ok: false, error: "Request failed" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="rounded-xl border border-[var(--border)] bg-[var(--bg)]/50 p-4 space-y-3">
+      <h3 className="text-sm font-semibold text-white">
+        {locale === "ko" ? "선택: 솔루션 작성 (0~20점 추가)" : "Optional: Add solution (0–20 pts)"}
+      </h3>
+      {scoreGuide && (
+        <p className="text-xs text-[var(--accent)]">{scoreGuide}</p>
+      )}
+      <p className="text-xs text-zinc-400">
+        {locale === "ko"
+          ? "터미널로 제출한 뒤, 원인·해결을 적어 보내면 AI가 채점해 최대 20점을 더해 줍니다. 이름이 URL/입력에 있어야 합니다."
+          : "After submitting from the terminal, add cause and resolution here for up to 20 extra points."}
+      </p>
+      <div className="grid gap-2">
+        <label className="text-xs text-zinc-400">
+          {locale === "ko" ? "원인 요약" : "Cause summary"}
+        </label>
+        <textarea
+          value={causeSummary}
+          onChange={(e) => setCauseSummary(e.target.value)}
+          placeholder={locale === "ko" ? "원인을 간단히" : "Brief cause"}
+          rows={2}
+          className="rounded border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm text-white placeholder:text-zinc-500 w-full resize-y"
+        />
+        <label className="text-xs text-zinc-400">
+          {locale === "ko" ? "해결 단계" : "Resolution steps"}
+        </label>
+        <textarea
+          value={steps}
+          onChange={(e) => setSteps(e.target.value)}
+          placeholder={locale === "ko" ? "수정한 내용·단계" : "What you changed / steps"}
+          rows={3}
+          className="rounded border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm text-white placeholder:text-zinc-500 w-full resize-y"
+        />
+      </div>
+      {!participantName?.trim() && (
+        <p className="text-xs text-amber-400">
+          {locale === "ko" ? "위에서 제출 이름을 입력하거나 URL에 ?participantName=이름 을 넣어 주세요." : "Set your name above or in the URL (?participantName=...)."}
+        </p>
+      )}
+      <button
+        type="button"
+        disabled={!canSubmit || loading}
+        onClick={submit}
+        className="rounded border border-[var(--accent)] bg-[var(--accent)]/20 px-4 py-2 text-sm text-[var(--accent)] disabled:opacity-50 hover:bg-[var(--accent)]/30"
+      >
+        {loading ? (locale === "ko" ? "채점 중…" : "Grading…") : (locale === "ko" ? "솔루션 제출 (채점)" : "Submit solution (grade)")}
+      </button>
+      {result && (
+        <p className={`text-sm ${result.ok ? "text-[var(--accent)]" : "text-amber-400"}`}>
+          {result.ok
+            ? (locale === "ko" ? `반영됨: 솔루션 +${result.solutionPoints}점 → 총 ${result.newScore}점` : `Done: +${result.solutionPoints} pts → total ${result.newScore}`)
+            : result.error}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function ChallengePageContent() {
   const { t, locale } = useLocale();
   const params = useParams();
@@ -295,6 +401,13 @@ function ChallengePageContent() {
             {" "}
             <a href="/leaderboard" className="text-[var(--accent)] hover:underline">/leaderboard</a>
           </p>
+
+          <SolutionForm
+            challengeId={id}
+            participantName={participantName}
+            locale={locale}
+            scoreGuide={challenge.scoreGuide}
+          />
         </div>
       )}
     </div>
