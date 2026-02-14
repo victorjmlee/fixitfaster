@@ -45,8 +45,8 @@ export default function HomePage() {
         <ol className="mt-2 text-white text-sm list-decimal pl-5 space-y-2">
           <li>
             {locale === "en"
-              ? "First time only: set API Key and App Key, then start the lab. Name is optional (set on the challenge page when you submit). Run (replace YOUR_KEY):"
-              : "최초 1회: API Key, App Key 넣고 랩 실행. 이름은 생략 가능 (제출 시 챌린지 페이지에서 입력). 아래 한 줄 실행 (YOUR_KEY만 바꿔서):"}
+              ? "First time only: set API Key and App Key, then start the lab. Run (replace YOUR_KEY):"
+              : "최초 1회: API Key, App Key 넣고 랩 실행. 아래 한 줄 실행 (YOUR_KEY만 바꿔서):"}
             <pre className="mt-1.5 p-3 rounded-lg bg-[var(--card)] border border-[var(--border)] text-xs overflow-x-auto text-white">
               <code>{`echo 'DATADOG_API_KEY=YOUR_KEY' > .env.local && echo 'DATADOG_APP_KEY=YOUR_KEY' >> .env.local && npm run up:full`}</code>
             </pre>
@@ -58,8 +58,8 @@ export default function HomePage() {
           </li>
           <li>
             {locale === "en"
-              ? "Before submitting: run the artifacts script in Codespace. Name is read from the file you set at first run. Then submit with the same name on Vercel."
-              : "제출 전: Codespace 터미널에서 아래 명령 실행. 이름은 최초 1회에 저장한 값을 씁니다. 이어서 Vercel에서 같은 이름으로 제출."}
+              ? "Before submitting: run the artifacts script in your Codespace terminal."
+              : "제출 전: Codespace 터미널에서 아래 명령 실행."}
             <pre className="mt-1.5 p-3 rounded-lg bg-[var(--card)] border border-[var(--border)] text-xs overflow-x-auto text-white">
               <code>{`curl -sL "https://raw.githubusercontent.com/victorjmlee/fixitfaster/main/lab-server/scripts/collect-and-send-artifacts.sh" -o /tmp/send-artifacts.sh && FIXITFASTER_URL="https://dd-tse-fix-it-faster.vercel.app" CHALLENGE_ID="scenario-apm" bash /tmp/send-artifacts.sh`}</code>
             </pre>

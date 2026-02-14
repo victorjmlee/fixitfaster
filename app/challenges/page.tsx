@@ -100,8 +100,8 @@ function ChallengesListContent() {
       <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4">
         <p className="text-sm text-zinc-300 mb-2">
           {locale === "ko"
-            ? "공용 환경에서는 내 이름을 입력한 뒤 이동하세요. 제출함 표시와 제출 시 사용할 이름이 이 값으로 고정됩니다."
-            : "On shared devices, enter your name then go. This fixes whose submissions and name are used."}
+            ? "이름을 입력하면 제출과 점수가 해당 이름으로 기록됩니다."
+            : "Enter your name to track your submissions and scores."}
         </p>
         <div className="flex flex-wrap items-center gap-2">
           <input
@@ -117,7 +117,7 @@ function ChallengesListContent() {
             onClick={applyName}
             className="rounded border border-[var(--accent)] bg-[var(--accent)]/20 px-3 py-2 text-sm text-[var(--accent)] hover:bg-[var(--accent)]/30"
           >
-            {locale === "ko" ? "이름으로 이동" : "Go with this name"}
+            {locale === "ko" ? "확인" : "Set name"}
           </button>
         </div>
         {participantNameFromUrl && (
