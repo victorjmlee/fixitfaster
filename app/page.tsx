@@ -1,12 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { useLocale } from "@/app/LocaleContext";
 
 const CODESPACES_URL = "https://codespaces.new/CrystalBellSound/fixitfaster-agent";
 
-export default function HomePage() {
+function HomePageContent() {
   const { locale } = useLocale();
+  const searchParams = useSearchParams();
+  const isCodespace = searchParams.get("codespace") === "true";
 
   return (
     <div className="space-y-8">
@@ -119,7 +123,7 @@ export default function HomePage() {
       </section>
 
       <div className="flex gap-6 pt-4">
-        {process.env.NEXT_PUBLIC_IS_CODESPACE === "true" && (
+        {isCodespace && (
           <Link href="/challenges" className="text-[var(--accent)] hover:underline">
             → {locale === "en" ? "Go to Challenges" : "챌린지로 가기"}
           </Link>
@@ -129,5 +133,13 @@ export default function HomePage() {
         </Link>
       </div>
     </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense>
+      <HomePageContent />
+    </Suspense>
   );
 }
