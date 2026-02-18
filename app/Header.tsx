@@ -1,10 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useLocale } from "./LocaleContext";
 
 export default function Header() {
   const { locale, setLocale, t } = useLocale();
+  const [isEmbedded, setIsEmbedded] = useState(false);
+
+  useEffect(() => {
+    try { setIsEmbedded(window.self !== window.top); } catch { setIsEmbedded(true); }
+  }, []);
   return (
     <header className="border-b border-[var(--border)] bg-[var(--card)]/80 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4">
@@ -16,6 +22,11 @@ export default function Header() {
             <Link href="/" className="hover:text-white">
               {t("nav.start")}
             </Link>
+            {isEmbedded && (
+              <Link href="/challenges" className="hover:text-white">
+                {t("nav.challenges")}
+              </Link>
+            )}
             <Link href="/leaderboard" className="hover:text-white">
               {t("nav.leaderboard")}
             </Link>

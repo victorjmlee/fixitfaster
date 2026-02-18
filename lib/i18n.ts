@@ -2,6 +2,7 @@ export type Locale = "ko" | "en";
 
 export const translations: Record<Locale, Record<string, string>> = {
   en: {
+    "nav.challenges": "Challenges",
     "nav.leaderboard": "Leaderboard",
     "nav.lab": "Lab",
     "nav.start": "Setup guide",
@@ -58,6 +59,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "scenario.scenario-log-timezone": "Log timezone",
   },
   ko: {
+    "nav.challenges": "챌린지",
     "nav.leaderboard": "리더보드",
     "nav.lab": "랩",
     "nav.start": "설정 가이드",
