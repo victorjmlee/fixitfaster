@@ -118,11 +118,14 @@ export default function HomePage() {
         </div>
       </section>
 
-      <p className="pt-4">
+      <div className="flex gap-6 pt-4">
+        <Link href="/challenges" className="text-[var(--accent)] hover:underline">
+          → {locale === "en" ? "Go to Challenges" : "챌린지로 가기"}
+        </Link>
         <Link href="/leaderboard" className="text-[var(--accent)] hover:underline">
           → {locale === "en" ? "Go to Leaderboard" : "리더보드로 가기"}
         </Link>
-      </p>
+      </div>
     </div>
   );
 }
