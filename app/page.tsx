@@ -119,9 +119,11 @@ export default function HomePage() {
       </section>
 
       <div className="flex gap-6 pt-4">
-        <Link href="/challenges" className="text-[var(--accent)] hover:underline">
-          → {locale === "en" ? "Go to Challenges" : "챌린지로 가기"}
-        </Link>
+        {process.env.NEXT_PUBLIC_IS_CODESPACE === "true" && (
+          <Link href="/challenges" className="text-[var(--accent)] hover:underline">
+            → {locale === "en" ? "Go to Challenges" : "챌린지로 가기"}
+          </Link>
+        )}
         <Link href="/leaderboard" className="text-[var(--accent)] hover:underline">
           → {locale === "en" ? "Go to Leaderboard" : "리더보드로 가기"}
         </Link>
