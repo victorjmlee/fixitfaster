@@ -33,15 +33,17 @@ export default function HomePage() {
         </h2>
 
         <ol className="text-white text-sm list-decimal pl-5 space-y-4">
-          <li>
-            <strong>{locale === "en" ? "Open Codespace" : "Codespace 열기"}</strong>
-            <p className="mt-1">
-              <a href={CODESPACES_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-lg border-2 border-[var(--accent)] bg-[var(--accent)]/10 px-4 py-2 text-[var(--accent)] font-medium hover:bg-[var(--accent)]/20">
-                <span aria-hidden>⚡</span>
-                {locale === "en" ? "Open in GitHub Codespaces" : "GitHub Codespaces에서 열기"}
-              </a>
-            </p>
-          </li>
+          {!isEmbedded && (
+            <li>
+              <strong>{locale === "en" ? "Open Codespace" : "Codespace 열기"}</strong>
+              <p className="mt-1">
+                <a href={CODESPACES_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-lg border-2 border-[var(--accent)] bg-[var(--accent)]/10 px-4 py-2 text-[var(--accent)] font-medium hover:bg-[var(--accent)]/20">
+                  <span aria-hidden>⚡</span>
+                  {locale === "en" ? "Open in GitHub Codespaces" : "GitHub Codespaces에서 열기"}
+                </a>
+              </p>
+            </li>
+          )}
           <li>
             <strong>{locale === "en" ? "Wait for setup to finish" : "설정 완료 대기"}</strong>
             <p className="mt-1 text-zinc-400">
