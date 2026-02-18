@@ -2,15 +2,25 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useLocale } from "./LocaleContext";
 
 export default function Header() {
   const { locale, setLocale, t } = useLocale();
+  const pathname = usePathname();
   const [isEmbedded, setIsEmbedded] = useState(false);
 
   useEffect(() => {
     try { setIsEmbedded(window.self !== window.top); } catch { setIsEmbedded(true); }
   }, []);
+
+  const linkClass = (href: string) => {
+    const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
+    return isActive
+      ? "text-[var(--accent)] border-b-2 border-[var(--accent)] pb-0.5"
+      : "text-zinc-400 hover:text-white";
+  };
+
   return (
     <header className="border-b border-[var(--border)] bg-[var(--card)]/80 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4">
@@ -18,16 +28,16 @@ export default function Header() {
           Fix It Faster
         </Link>
         <div className="flex items-center gap-4">
-          <nav className="flex gap-6 text-sm text-white">
-            <Link href="/" className="hover:text-white">
+          <nav className="flex gap-6 text-sm">
+            <Link href="/" className={linkClass("/")}>
               {t("nav.start")}
             </Link>
             {isEmbedded && (
-              <Link href="/challenges" className="hover:text-white">
+              <Link href="/challenges" className={linkClass("/challenges")}>
                 {t("nav.challenges")}
               </Link>
             )}
-            <Link href="/leaderboard" className="hover:text-white">
+            <Link href="/leaderboard" className={linkClass("/leaderboard")}>
               {t("nav.leaderboard")}
             </Link>
           </nav>
