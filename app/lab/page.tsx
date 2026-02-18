@@ -3,9 +3,9 @@
 import { useCallback, useState } from "react";
 import { useLocale } from "@/app/LocaleContext";
 
-const REPO_URL = "https://github.com/CrystalBellSound/fixitfaster-agent.git";
+const REPO_URL = "https://github.com/victorjmlee/fixitfaster-agent.git";
 const LAB_DIR = "~/datadog-fix-it-faster";
-const CODESPACES_URL = "https://codespaces.new/CrystalBellSound/fixitfaster-agent";
+const CODESPACES_URL = "https://codespaces.new/victorjmlee/fixitfaster-agent";
 const VERCEL_URL = "https://dd-tse-fix-it-faster.vercel.app";
 
 const LOCAL_COMMANDS = `mkdir -p ${LAB_DIR} && cd ${LAB_DIR}

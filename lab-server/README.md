@@ -18,7 +18,7 @@ npm install
 Create `.env` if needed:
 
 - `PORT` – default `3001`
-- `LAB_REPO_URL` – default `https://github.com/CrystalBellSound/fixitfaster-agent.git`
+- `LAB_REPO_URL` – default `https://github.com/victorjmlee/fixitfaster-agent.git`
 
 ## Run
 

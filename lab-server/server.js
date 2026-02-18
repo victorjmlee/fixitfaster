@@ -17,7 +17,7 @@ const app = express();
 app.use(express.json());
 
 const PORT = Number(process.env.PORT) || 3001;
-const REPO_URL = process.env.LAB_REPO_URL || "https://github.com/CrystalBellSound/fixitfaster-agent.git";
+const REPO_URL = process.env.LAB_REPO_URL || "https://github.com/victorjmlee/fixitfaster-agent.git";
 const SESSIONS = new Map(); // sessionId -> { apiKey, appKey, createdAt }
 
 // CORS for Vercel frontend

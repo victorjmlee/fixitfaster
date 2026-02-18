@@ -16,7 +16,7 @@ fi
 
 if [ ! -d "$AGENT_DIR" ]; then
   echo "fixitfaster-agent 폴더가 없습니다. 먼저 클론하세요:"
-  echo "  git clone https://github.com/CrystalBellSound/fixitfaster-agent.git $AGENT_DIR"
+  echo "  git clone https://github.com/victorjmlee/fixitfaster-agent.git $AGENT_DIR"
   exit 1
 fi
 

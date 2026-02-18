@@ -12,7 +12,7 @@
 1. **Vercel** → 프로젝트 **dd-tse-fix-it-faster** → **Settings** → **Git**.
 2. **Connected Git Repository** 를 확인:
    - `victorjmlee/fixitfaster` 인지
-   - `CrystalBellSound/fixitfaster` 등 다른 리포인지
+   - `victorjmlee/fixitfaster` 등 다른 리포인지
 3. **Production Branch** (보통 `main`) 확인.
 
 ### 2. 이 리포에서 그 리포로 push
@@ -22,7 +22,7 @@
   cd /Users/victor.lee/fixitfaster
   git push origin main
   ```
-- 연결된 리포가 **CrystalBellSound/fixitfaster** 이면:
+- 연결된 리포가 **victorjmlee/fixitfaster** 이면:
   - 해당 리포에 push 권한이 있어야 함.
   - 또는 Vercel 설정에서 **victorjmlee/fixitfaster** 로 연결을 바꾼 뒤 `git push origin main`.
 
@@ -40,4 +40,4 @@
 | Vercel Git 연결 리포        | 할 일 |
 |----------------------------|--------|
 | victorjmlee/fixitfaster    | `git push origin main` 후 배포 확인 |
-| CrystalBellSound/fixitfaster | 그 리포에 랩 포함된 코드 push 또는 Vercel을 victorjmlee/fixitfaster 로 변경 |
+| victorjmlee/fixitfaster | 그 리포에 랩 포함된 코드 push 또는 Vercel을 victorjmlee/fixitfaster 로 변경 |

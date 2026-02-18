@@ -196,7 +196,7 @@ cd ~
 - 홈 디렉터리로 이동합니다.
 
 ```bash
-git clone https://github.com/CrystalBellSound/fixitfaster.git
+git clone https://github.com/victorjmlee/fixitfaster.git
 ```
 
 - 저장소가 `~/fixitfaster` 로 내려받아집니다. 끝날 때까지 기다립니다.

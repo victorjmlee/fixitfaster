@@ -103,7 +103,7 @@ chmod +x setup-codespaces-devcontainer.sh
 
 ```bash
 cd /Users/victor.lee
-git clone https://github.com/CrystalBellSound/fixitfaster-agent.git
+git clone https://github.com/victorjmlee/fixitfaster-agent.git
 ./fixitfaster/lab-server/setup-codespaces-devcontainer.sh
 ```
 
@@ -164,7 +164,7 @@ git push
 
 fixitfaster(웹앱) Lab 페이지에 버튼/링크를 넣으면 됩니다.
 
-- **링크 주소:** `https://codespaces.new/CrystalBellSound/fixitfaster-agent`  
+- **링크 주소:** `https://codespaces.new/victorjmlee/fixitfaster-agent`  
   (리포가 다른 org/user면 `OWNER/REPO` 만 바꾸면 됨.)
 - **버튼 위치:** API/App Key 폼 위나 아래, 또는 "명령어 보기"와 함께.
 

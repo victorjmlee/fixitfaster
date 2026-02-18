@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useLocale } from "@/app/LocaleContext";
 
-const CODESPACES_URL = "https://codespaces.new/CrystalBellSound/fixitfaster-agent";
+const CODESPACES_URL = "https://codespaces.new/victorjmlee/fixitfaster-agent";
 
 export default function HomePage() {
   const { locale } = useLocale();
