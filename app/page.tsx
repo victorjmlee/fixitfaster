@@ -79,6 +79,13 @@ export default function HomePage() {
         </h2>
         <ol className="text-white text-sm list-decimal pl-5 space-y-3">
           <li>
+            <strong>{locale === "en" ? "Set your name" : "이름 설정"}</strong>
+            {" — "}
+            {locale === "en"
+              ? "Enter your name on the Challenges page before starting. Your submissions and scores will be tracked under this name."
+              : "챌린지 페이지에서 시작 전에 이름을 입력하세요. 제출과 점수가 이 이름으로 기록됩니다."}
+          </li>
+          <li>
             <strong>{locale === "en" ? "Solve" : "풀기"}</strong>
             {" — "}
             {locale === "en"
