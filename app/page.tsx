@@ -44,19 +44,21 @@ export default function HomePage() {
               </p>
             </li>
           )}
-          <li>
-            <strong>{locale === "en" ? "Wait for setup to finish" : "설정 완료 대기"}</strong>
-            <p className="mt-1 text-zinc-400">
-              {locale === "en"
-                ? "Codespace will pull Docker images and build containers automatically. This may take a few minutes. Wait until the terminal shows \"Done\" and the Simple Browser panel opens on the right side."
-                : "Codespace가 Docker 이미지를 받고 컨테이너를 자동으로 빌드합니다. 몇 분 걸릴 수 있습니다. 터미널에 \"Done\"이 표시되고 오른쪽에 Simple Browser 패널이 열릴 때까지 기다려 주세요."}
-            </p>
-            <p className="mt-1 text-zinc-400">
-              {locale === "en"
-                ? "If a popup asks to open Simple Browser or allow a port, click Allow / Open."
-                : "Simple Browser를 열거나 포트를 허용하라는 팝업이 나오면 Allow / Open을 눌러 주세요."}
-            </p>
-          </li>
+          {!isEmbedded && (
+            <li>
+              <strong>{locale === "en" ? "Wait for setup to finish" : "설정 완료 대기"}</strong>
+              <p className="mt-1 text-zinc-400">
+                {locale === "en"
+                  ? "Codespace will pull Docker images and build containers automatically. This may take a few minutes. Wait until the terminal shows \"Done\" and the Simple Browser panel opens on the right side."
+                  : "Codespace가 Docker 이미지를 받고 컨테이너를 자동으로 빌드합니다. 몇 분 걸릴 수 있습니다. 터미널에 \"Done\"이 표시되고 오른쪽에 Simple Browser 패널이 열릴 때까지 기다려 주세요."}
+              </p>
+              <p className="mt-1 text-zinc-400">
+                {locale === "en"
+                  ? "If a popup asks to open Simple Browser or allow a port, click Allow / Open."
+                  : "Simple Browser를 열거나 포트를 허용하라는 팝업이 나오면 Allow / Open을 눌러 주세요."}
+              </p>
+            </li>
+          )}
           <li>
             <strong>{locale === "en" ? "Set API keys and start" : "API Key 설정 후 시작"}</strong>
             <p className="mt-1 text-zinc-400">
