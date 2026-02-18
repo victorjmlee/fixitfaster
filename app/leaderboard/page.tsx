@@ -40,12 +40,6 @@ export default function LeaderboardPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleReset = async () => {
-    if (!confirm(t("leaderboard.confirmReset"))) return;
-    await fetch("/api/reset-leaderboard", { method: "POST" });
-    setList([]);
-  };
-
   if (loading) {
     return (
       <div className="flex justify-center py-16">
@@ -61,15 +55,6 @@ export default function LeaderboardPage() {
           <h1 className="text-2xl font-bold">{t("leaderboard.title")}</h1>
           <p className="mt-1 text-zinc-400 text-sm">{t("leaderboard.subtitle")}</p>
         </div>
-        {list.length > 0 && (
-          <button
-            type="button"
-            onClick={handleReset}
-            className="rounded border border-[var(--border)] px-3 py-1.5 text-sm text-zinc-400 hover:bg-[var(--card)] hover:text-white"
-          >
-            {t("leaderboard.reset")}
-          </button>
-        )}
       </div>
 
       {list.length === 0 ? (
