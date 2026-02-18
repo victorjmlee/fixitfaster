@@ -51,22 +51,22 @@ export default function HomePage() {
             <strong>{locale === "en" ? "Solve" : "풀기"}</strong>
             {" — "}
             {locale === "en"
-              ? "Pick a scenario on the challenge page, start the timer, and fix the issue in Codespace."
-              : "챌린지 페이지에서 시나리오를 고르고 타이머를 시작한 뒤, Codespace에서 원인을 찾고 수정합니다."}
+              ? "Pick a scenario in Codespace and fix the issue."
+              : "Codespace에서 시나리오를 고르고 원인을 찾아 수정합니다."}
           </li>
           <li>
             <strong>{locale === "en" ? "Submit" : "제출"}</strong>
             {" — "}
             {locale === "en"
-              ? "Click Copy on the challenge page (timer stops), then paste in the Codespace terminal. Artifacts + submission in one step."
-              : "챌린지 페이지에서 복사 버튼을 누르면 타이머가 멈추고, Codespace 터미널에 붙여넣기만 하면 아티팩트 전송 + 제출이 한 번에 끝납니다."}
+              ? "Run the submit command in the Codespace terminal. Artifacts + submission in one step."
+              : "Codespace 터미널에서 제출 명령을 실행하면 아티팩트 전송 + 제출이 한 번에 끝납니다."}
           </li>
           <li>
-            <strong>{locale === "en" ? "Solution (optional)" : "솔루션 (선택)"}</strong>
+            <strong>{locale === "en" ? "Leaderboard" : "리더보드"}</strong>
             {" — "}
             {locale === "en"
-              ? "Write cause and resolution on the same page for up to 20 extra points (AI-graded)."
-              : "같은 페이지에서 원인과 해결 방법을 작성하면 AI가 추가 채점합니다 (최대 20점)."}
+              ? "Check your score and ranking on the leaderboard."
+              : "리더보드에서 점수와 순위를 확인하세요."}
           </li>
         </ol>
       </section>
@@ -119,8 +119,8 @@ export default function HomePage() {
       </section>
 
       <p className="pt-4">
-        <Link href="/challenges" className="text-[var(--accent)] hover:underline">
-          → {locale === "en" ? "Go to Challenges" : "챌린지로 가기"}
+        <Link href="/leaderboard" className="text-[var(--accent)] hover:underline">
+          → {locale === "en" ? "Go to Leaderboard" : "리더보드로 가기"}
         </Link>
       </p>
     </div>
