@@ -31,21 +31,42 @@ export default function HomePage() {
         <h2 className="text-lg font-semibold text-white mt-8 mb-2">
           {locale === "en" ? "Quick start" : "빠른 시작"}
         </h2>
-        <p className="text-white text-sm mb-2">
-          {locale === "en" ? "Open the lab in Codespace:" : "Codespace에서 랩 열기:"}
-        </p>
-        <p>
-          <a href={CODESPACES_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-lg border-2 border-[var(--accent)] bg-[var(--accent)]/10 px-4 py-2 text-[var(--accent)] font-medium hover:bg-[var(--accent)]/20">
-            <span aria-hidden>⚡</span>
-            {locale === "en" ? "Open in GitHub Codespaces" : "GitHub Codespaces에서 열기"}
-          </a>
-        </p>
-        <p className="mt-4 text-white text-sm font-medium">
-          {locale === "en" ? "First time only — set API keys and start (replace YOUR_KEY):" : "최초 1회 — API Key 넣고 시작 (YOUR_KEY만 바꿔서):"}
-        </p>
-        <pre className="mt-1.5 p-3 rounded-lg bg-[var(--card)] border border-[var(--border)] text-xs overflow-x-auto text-white">
-          <code>{`echo 'DATADOG_API_KEY=YOUR_KEY' > .env.local && echo 'DATADOG_APP_KEY=YOUR_KEY' >> .env.local && npm run up:full`}</code>
-        </pre>
+
+        <ol className="text-white text-sm list-decimal pl-5 space-y-4">
+          <li>
+            <strong>{locale === "en" ? "Open Codespace" : "Codespace 열기"}</strong>
+            <p className="mt-1">
+              <a href={CODESPACES_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-lg border-2 border-[var(--accent)] bg-[var(--accent)]/10 px-4 py-2 text-[var(--accent)] font-medium hover:bg-[var(--accent)]/20">
+                <span aria-hidden>⚡</span>
+                {locale === "en" ? "Open in GitHub Codespaces" : "GitHub Codespaces에서 열기"}
+              </a>
+            </p>
+          </li>
+          <li>
+            <strong>{locale === "en" ? "Wait for setup to finish" : "설정 완료 대기"}</strong>
+            <p className="mt-1 text-zinc-400">
+              {locale === "en"
+                ? "Codespace will pull Docker images and build containers automatically. This may take a few minutes. Wait until the terminal shows \"Done\" and the Simple Browser panel opens on the right side."
+                : "Codespace가 Docker 이미지를 받고 컨테이너를 자동으로 빌드합니다. 몇 분 걸릴 수 있습니다. 터미널에 \"Done\"이 표시되고 오른쪽에 Simple Browser 패널이 열릴 때까지 기다려 주세요."}
+            </p>
+            <p className="mt-1 text-zinc-400">
+              {locale === "en"
+                ? "If a popup asks to open Simple Browser or allow a port, click Allow / Open."
+                : "Simple Browser를 열거나 포트를 허용하라는 팝업이 나오면 Allow / Open을 눌러 주세요."}
+            </p>
+          </li>
+          <li>
+            <strong>{locale === "en" ? "Set API keys and start" : "API Key 설정 후 시작"}</strong>
+            <p className="mt-1 text-zinc-400">
+              {locale === "en"
+                ? "First time only — replace YOUR_KEY with your actual Datadog API and App keys:"
+                : "최초 1회 — YOUR_KEY를 실제 Datadog API Key, App Key로 바꿔서 실행:"}
+            </p>
+            <pre className="mt-1.5 p-3 rounded-lg bg-[var(--card)] border border-[var(--border)] text-xs overflow-x-auto text-white">
+              <code>{`echo 'DATADOG_API_KEY=YOUR_KEY' > .env.local && echo 'DATADOG_APP_KEY=YOUR_KEY' >> .env.local && npm run up:full`}</code>
+            </pre>
+          </li>
+        </ol>
       </section>
 
       <section>
