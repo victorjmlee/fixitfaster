@@ -26,6 +26,9 @@ function ChallengesListContent() {
 
   useEffect(() => {
     setNameInput(participantNameFromUrl);
+    if (participantNameFromUrl) {
+      try { sessionStorage.setItem("fixitfaster-participant-name", participantNameFromUrl); } catch { /* ignore */ }
+    }
   }, [participantNameFromUrl]);
 
   // URL에 이름 없는데 sessionStorage에 있으면 복원 (리더보드→챌린지 돌아올 때 제출함 유지)
@@ -87,7 +90,10 @@ function ChallengesListContent() {
 
   const applyName = () => {
     const name = nameInput.trim();
-    if (name) router.push(`/challenges?participantName=${encodeURIComponent(name)}`);
+    if (name) {
+      try { sessionStorage.setItem("fixitfaster-participant-name", name); } catch { /* ignore */ }
+      router.push(`/challenges?participantName=${encodeURIComponent(name)}`);
+    }
   };
 
   return (
