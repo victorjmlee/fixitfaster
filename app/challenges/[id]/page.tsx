@@ -271,6 +271,9 @@ function ChallengePageContent() {
 
   useEffect(() => {
     setParticipantNameLocal(participantNameFromUrl ?? "");
+    if (participantNameFromUrl) {
+      try { sessionStorage.setItem("fixitfaster-participant-name", participantNameFromUrl); } catch { /* ignore */ }
+    }
   }, [participantNameFromUrl]);
 
   const tick = useCallback(() => setElapsed((s) => s + 1), []);
