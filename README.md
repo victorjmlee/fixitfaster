@@ -6,16 +6,20 @@ Datadog 트러블슈팅 챌린지와 리더보드 앱입니다. Codespace에서 
 
 ## 참가자용: 어떻게 플레이하나요?
 
-### 1. 챌린지 풀기
+### 1. 이름 설정
+
+- 챌린지 페이지에서 시작 전에 이름을 입력하세요. 제출과 점수가 이 이름으로 기록됩니다.
+
+### 2. 챌린지 풀기
 
 - 챌린지 페이지에서 시나리오를 고르고 타이머를 시작합니다.
 - Codespace에서 원인을 찾고 수정합니다.
 
-### 2. 제출
+### 3. 제출
 
 챌린지 페이지에서 **복사** 버튼을 누르면 타이머가 멈추고, 제출 명령이 클립보드에 복사됩니다. Codespace 터미널에 붙여넣기만 하면 아티팩트 전송 + 제출이 한 번에 끝납니다. 선택으로 원인과 해결 방법을 작성하면 최대 20점 추가 (AI 채점).
 
-### 3. 솔루션 작성 (선택)
+### 4. 솔루션 작성 (선택)
 
 제출 후, 같은 챌린지 페이지에서 원인 요약과 해결 방법을 작성하면 AI가 추가 채점합니다 (최대 20점).
 
@@ -46,16 +50,20 @@ Datadog troubleshooting challenges and leaderboard app. Solve issues in Codespac
 
 ## For participants: How do I play?
 
-### 1. Solve the challenge
+### 1. Set your name
+
+- Enter your name on the Challenges page before starting. Your submissions and scores will be tracked under this name.
+
+### 2. Solve the challenge
 
 - Pick a scenario on the challenge page and start the timer.
 - Find and fix the issue in Codespace.
 
-### 2. Submit
+### 3. Submit
 
 Click **Copy** on the challenge page — the timer stops and the submit command is copied to your clipboard. Paste it in the Codespace terminal to send artifacts and submit in one step. Optionally, write your root cause and resolution for up to 20 bonus pts (AI-graded).
 
-### 3. Add a solution (optional)
+### 4. Add a solution (optional)
 
 After submitting, write the cause and resolution on the same challenge page. AI grades it for up to 20 extra points.
 
