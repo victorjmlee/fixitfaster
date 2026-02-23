@@ -111,6 +111,51 @@ export default function HomePage() {
 
       <section>
         <h2 className="text-lg font-semibold text-white mt-8 mb-3">
+          {locale === "en" ? "Scoring" : "채점·점수 안내"}
+        </h2>
+        <div className="overflow-x-auto rounded-lg border border-[var(--border)]">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[var(--border)]">
+                <th className="text-left p-3 text-white font-semibold">{locale === "en" ? "Scenario" : "시나리오"}</th>
+                <th className="text-left p-3 text-white font-semibold">{locale === "en" ? "Result score" : "결과 점수"}</th>
+                <th className="text-left p-3 text-white font-semibold">{locale === "en" ? "Max (result + solution)" : "만점 (결과 + 솔루션)"}</th>
+              </tr>
+            </thead>
+            <tbody className="text-white">
+              <tr className="border-b border-[var(--border)] hover:bg-white/5"><td className="p-3">{locale === "en" ? "Infra (Hostname)" : "인프라 (호스트명)"}</td><td className="p-3">50</td><td className="p-3">70</td></tr>
+              <tr className="border-b border-[var(--border)] hover:bg-white/5"><td className="p-3">Autodiscovery</td><td className="p-3">60</td><td className="p-3">80</td></tr>
+              <tr className="border-b border-[var(--border)] hover:bg-white/5"><td className="p-3">APM</td><td className="p-3">80</td><td className="p-3">100</td></tr>
+              <tr className="border-b border-[var(--border)] hover:bg-white/5"><td className="p-3">Correlation</td><td className="p-3">50</td><td className="p-3">70</td></tr>
+              <tr className="border-b border-[var(--border)] hover:bg-white/5"><td className="p-3">{locale === "en" ? "Custom metrics" : "커스텀 메트릭"}</td><td className="p-3">80</td><td className="p-3">100</td></tr>
+              <tr className="hover:bg-white/5"><td className="p-3">{locale === "en" ? "Log timezone (Bonus)" : "로그 타임존 (보너스)"}</td><td className="p-3">—</td><td className="p-3">20</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <ul className="text-white text-sm mt-3 space-y-1.5 list-disc pl-5">
+          <li>
+            <strong>{locale === "en" ? "Solution (optional):" : "솔루션 (선택):"}</strong>{" "}
+            {locale === "en"
+              ? "Write cause and resolution for 0–20 pts (AI-graded)."
+              : "원인/해결을 작성하면 AI가 0~20점으로 채점합니다."}
+          </li>
+          <li>
+            <strong>{locale === "en" ? "Bonus (Log timezone):" : "보너스 (로그 타임존):"}</strong>{" "}
+            {locale === "en"
+              ? "Fixed in the Datadog UI. Solution only — up to 20 pts."
+              : "Datadog UI에서 파이프라인을 수정하는 시나리오입니다. 솔루션 작성만으로 최대 20점."}
+          </li>
+          <li>
+            <strong>{locale === "en" ? "Total:" : "총점:"}</strong>{" "}
+            {locale === "en"
+              ? "Result + Solution (capped at 100). Ties ranked by shorter time."
+              : "결과 + 솔루션 (최대 100점). 동점이면 소요 시간이 짧은 사람이 위."}
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 className="text-lg font-semibold text-white mt-8 mb-3">
           {locale === "en" ? "Commands" : "명령어"}
         </h2>
         <div className="overflow-x-auto rounded-lg border border-[var(--border)]">
