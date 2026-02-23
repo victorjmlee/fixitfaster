@@ -13,7 +13,7 @@ Datadog 트러블슈팅 챌린지와 리더보드 앱입니다. Codespace에서 
 
 ### 2. 제출
 
-챌린지 페이지에서 **복사** 버튼을 누르면 타이머가 멈추고, 제출 명령이 클립보드에 복사됩니다. Codespace 터미널에 붙여넣기만 하면 아티팩트 전송 + 제출이 한 번에 끝납니다.
+챌린지 페이지에서 **복사** 버튼을 누르면 타이머가 멈추고, 제출 명령이 클립보드에 복사됩니다. Codespace 터미널에 붙여넣기만 하면 아티팩트 전송 + 제출이 한 번에 끝납니다. 선택으로 원인과 해결 방법을 작성하면 최대 20점 추가 (AI 채점).
 
 ### 3. 솔루션 작성 (선택)
 
@@ -53,7 +53,7 @@ Datadog troubleshooting challenges and leaderboard app. Solve issues in Codespac
 
 ### 2. Submit
 
-Click **Copy** on the challenge page — the timer stops and the submit command is copied to your clipboard. Paste it in the Codespace terminal to send artifacts and submit in one step.
+Click **Copy** on the challenge page — the timer stops and the submit command is copied to your clipboard. Paste it in the Codespace terminal to send artifacts and submit in one step. Optionally, write your root cause and resolution for up to 20 bonus pts (AI-graded).
 
 ### 3. Add a solution (optional)
 
