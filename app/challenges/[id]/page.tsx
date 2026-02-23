@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState, useRef, useCallback } from "react";
 import { useLocale } from "@/app/LocaleContext";
@@ -259,6 +260,7 @@ function ChallengePageContent() {
   const searchParams = useSearchParams();
   const id = params.id as string;
   const [challenge, setChallenge] = useState<Challenge | null>(null);
+  const [challenges, setChallenges] = useState<{ id: string; title: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [elapsed, setElapsed] = useState(0);
   const [started, setStarted] = useState(false);
@@ -284,6 +286,12 @@ function ChallengePageContent() {
       .then(setChallenge)
       .finally(() => setLoading(false));
   }, [id, locale]);
+
+  useEffect(() => {
+    fetch("/api/challenges")
+      .then((r) => (r.ok ? r.json() : []))
+      .then(setChallenges);
+  }, []);
 
   useEffect(() => {
     if (started && !timerStopped) {
@@ -423,6 +431,25 @@ function ChallengePageContent() {
           />
         </div>
       )}
+
+      {challenges.length > 0 && (() => {
+        const idx = challenges.findIndex((c) => c.id === id);
+        const nextChallenge = idx >= 0 && idx < challenges.length - 1 ? challenges[idx + 1] : null;
+        const nameParam = participantName ? `?participantName=${encodeURIComponent(participantName)}` : "";
+        return (
+          <div className="flex gap-6 pt-2">
+            {nextChallenge ? (
+              <Link href={`/challenges/${nextChallenge.id}${nameParam}`} className="text-[var(--accent)] hover:underline">
+                {locale === "ko" ? `다음 시나리오 →` : `Next scenario →`}
+              </Link>
+            ) : (
+              <Link href="/challenges" className="text-[var(--accent)] hover:underline">
+                {locale === "ko" ? `← 챌린지 목록으로` : `← Back to Challenges`}
+              </Link>
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 }
