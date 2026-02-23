@@ -96,8 +96,8 @@ export default function HomePage() {
             <strong>{locale === "en" ? "Submit" : "제출"}</strong>
             {" — "}
             {locale === "en"
-              ? "Run the submit command in the Codespace terminal. Artifacts + submission in one step."
-              : "Codespace 터미널에서 제출 명령을 실행하면 아티팩트 전송 + 제출이 한 번에 끝납니다."}
+              ? "Run the submit command in the Codespace terminal. Artifacts + submission in one step. Optionally, write your root cause and resolution for up to 20 bonus pts (AI-graded)."
+              : "Codespace 터미널에서 제출 명령을 실행하면 아티팩트 전송 + 제출이 한 번에 끝납니다. 선택으로 원인과 해결 방법을 작성하면 최대 20점 추가 (AI 채점)."}
           </li>
           <li>
             <strong>{locale === "en" ? "Leaderboard" : "리더보드"}</strong>
