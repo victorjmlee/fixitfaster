@@ -410,11 +410,14 @@ function ChallengePageContent() {
       {challenges.length > 0 && (() => {
         const idx = challenges.findIndex((c) => c.id === id);
         const nextChallenge = idx >= 0 && idx < challenges.length - 1 ? challenges[idx + 1] : null;
-        const nameParam = participantName ? `?participantName=${encodeURIComponent(participantName)}` : "";
+        const params = new URLSearchParams();
+        if (participantName) params.set("participantName", participantName);
+        if (codespaceId) params.set("codespace", codespaceId);
+        const qs = params.toString() ? `?${params.toString()}` : "";
         return (
           <div className="flex gap-6 pt-2">
             {nextChallenge ? (
-              <Link href={`/challenges/${nextChallenge.id}${nameParam}`} className="text-[var(--accent)] hover:underline">
+              <Link href={`/challenges/${nextChallenge.id}${qs}`} className="text-[var(--accent)] hover:underline">
                 {locale === "ko" ? `다음 시나리오 →` : `Next scenario →`}
               </Link>
             ) : (
