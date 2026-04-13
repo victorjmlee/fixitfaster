@@ -111,40 +111,47 @@ export async function saveArtifacts(
   writeAllFile(data);
 }
 
-/** Get and remove artifacts for this challenge+participant. One-time use for grading. */
+/** Get and remove artifacts for this challenge+participant. One-time use for grading.
+ *  Tries challengeId-specific key first, then falls back to "_auto" key (auto-push). */
 export async function getAndConsumeArtifacts(
   challengeId: string,
   participantName: string
 ): Promise<string | null> {
   const kv = await getKv();
   if (kv) {
-    const k = keyKv(challengeId, participantName);
-    const raw = await kv.get<string>(k);
-    if (!raw) return null;
-    let entry: ArtifactEntry;
-    try {
-      entry = typeof raw === "string" ? JSON.parse(raw) : raw;
-    } catch {
-      return null;
-    }
-    if (Date.now() - entry.at > TTL_MS) {
+    for (const cid of [challengeId, "_auto"]) {
+      const k = keyKv(cid, participantName);
+      const raw = await kv.get<string>(k);
+      if (!raw) continue;
+      let entry: ArtifactEntry;
+      try {
+        entry = typeof raw === "string" ? JSON.parse(raw) : raw;
+      } catch {
+        continue;
+      }
+      if (Date.now() - entry.at > TTL_MS) {
+        await kv.del(k);
+        continue;
+      }
       await kv.del(k);
-      return null;
+      return entry.artifacts;
     }
-    await kv.del(k);
-    return entry.artifacts;
-  }
-
-  const k = keyFile(challengeId, participantName);
-  const data = readAllFile();
-  const entry = data[k];
-  if (!entry) return null;
-  if (Date.now() - entry.at > TTL_MS) {
-    delete data[k];
-    writeAllFile(data);
     return null;
   }
-  delete data[k];
-  writeAllFile(data);
-  return entry.artifacts;
+
+  const data = readAllFile();
+  for (const cid of [challengeId, "_auto"]) {
+    const k = keyFile(cid, participantName);
+    const entry = data[k];
+    if (!entry) continue;
+    if (Date.now() - entry.at > TTL_MS) {
+      delete data[k];
+      writeAllFile(data);
+      continue;
+    }
+    delete data[k];
+    writeAllFile(data);
+    return entry.artifacts;
+  }
+  return null;
 }

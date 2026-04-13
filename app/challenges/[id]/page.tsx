@@ -5,8 +5,6 @@ import { useParams, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState, useRef, useCallback } from "react";
 import { useLocale } from "@/app/LocaleContext";
 
-const CODESPACE_URL_KEY = "fixitfaster_codespace_url";
-
 type Challenge = {
   id: string;
   title: string;
@@ -29,35 +27,29 @@ function formatTime(seconds: number) {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-/** 메인 제출 폼: Codespace에서 아티팩트 수집 + 제출을 한 번에 */
+/** 메인 제출 폼: artifact(자동 push) + 솔루션(선택) 통합 */
 function SubmitForm({
   challengeId,
   locale,
   elapsed,
   participantName,
+  scoreGuide,
   onSubmit,
 }: {
   challengeId: string;
   locale: string;
   elapsed: number;
   participantName: string | null;
+  scoreGuide?: string;
   onSubmit: () => void;
 }) {
-  const [codespaceUrl, setCodespaceUrl] = useState("");
   const [causeSummary, setCauseSummary] = useState("");
   const [steps, setSteps] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState<{ score?: number; _gradingSkipped?: boolean; _gradingHint?: string } | null>(null);
+  const [result, setResult] = useState<{ score?: number; _gradingSkipped?: boolean; _gradingHint?: string; _gradingReason?: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    try { setCodespaceUrl(sessionStorage.getItem(CODESPACE_URL_KEY) || ""); } catch {}
-  }, []);
-  useEffect(() => {
-    try { if (codespaceUrl) sessionStorage.setItem(CODESPACE_URL_KEY, codespaceUrl); } catch {}
-  }, [codespaceUrl]);
-
-  const canSubmit = !!participantName?.trim() && !!codespaceUrl.trim() && !submitting && !result;
+  const canSubmit = !!participantName?.trim() && !submitting && !result;
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -65,44 +57,24 @@ function SubmitForm({
     setError(null);
 
     try {
-      const baseUrl = codespaceUrl.trim().replace(/\/$/, "");
-      let artifacts = "";
-      try {
-        const artifactRes = await fetch(`${baseUrl}/artifacts`, {
-          signal: AbortSignal.timeout(10000),
-        });
-        if (!artifactRes.ok) throw new Error("status " + artifactRes.status);
-        const data = await artifactRes.json();
-        artifacts = data.artifacts || "";
-      } catch {
-        setError(
-          locale === "ko"
-            ? "Codespace에 연결할 수 없습니다. URL을 확인하고, Codespace PORTS 탭에서 4000번 포트가 Public인지 확인하세요."
-            : "Cannot reach Codespace. Check the URL and make sure port 4000 is set to Public in the PORTS tab."
-        );
-        setSubmitting(false);
-        return;
-      }
-
-      const submitRes = await fetch("/api/submit", {
+      const res = await fetch("/api/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           challengeId,
           participantName: participantName!.trim(),
-          artifacts,
           causeSummary: causeSummary.trim(),
           steps: steps.trim(),
           elapsedSeconds: elapsed,
         }),
       });
 
-      const submitData = await submitRes.json();
-      if (submitRes.ok) {
-        setResult(submitData);
+      const data = await res.json();
+      if (res.ok) {
+        setResult(data);
         onSubmit();
       } else {
-        setError(submitData.error || "Submit failed");
+        setError(data.error || "Submit failed");
       }
     } catch {
       setError("Request failed");
@@ -113,23 +85,11 @@ function SubmitForm({
 
   return (
     <div className="space-y-3">
-      <div className="grid gap-1">
-        <label className="text-xs text-zinc-400">
-          Codespace Artifact Server URL
-        </label>
-        <input
-          type="url"
-          value={codespaceUrl}
-          onChange={(e) => setCodespaceUrl(e.target.value)}
-          placeholder="https://xxx-4000.app.github.dev"
-          className="rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-1.5 text-sm text-white placeholder:text-zinc-500 w-full font-mono"
-        />
-        <p className="text-xs text-zinc-500">
-          {locale === "ko"
-            ? "Codespace PORTS 탭 → 4000번 포트 주소를 붙여넣기 (Visibility: Public 필수)"
-            : "Paste port 4000 address from Codespace PORTS tab (Visibility must be Public)"}
-        </p>
-      </div>
+      {scoreGuide && (
+        <div className="rounded-lg border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-3 py-2 text-sm text-[var(--accent)]">
+          {scoreGuide}
+        </div>
+      )}
 
       <div className="rounded-lg border border-[var(--border)] bg-[var(--bg)]/50 p-3 space-y-2">
         <p className="text-xs text-zinc-400">
@@ -183,19 +143,17 @@ function SubmitForm({
   );
 }
 
-/** 솔루션(원인/해결) 추가 제출 (기존 제출에 보너스 점수 추가) */
+/** 솔루션 전용 시나리오(보너스) 제출 폼 */
 function SolutionForm({
   challengeId,
   participantName,
   locale,
   scoreGuide,
-  isSolutionOnly,
 }: {
   challengeId: string;
   participantName: string | null;
   locale: string;
   scoreGuide?: string;
-  isSolutionOnly?: boolean;
 }) {
   const [causeSummary, setCauseSummary] = useState("");
   const [steps, setSteps] = useState("");
@@ -223,7 +181,7 @@ function SolutionForm({
       if (res.ok && data.ok) {
         setResult({ ok: true, newScore: data.newScore, solutionPoints: data.solutionPoints });
       } else {
-        setResult({ ok: false, error: data.error || (res.status === 404 ? (locale === "ko" ? "먼저 제출해 주세요." : "Submit first.") : "Failed") });
+        setResult({ ok: false, error: data.error || "Failed" });
       }
     } catch {
       setResult({ ok: false, error: "Request failed" });
@@ -233,42 +191,29 @@ function SolutionForm({
   };
 
   return (
-    <div className="rounded-xl border border-[var(--border)] bg-[var(--bg)]/50 p-4 space-y-3">
-      <h3 className="text-sm font-semibold text-white">
-        {isSolutionOnly
-          ? (locale === "ko" ? "솔루션 작성 (보너스 채점)" : "Submit solution (bonus)")
-          : (locale === "ko" ? "솔루션 추가 제출 (0~20점 추가)" : "Add solution (0–20 bonus pts)")}
-      </h3>
+    <div className="space-y-3">
       {scoreGuide && (
-        <p className="text-xs text-[var(--accent)]">{scoreGuide}</p>
+        <div className="rounded-lg border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-3 py-2 text-sm text-[var(--accent)]">
+          {scoreGuide}
+        </div>
       )}
       <p className="text-xs text-zinc-400">
-        {isSolutionOnly
-          ? (locale === "ko"
-              ? "원인과 해결 방법을 적어 보내면 AI가 채점합니다."
-              : "Write the cause and resolution below. AI will grade your answer.")
-          : (locale === "ko"
-              ? "제출 후 원인·해결을 적어 보내면 AI가 채점해 최대 20점을 더해 줍니다."
-              : "After submitting, add cause and resolution here for up to 20 extra points.")}
+        {locale === "ko"
+          ? "원인과 해결 방법을 적어 보내면 AI가 채점합니다."
+          : "Write the cause and resolution below. AI will grade your answer."}
       </p>
       <div className="grid gap-2">
-        <label className="text-xs text-zinc-400">
-          {locale === "ko" ? "원인 요약" : "Cause summary"}
-        </label>
         <textarea
           value={causeSummary}
           onChange={(e) => setCauseSummary(e.target.value)}
-          placeholder={locale === "ko" ? "원인을 간단히" : "Brief cause"}
+          placeholder={locale === "ko" ? "원인 요약" : "Cause summary"}
           rows={2}
           className="rounded border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm text-white placeholder:text-zinc-500 w-full resize-y"
         />
-        <label className="text-xs text-zinc-400">
-          {locale === "ko" ? "해결 단계" : "Resolution steps"}
-        </label>
         <textarea
           value={steps}
           onChange={(e) => setSteps(e.target.value)}
-          placeholder={locale === "ko" ? "수정한 내용·단계" : "What you changed / steps"}
+          placeholder={locale === "ko" ? "해결 단계" : "Resolution steps"}
           rows={3}
           className="rounded border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm text-white placeholder:text-zinc-500 w-full resize-y"
         />
@@ -277,14 +222,14 @@ function SolutionForm({
         type="button"
         disabled={!canSubmit || loading}
         onClick={submit}
-        className="rounded border border-[var(--accent)] bg-[var(--accent)]/20 px-4 py-2 text-sm text-[var(--accent)] disabled:opacity-50 hover:bg-[var(--accent)]/30"
+        className="w-full rounded-lg bg-[var(--accent)] px-4 py-3 text-sm font-medium text-[var(--bg)] disabled:opacity-50 hover:opacity-90"
       >
-        {loading ? (locale === "ko" ? "채점 중…" : "Grading…") : (locale === "ko" ? "솔루션 제출 (채점)" : "Submit solution (grade)")}
+        {loading ? (locale === "ko" ? "채점 중…" : "Grading…") : (locale === "ko" ? "제출하기" : "Submit")}
       </button>
       {result && (
         <p className={`text-sm ${result.ok ? "text-[var(--accent)]" : "text-amber-400"}`}>
           {result.ok
-            ? (locale === "ko" ? `반영됨: 솔루션 +${result.solutionPoints}점 → 총 ${result.newScore}점` : `Done: +${result.solutionPoints} pts → total ${result.newScore}`)
+            ? (locale === "ko" ? `채점 완료: ${result.solutionPoints}점` : `Score: ${result.solutionPoints}`)
             : result.error}
         </p>
       )}
@@ -413,15 +358,10 @@ function ChallengePageContent() {
       {started && (
         <div className="space-y-4 rounded-xl border border-[var(--border)] bg-[var(--card)] p-5">
           <h2 className="text-base font-semibold text-white">{t("challenge.submit")}</h2>
-          {challenge.scoreGuide ? (
-            <div className="rounded-lg border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-3 py-2 text-sm text-[var(--accent)]">
-              {challenge.scoreGuide}
-            </div>
-          ) : null}
           {!participantNameFromUrl && (
             <div className="flex flex-wrap items-center gap-2">
               <label className="text-sm text-zinc-400">
-                {locale === "ko" ? "제출할 때 사용할 이름 (URL에 없으면 여기 입력):" : "Your name for submission (if not in URL, enter here):"}
+                {locale === "ko" ? "이름:" : "Name:"}
               </label>
               <input
                 type="text"
@@ -437,28 +377,28 @@ function ChallengePageContent() {
               {locale === "ko" ? `제출 이름: ${participantNameFromUrl}` : `Submitting as: ${participantNameFromUrl}`}
             </p>
           )}
-          {challenge.artifactScore !== 0 && (
+          {challenge.artifactScore !== 0 ? (
             <SubmitForm
               challengeId={id}
               locale={locale}
               elapsed={elapsed}
               participantName={participantName}
+              scoreGuide={challenge.scoreGuide}
               onSubmit={stopTimer}
+            />
+          ) : (
+            <SolutionForm
+              challengeId={id}
+              participantName={participantName}
+              locale={locale}
+              scoreGuide={challenge.scoreGuide}
             />
           )}
           <p className="text-sm text-zinc-500">
-            {locale === "ko" ? "채점 후 리더보드에서 점수를 확인하세요." : "Check your score on the leaderboard after grading."}
+            {locale === "ko" ? "리더보드에서 점수를 확인하세요." : "Check your score on the leaderboard."}
             {" "}
             <a href="/leaderboard" className="text-[var(--accent)] hover:underline">/leaderboard</a>
           </p>
-
-          <SolutionForm
-            challengeId={id}
-            participantName={participantName}
-            locale={locale}
-            scoreGuide={challenge.scoreGuide}
-            isSolutionOnly={challenge.artifactScore === 0}
-          />
         </div>
       )}
 
