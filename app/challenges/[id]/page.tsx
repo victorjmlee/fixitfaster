@@ -4,6 +4,32 @@ import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState, useRef, useCallback } from "react";
 import { useLocale } from "@/app/LocaleContext";
+import { seedFromParams, getSession } from "@/lib/session";
+
+function useHeartbeat(codespaceId: string | null) {
+  const [status, setStatus] = useState<"unknown" | "connected" | "stale" | "disconnected">("unknown");
+
+  useEffect(() => {
+    if (!codespaceId) { setStatus("unknown"); return; }
+    let cancelled = false;
+    const check = async () => {
+      try {
+        const res = await fetch(`/api/heartbeat?codespaceId=${encodeURIComponent(codespaceId)}`);
+        const data = await res.json();
+        if (cancelled) return;
+        if (data.connected) setStatus(data.age < 30000 ? "connected" : "stale");
+        else setStatus("disconnected");
+      } catch {
+        if (!cancelled) setStatus("disconnected");
+      }
+    };
+    check();
+    const interval = setInterval(check, 10000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [codespaceId]);
+
+  return status;
+}
 
 const COMMANDS = [
   { id: "agent-restart", label: { ko: "Agent 재시작", en: "Restart Agent" } },
@@ -50,7 +76,7 @@ function CodespaceCommands({ codespaceId, locale }: { codespaceId: string; local
   return (
     <div className="rounded-lg border border-[var(--border)] bg-[var(--bg)]/50 p-3 space-y-2">
       <p className="text-xs text-zinc-500">
-        {locale === "ko" ? "Codespace 명령" : "Codespace Commands"}
+        {locale === "ko" ? "제출 전에 수정 결과를 확인하세요" : "Verify your fix before submitting"}
       </p>
       <div className="flex flex-wrap gap-2">
         {COMMANDS.map((cmd) => (
@@ -112,7 +138,7 @@ function scoreMessage(score: number, locale: string): string {
   return "Keep trying!";
 }
 
-function ScoreReveal({ score, locale }: { score: number; locale: string }) {
+function ScoreReveal({ score, artifactScore, locale }: { score: number; artifactScore?: number; locale: string }) {
   const [display, setDisplay] = useState(0);
   const frameRef = useRef<number>(0);
 
@@ -129,10 +155,19 @@ function ScoreReveal({ score, locale }: { score: number; locale: string }) {
     return () => cancelAnimationFrame(frameRef.current);
   }, [score]);
 
+  const solutionScore = artifactScore != null ? score - artifactScore : null;
+
   return (
     <div className={`animate-score-pop text-center py-3 ${score >= 80 ? "score-glow rounded-lg" : ""}`}>
       <p className="font-mono text-4xl font-bold text-[var(--accent)]">{display}</p>
       <p className="text-sm text-zinc-400 mt-1">{scoreMessage(score, locale)}</p>
+      {artifactScore != null && (
+        <p className="text-xs text-zinc-500 mt-2 font-mono">
+          {locale === "ko"
+            ? `설정 수정 ${artifactScore}점${solutionScore ? ` + 솔루션 ${solutionScore}점` : ""}`
+            : `Config fix ${artifactScore}${solutionScore ? ` + Solution ${solutionScore}` : ""}`}
+        </p>
+      )}
     </div>
   );
 }
@@ -158,7 +193,7 @@ function SubmitForm({
   const [causeSummary, setCauseSummary] = useState("");
   const [steps, setSteps] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState<{ score?: number; _gradingSkipped?: boolean; _gradingReason?: string } | null>(null);
+  const [result, setResult] = useState<{ score?: number; artifactScore?: number; _gradingSkipped?: boolean; _gradingReason?: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const canSubmit = !!participantName?.trim() && !submitting;
@@ -246,15 +281,28 @@ function SubmitForm({
         <div className="animate-slide-up rounded-lg border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-4 py-3 text-[var(--accent)]">
           {result.score != null ? (
             <>
-              <ScoreReveal score={result.score} locale={locale} />
-              {!(causeSummary.trim() || steps.trim()) && (
+              <ScoreReveal score={result.score} artifactScore={result.artifactScore} locale={locale} />
+              {!(causeSummary.trim() || steps.trim()) && result.artifactScore != null && result.score - result.artifactScore === 0 && (
                 <p className="text-xs text-center text-zinc-400 mt-2">
                   {locale === "ko"
-                    ? "원인과 해결 방법을 작성하고 다시 제출하면 추가 점수를 받을 수 있습니다."
-                    : "Write cause and resolution above, then re-submit for bonus points."}
+                    ? `솔루션 0/20점 — 원인과 해결 방법을 작성하고 다시 제출하면 추가 점수를 받을 수 있습니다.`
+                    : `Solution 0/20 — write cause and resolution above, then re-submit for bonus points.`}
                 </p>
               )}
             </>
+          ) : result._gradingReason === "no_artifacts" ? (
+            <div className="text-sm text-center space-y-1">
+              <p className="text-amber-400">
+                {locale === "ko"
+                  ? "변경사항이 아직 감지되지 않았습니다."
+                  : "No changes detected yet."}
+              </p>
+              <p className="text-xs text-zinc-400">
+                {locale === "ko"
+                  ? "파일을 저장하고 잠시 후 다시 제출해 주세요. (자동 동기화: ~15초)"
+                  : "Save your files and re-submit in a moment. (Auto-sync: ~15s)"}
+              </p>
+            </div>
           ) : (
             <p className="text-sm text-center">
               {locale === "ko"
@@ -379,19 +427,20 @@ function ChallengePageContent() {
   const [elapsed, setElapsed] = useState(0);
   const [started, setStarted] = useState(false);
   const [timerStopped, setTimerStopped] = useState(false);
-  // 참가자 이름: URL에서만 사용 (localStorage 사용 안 함 → 공용 브라우저에서 Aaron/이종민 섞임 방지)
+  // Session: URL params seed sessionStorage, then sessionStorage is the source of truth
+  const [session, setSession] = useState(() => seedFromParams(searchParams));
   const participantNameFromUrl = searchParams.get("participantName")?.trim() ?? null;
-  const codespaceId = searchParams.get("codespace")?.trim() ?? null;
-  const [participantNameLocal, setParticipantNameLocal] = useState(participantNameFromUrl ?? "");
-  const participantName = participantNameFromUrl ?? (participantNameLocal.trim() || null);
+  const codespaceId = session.codespaceId ?? null;
+  const heartbeat = useHeartbeat(codespaceId);
+  const [participantNameLocal, setParticipantNameLocal] = useState(session.participantName ?? "");
+  const participantName = participantNameFromUrl ?? session.participantName ?? (participantNameLocal.trim() || null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    setParticipantNameLocal(participantNameFromUrl ?? "");
-    if (participantNameFromUrl) {
-      try { sessionStorage.setItem("fixitfaster-participant-name", participantNameFromUrl); } catch { /* ignore */ }
-    }
-  }, [participantNameFromUrl]);
+    const s = seedFromParams(searchParams);
+    setSession(s);
+    if (s.participantName) setParticipantNameLocal(s.participantName);
+  }, [searchParams]);
 
   const tick = useCallback(() => setElapsed((s) => s + 1), []);
 
@@ -475,6 +524,17 @@ function ChallengePageContent() {
             <span className="text-sm text-zinc-500">
               {timerStopped ? (locale === "ko" ? "기록된 시간" : "Recorded time") : t("challenge.elapsed")}
             </span>
+            {codespaceId && (
+              <span className={`w-1.5 h-1.5 rounded-full ${
+                heartbeat === "connected" ? "bg-green-400" :
+                heartbeat === "stale" ? "bg-yellow-400" :
+                heartbeat === "disconnected" ? "bg-red-400" : "bg-zinc-600"
+              }`} title={
+                heartbeat === "connected" ? "Codespace connected" :
+                heartbeat === "stale" ? "Codespace sync delayed" :
+                heartbeat === "disconnected" ? "Codespace disconnected" : "Checking..."
+              } />
+            )}
             <a href="#submit-section" className="text-xs text-[var(--accent)] hover:underline">
               {locale === "ko" ? "제출 ↓" : "Submit ↓"}
             </a>

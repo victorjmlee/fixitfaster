@@ -47,7 +47,16 @@ export async function POST(req: Request) {
     // Use inline artifacts (browser submit) or fall back to store (CLI/auto-push)
     const inlineArtifacts = typeof body.artifacts === "string" ? body.artifacts.trim() : "";
     const codespaceId = typeof body.codespaceId === "string" ? body.codespaceId.trim() : null;
-    const artifacts = inlineArtifacts || await getAndConsumeArtifacts(submission.challengeId, participantNameTrimmed, codespaceId);
+    let artifacts = inlineArtifacts || await getAndConsumeArtifacts(submission.challengeId, participantNameTrimmed, codespaceId);
+
+    // If no artifacts yet and codespaceId present, poll for up to 15s (wait for auto-push)
+    if ((!artifacts || !artifacts.trim()) && codespaceId) {
+      for (let i = 0; i < 5; i++) {
+        await new Promise((r) => setTimeout(r, 3000));
+        artifacts = await getAndConsumeArtifacts(submission.challengeId, participantNameTrimmed, codespaceId);
+        if (artifacts?.trim()) break;
+      }
+    }
 
     if (artifacts?.trim()) {
       const sample = artifacts.slice(0, 200).replace(/\n/g, " ");

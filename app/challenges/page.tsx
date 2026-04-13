@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale } from "@/app/LocaleContext";
+import { seedFromParams, getSession } from "@/lib/session";
 
 type ChallengeMeta = {
   id: string;
@@ -17,29 +18,22 @@ function ChallengesListContent() {
   const { t, locale } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [session] = useState(() => seedFromParams(searchParams));
   const participantNameFromUrl = searchParams.get("participantName")?.trim() ?? "";
+  const codespaceId = session.codespaceId ?? null;
   const [challenges, setChallenges] = useState<ChallengeMeta[]>([]);
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
   const [scores, setScores] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [nameInput, setNameInput] = useState(participantNameFromUrl);
+  const [nameInput, setNameInput] = useState(participantNameFromUrl || session.participantName || "");
 
-  useEffect(() => {
-    setNameInput(participantNameFromUrl);
-    if (participantNameFromUrl) {
-      try { sessionStorage.setItem("fixitfaster-participant-name", participantNameFromUrl); } catch { /* ignore */ }
-    }
-  }, [participantNameFromUrl]);
-
-  // URL에 이름 없는데 sessionStorage에 있으면 복원 (리더보드→챌린지 돌아올 때 제출함 유지)
+  // Restore name from session if not in URL
   useEffect(() => {
     if (participantNameFromUrl) return;
-    try {
-      const name = sessionStorage.getItem("fixitfaster-participant-name")?.trim();
-      if (name) router.replace(`/challenges?participantName=${encodeURIComponent(name)}`);
-    } catch {
-      /* ignore */
+    const s = getSession();
+    if (s.participantName) {
+      router.replace(`/challenges?participantName=${encodeURIComponent(s.participantName)}${s.codespaceId ? `&codespace=${encodeURIComponent(s.codespaceId)}` : ""}`);
     }
   }, [participantNameFromUrl, router]);
 
@@ -163,7 +157,13 @@ function ChallengesListContent() {
             return (
               <li key={c.id}>
                 <Link
-                  href={participantNameFromUrl ? `/challenges/${c.id}?participantName=${encodeURIComponent(participantNameFromUrl)}` : `/challenges/${c.id}`}
+                  href={(() => {
+                    const p = new URLSearchParams();
+                    if (participantNameFromUrl) p.set("participantName", participantNameFromUrl);
+                    if (codespaceId) p.set("codespace", codespaceId);
+                    const qs = p.toString();
+                    return `/challenges/${c.id}${qs ? `?${qs}` : ""}`;
+                  })()}
                   className="block rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 transition-all duration-200 hover:border-[var(--accent-dim)] hover:translate-x-1 hover:shadow-lg hover:shadow-[var(--accent)]/5"
                 >
                   <div className="flex items-start justify-between gap-4">

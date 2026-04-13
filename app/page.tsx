@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "@/app/LocaleContext";
+import { updateSession } from "@/lib/session";
 
 const CODESPACE_REPO = "victorjmlee/fixitfaster-agent";
 
@@ -21,9 +22,10 @@ export default function HomePage() {
     const params = new URLSearchParams();
     params.set("env[DATADOG_API_KEY]", apiKey.trim());
     params.set("env[DATADOG_APP_KEY]", appKey.trim());
+    params.set("env[PARTICIPANT_NAME]", name.trim());
     const url = `https://codespaces.new/${CODESPACE_REPO}?${params.toString()}`;
 
-    try { sessionStorage.setItem("fixitfaster-participant-name", name.trim()); } catch {}
+    updateSession({ participantName: name.trim(), launched: true, launchedAt: Date.now() });
 
     window.open(url, "_blank");
     setLaunched(true);
@@ -64,7 +66,7 @@ export default function HomePage() {
             type="password"
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
-            placeholder="Organization Settings → API Keys"
+            placeholder="32-character hex"
             className="w-full rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-white placeholder:text-zinc-500 font-mono"
           />
         </div>
@@ -75,10 +77,22 @@ export default function HomePage() {
             type="password"
             value={appKey}
             onChange={(e) => setAppKey(e.target.value)}
-            placeholder="Organization Settings → Application Keys"
+            placeholder="40-character hex"
             className="w-full rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-white placeholder:text-zinc-500 font-mono"
           />
         </div>
+
+        <details className="text-xs text-zinc-500">
+          <summary className="cursor-pointer hover:text-zinc-300">
+            {locale === "ko" ? "API Key 찾는 방법" : "How to find your keys"}
+          </summary>
+          <ol className="mt-2 ml-4 list-decimal space-y-1">
+            <li><a href="https://app.datadoghq.com" target="_blank" rel="noopener noreferrer" className="text-[var(--accent)] hover:underline">app.datadoghq.com</a> {locale === "ko" ? "로그인" : "→ Log in"}</li>
+            <li>{locale === "ko" ? "좌측 하단 계정 아이콘 → Organization Settings" : "Bottom-left account icon → Organization Settings"}</li>
+            <li>{locale === "ko" ? "API Keys 탭 → 키 복사" : "API Keys tab → Copy key"}</li>
+            <li>{locale === "ko" ? "Application Keys 탭 → 키 복사" : "Application Keys tab → Copy key"}</li>
+          </ol>
+        </details>
 
         {!launched ? (
           <button
