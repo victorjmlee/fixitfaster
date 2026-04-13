@@ -34,43 +34,26 @@ function SetupForm({
     busyRef.current = true;
     setSetting(true);
     setError(null);
-    setStatus(locale === "ko" ? "환경 설정 중..." : "Setting up environment...");
+    setStatus(locale === "ko" ? "Docker 컨테이너 시작 중..." : "Starting Docker containers...");
 
     try {
-      const res = await fetch("/api/commands", {
+      // Call Codespace artifact-server directly (no Redis/command queue dependency)
+      const csUrl = `https://${codespaceId}-4000.app.github.dev/setup`;
+      const res = await fetch(csUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          codespaceId,
-          command: "setup",
-          payload: { apiKey: apiKey.trim(), appKey: appKey.trim() },
-        }),
+        body: JSON.stringify({ apiKey: apiKey.trim(), appKey: appKey.trim() }),
+        signal: AbortSignal.timeout(180000), // 3 min timeout for docker build
       });
+
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || `HTTP ${res.status}`);
+        throw new Error(data.error || locale === "ko" ? "환경 설정 실패. 키를 확인하고 다시 시도하세요." : "Setup failed. Check your keys and try again.");
       }
-      const { commandId } = await res.json();
 
-      setStatus(locale === "ko" ? "Docker 컨테이너 시작 중..." : "Starting Docker containers...");
-
-      for (let i = 0; i < 60; i++) {
-        await new Promise((r) => setTimeout(r, 2000));
-        const poll = await fetch(`/api/commands?codespaceId=${encodeURIComponent(codespaceId)}`);
-        const { all } = await poll.json();
-        const entry = all?.find((e: { id: string; status: string }) => e.id === commandId);
-        if (entry?.status === "done") {
-          try { sessionStorage.setItem(SETUP_DONE_KEY, "true"); } catch {}
-          updateSession({ participantName: nameInput.trim() });
-          onComplete(nameInput.trim());
-          return;
-        }
-        if (entry?.status === "error") {
-          throw new Error(locale === "ko" ? "환경 설정 실패. 키를 확인하고 다시 시도하세요." : "Setup failed. Check your keys and try again.");
-        }
-        if (i === 10) setStatus(locale === "ko" ? "거의 완료..." : "Almost ready...");
-      }
-      throw new Error("Setup timed out");
+      try { sessionStorage.setItem(SETUP_DONE_KEY, "true"); } catch {}
+      updateSession({ participantName: nameInput.trim() });
+      onComplete(nameInput.trim());
     } catch (e) {
       setError(e instanceof Error ? e.message : "Setup failed");
     } finally {
