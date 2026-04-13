@@ -60,7 +60,7 @@ export async function POST(req: Request) {
         ...submission,
         _gradingSkipped: true,
         _gradingHint:
-          "채점을 받으려면 Codespace 터미널에서 artifacts 스크립트를 먼저 실행한 뒤, 같은 이름으로 제출해 주세요. (랩 → Codespaces 문서 참고)",
+          "아티팩트가 아직 수신되지 않았습니다. Codespace에서 artifact-server가 실행 중인지, .env.local에 FIXITFASTER_URL이 설정되어 있는지 확인하세요.",
         _gradingReason: "no_artifacts",
       });
     }
