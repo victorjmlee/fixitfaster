@@ -44,9 +44,10 @@ export async function POST(req: Request) {
       elapsedSeconds: Math.floor(Number(elapsedSeconds)),
     });
 
-    // Use inline artifacts (browser submit) or fall back to store (CLI submit)
+    // Use inline artifacts (browser submit) or fall back to store (CLI/auto-push)
     const inlineArtifacts = typeof body.artifacts === "string" ? body.artifacts.trim() : "";
-    const artifacts = inlineArtifacts || await getAndConsumeArtifacts(submission.challengeId, participantNameTrimmed);
+    const codespaceId = typeof body.codespaceId === "string" ? body.codespaceId.trim() : null;
+    const artifacts = inlineArtifacts || await getAndConsumeArtifacts(submission.challengeId, participantNameTrimmed, codespaceId);
 
     if (artifacts?.trim()) {
       const sample = artifacts.slice(0, 200).replace(/\n/g, " ");

@@ -33,6 +33,7 @@ function SubmitForm({
   locale,
   elapsed,
   participantName,
+  codespaceId,
   scoreGuide,
   onSubmit,
 }: {
@@ -40,6 +41,7 @@ function SubmitForm({
   locale: string;
   elapsed: number;
   participantName: string | null;
+  codespaceId: string | null;
   scoreGuide?: string;
   onSubmit: () => void;
 }) {
@@ -63,6 +65,7 @@ function SubmitForm({
         body: JSON.stringify({
           challengeId,
           participantName: participantName!.trim(),
+          codespaceId: codespaceId || undefined,
           causeSummary: causeSummary.trim(),
           steps: steps.trim(),
           elapsedSeconds: elapsed,
@@ -250,6 +253,7 @@ function ChallengePageContent() {
   const [timerStopped, setTimerStopped] = useState(false);
   // 참가자 이름: URL에서만 사용 (localStorage 사용 안 함 → 공용 브라우저에서 Aaron/이종민 섞임 방지)
   const participantNameFromUrl = searchParams.get("participantName")?.trim() ?? null;
+  const codespaceId = searchParams.get("codespace")?.trim() ?? null;
   const [participantNameLocal, setParticipantNameLocal] = useState(participantNameFromUrl ?? "");
   const participantName = participantNameFromUrl ?? (participantNameLocal.trim() || null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -383,6 +387,7 @@ function ChallengePageContent() {
               locale={locale}
               elapsed={elapsed}
               participantName={participantName}
+              codespaceId={codespaceId}
               scoreGuide={challenge.scoreGuide}
               onSubmit={stopTimer}
             />
