@@ -28,14 +28,31 @@ function ChallengesListContent() {
   const [error, setError] = useState<string | null>(null);
   const [nameInput, setNameInput] = useState(participantNameFromUrl || session.participantName || "");
 
+  // Resolve name from setup token (Codespace Simple Browser flow)
+  useEffect(() => {
+    const setupToken = searchParams.get("setup")?.trim();
+    if (!setupToken || participantNameFromUrl) return;
+    fetch(`/api/setup?token=${encodeURIComponent(setupToken)}`)
+      .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
+      .then((data) => {
+        if (data.participantName) {
+          const p = new URLSearchParams(searchParams.toString());
+          p.set("participantName", data.participantName);
+          p.delete("setup");
+          router.replace(`/challenges?${p.toString()}`);
+        }
+      })
+      .catch(() => {});
+  }, [searchParams, participantNameFromUrl, router]);
+
   // Restore name from session if not in URL
   useEffect(() => {
-    if (participantNameFromUrl) return;
+    if (participantNameFromUrl || searchParams.get("setup")) return;
     const s = getSession();
     if (s.participantName) {
       router.replace(`/challenges?participantName=${encodeURIComponent(s.participantName)}${s.codespaceId ? `&codespace=${encodeURIComponent(s.codespaceId)}` : ""}`);
     }
-  }, [participantNameFromUrl, router]);
+  }, [participantNameFromUrl, searchParams, router]);
 
   useEffect(() => {
     const ctrl = new AbortController();

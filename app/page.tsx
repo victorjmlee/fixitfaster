@@ -17,8 +17,24 @@ export default function HomePage() {
 
   const canLaunch = name.trim() && apiKey.trim() && appKey.trim();
 
-  const launch = () => {
+  const launch = async () => {
     if (!canLaunch) return;
+
+    // Compute deterministic token from API keys (SHA-256)
+    const encoder = new TextEncoder();
+    const data = encoder.encode(`${apiKey.trim()}:${appKey.trim()}`);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    const token = Array.from(new Uint8Array(hashBuffer))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+
+    // Store name→token mapping in Redis (fire-and-forget)
+    fetch("/api/setup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ participantName: name.trim(), token }),
+    }).catch(() => {});
+
     const params = new URLSearchParams();
     params.set("env[DATADOG_API_KEY]", apiKey.trim());
     params.set("env[DATADOG_APP_KEY]", appKey.trim());
