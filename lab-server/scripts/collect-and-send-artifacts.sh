@@ -27,7 +27,7 @@ OUT=$(mktemp)
 trap "rm -f $OUT" EXIT
 
 echo "=== git status ===" >> "$OUT"
-git status --short 2>/dev/null || true >> "$OUT"
+(git status --short 2>/dev/null || true) >> "$OUT"
 echo "" >> "$OUT"
 
 echo "=== git diff (excluding .env.local, staged + unstaged) ===" >> "$OUT"

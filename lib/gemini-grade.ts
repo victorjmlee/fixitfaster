@@ -187,7 +187,7 @@ const SOLUTION_MAX_POINTS = 20;
 
 /**
  * 참가자 채점: 결과(artifact) 점수 + 솔루션(원인/해결 작성) 0~20점.
- * - artifact만: 패턴 통과 시 시나리오별 점수(50~80), 미통과 시 65.
+ * - artifact만: 패턴 통과 시 시나리오별 점수(50~80), 미통과 시 0점.
  * - artifact + 솔루션 작성: 결과 점수 + Gemini로 솔루션 0~20점, 합산(캡 100).
  */
 export async function gradeSubmission(

@@ -44,7 +44,9 @@ export async function POST(req: Request) {
       elapsedSeconds: Math.floor(Number(elapsedSeconds)),
     });
 
-    const artifacts = await getAndConsumeArtifacts(submission.challengeId, participantNameTrimmed);
+    // Use inline artifacts (browser submit) or fall back to store (CLI submit)
+    const inlineArtifacts = typeof body.artifacts === "string" ? body.artifacts.trim() : "";
+    const artifacts = inlineArtifacts || await getAndConsumeArtifacts(submission.challengeId, participantNameTrimmed);
 
     if (artifacts?.trim()) {
       const sample = artifacts.slice(0, 200).replace(/\n/g, " ");
