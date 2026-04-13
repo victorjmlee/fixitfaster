@@ -48,15 +48,16 @@ function SubmitForm({
   const [causeSummary, setCauseSummary] = useState("");
   const [steps, setSteps] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState<{ score?: number; _gradingSkipped?: boolean; _gradingHint?: string; _gradingReason?: string } | null>(null);
+  const [result, setResult] = useState<{ score?: number; _gradingSkipped?: boolean; _gradingReason?: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const canSubmit = !!participantName?.trim() && !submitting && !result;
+  const canSubmit = !!participantName?.trim() && !submitting;
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
     setSubmitting(true);
     setError(null);
+    setResult(null);
 
     try {
       const res = await fetch("/api/submit", {
@@ -126,16 +127,32 @@ function SubmitForm({
       >
         {submitting
           ? (locale === "ko" ? "제출 중…" : "Submitting…")
-          : (locale === "ko" ? "제출하기" : "Submit")}
+          : result
+            ? (locale === "ko" ? "다시 제출하기" : "Re-submit")
+            : (locale === "ko" ? "제출하기" : "Submit")}
       </button>
 
       {result && (
         <div className="rounded-lg border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-3 py-2 text-sm text-[var(--accent)]">
-          {result.score != null
-            ? (locale === "ko" ? `채점 완료: ${result.score}점` : `Score: ${result.score}`)
-            : (locale === "ko" ? "제출됨 (채점 보류)" : "Submitted (grading pending)")}
-          {result._gradingHint && (
-            <p className="text-xs mt-1 text-zinc-400">{result._gradingHint}</p>
+          {result.score != null ? (
+            <>
+              <p className="font-medium">
+                {locale === "ko" ? `채점 완료: ${result.score}점` : `Score: ${result.score}`}
+              </p>
+              {!(causeSummary.trim() || steps.trim()) && (
+                <p className="text-xs mt-1 text-zinc-400">
+                  {locale === "ko"
+                    ? "원인과 해결 방법을 작성하고 다시 제출하면 추가 점수를 받을 수 있습니다."
+                    : "Write cause and resolution above, then re-submit for bonus points."}
+                </p>
+              )}
+            </>
+          ) : (
+            <p>
+              {locale === "ko"
+                ? "제출 완료 — 리더보드에서 결과를 확인하세요."
+                : "Submitted — check the leaderboard for results."}
+            </p>
           )}
         </div>
       )}
@@ -152,11 +169,13 @@ function SolutionForm({
   participantName,
   locale,
   scoreGuide,
+  onSubmit,
 }: {
   challengeId: string;
   participantName: string | null;
   locale: string;
   scoreGuide?: string;
+  onSubmit?: () => void;
 }) {
   const [causeSummary, setCauseSummary] = useState("");
   const [steps, setSteps] = useState("");
@@ -183,6 +202,7 @@ function SolutionForm({
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.ok) {
         setResult({ ok: true, newScore: data.newScore, solutionPoints: data.solutionPoints });
+        onSubmit?.();
       } else {
         setResult({ ok: false, error: data.error || "Failed" });
       }
@@ -326,15 +346,30 @@ function ChallengePageContent() {
             onClick={handleStart}
             className="mt-4 rounded-lg bg-[var(--accent)] px-6 py-3 font-medium text-[var(--bg)] hover:opacity-90"
           >
-            {t("challenge.start")}
+            {locale === "ko" ? "타이머 시작" : "Start Timer"}
           </button>
+          <p className="mt-2 text-xs text-zinc-500">
+            {locale === "ko" ? "클릭하면 타이머가 바로 시작됩니다." : "Timer starts immediately on click."}
+          </p>
         </div>
       ) : (
         <div className="sticky top-2 z-10 flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--card)] px-4 py-3">
-          <span className="font-mono text-lg text-[var(--accent)]">{formatTime(elapsed)}</span>
-          <span className="text-sm text-zinc-500">
-            {timerStopped ? (locale === "ko" ? "기록된 시간" : "Recorded time") : t("challenge.elapsed")}
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="font-mono text-lg text-[var(--accent)]">{formatTime(elapsed)}</span>
+            {challenges.length > 1 && (
+              <span className="text-xs text-zinc-600">
+                {Math.max(1, challenges.findIndex((c) => c.id === id) + 1)}/{challenges.length}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-zinc-500">
+              {timerStopped ? (locale === "ko" ? "기록된 시간" : "Recorded time") : t("challenge.elapsed")}
+            </span>
+            <a href="#submit-section" className="text-xs text-[var(--accent)] hover:underline">
+              {locale === "ko" ? "제출 ↓" : "Submit ↓"}
+            </a>
+          </div>
         </div>
       )}
 
@@ -360,7 +395,7 @@ function ChallengePageContent() {
       </div>
 
       {started && (
-        <div className="space-y-4 rounded-xl border border-[var(--border)] bg-[var(--card)] p-5">
+        <div id="submit-section" className="space-y-4 rounded-xl border border-[var(--border)] bg-[var(--card)] p-5">
           <h2 className="text-base font-semibold text-white">{t("challenge.submit")}</h2>
           {!participantNameFromUrl && (
             <div className="flex flex-wrap items-center gap-2">
@@ -397,6 +432,7 @@ function ChallengePageContent() {
               participantName={participantName}
               locale={locale}
               scoreGuide={challenge.scoreGuide}
+              onSubmit={stopTimer}
             />
           )}
           <p className="text-sm text-zinc-500">

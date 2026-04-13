@@ -60,8 +60,6 @@ export async function POST(req: Request) {
       return NextResponse.json({
         ...submission,
         _gradingSkipped: true,
-        _gradingHint:
-          "아티팩트가 아직 수신되지 않았습니다. Codespace에서 artifact-server가 실행 중인지, .env.local에 FIXITFASTER_URL이 설정되어 있는지 확인하세요.",
         _gradingReason: "no_artifacts",
       });
     }
