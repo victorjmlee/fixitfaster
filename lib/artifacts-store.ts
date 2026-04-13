@@ -65,13 +65,23 @@ function writeAllFile(data: Record<string, ArtifactEntry>) {
 // 1) REDIS_URL (Redis Cloud 등 redis:// 연결 문자열)
 // 2) KV_REST_API_URL + KV_REST_API_TOKEN (Vercel KV)
 // 3) UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN (Upstash)
-async function getKv() {
+//
+// The client is cached at module level so a single warm serverless instance
+// reuses the same connection instead of opening (and leaking) a new one on
+// every saveArtifacts / getAndConsumeArtifacts call.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let _kvPromise: Promise<any> | null = null;
+
+async function _resolveKv() {
   // 1) TCP Redis (REDIS_URL)
   const redisUrl = process.env.REDIS_URL?.trim();
   if (redisUrl) {
     try {
       const { createClient } = await import("redis");
       const client = createClient({ url: redisUrl });
+      client.on("error", (err: Error) => {
+        console.warn("[artifacts] Redis client error:", err.message);
+      });
       await client.connect();
       return {
         set: async (k: string, v: string, opts?: { ex?: number }) => {
@@ -91,6 +101,18 @@ async function getKv() {
   if (!url || !token) return null;
   const { createClient } = await import("@vercel/kv");
   return createClient({ url, token });
+}
+
+async function getKv() {
+  if (!_kvPromise) {
+    _kvPromise = _resolveKv().catch((e) => {
+      // Allow retry on transient failures (e.g. import error)
+      _kvPromise = null;
+      console.warn("[artifacts] KV init failed:", e instanceof Error ? e.message : String(e));
+      return null;
+    });
+  }
+  return _kvPromise;
 }
 
 /** Save artifacts (Codespace script). Overwrites previous. Use KV on Vercel so they persist. */
@@ -132,7 +154,7 @@ export async function getAndConsumeArtifacts(
   if (kv) {
     for (const [cid, name] of candidates) {
       const k = keyKv(cid, name);
-      const raw = await kv.get<string>(k);
+      const raw: string | null = await kv.get(k);
       if (!raw) continue;
       let entry: ArtifactEntry;
       try {

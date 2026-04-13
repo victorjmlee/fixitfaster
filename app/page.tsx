@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { useLocale } from "@/app/LocaleContext";
@@ -25,11 +25,13 @@ function SetupForm({
   const [setting, setSetting] = useState(false);
   const [status, setStatus] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const busyRef = useRef(false);
 
   const canSubmit = nameInput.trim() && apiKey.trim() && appKey.trim() && !setting;
 
   const handleSetup = useCallback(async () => {
-    if (!canSubmit) return;
+    if (!canSubmit || busyRef.current) return;
+    busyRef.current = true;
     setSetting(true);
     setError(null);
     setStatus(locale === "ko" ? "환경 설정 중..." : "Setting up environment...");
@@ -72,6 +74,7 @@ function SetupForm({
     } catch (e) {
       setError(e instanceof Error ? e.message : "Setup failed");
     } finally {
+      busyRef.current = false;
       setSetting(false);
       setStatus("");
     }
@@ -189,7 +192,8 @@ function HomePageContent() {
   const { locale } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const codespaceId = searchParams.get("codespace")?.trim() || null;
+  const session = seedFromParams(searchParams);
+  const codespaceId = searchParams.get("codespace")?.trim() || session.codespaceId || null;
 
   useEffect(() => { seedFromParams(searchParams); }, [searchParams]);
 

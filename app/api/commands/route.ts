@@ -65,7 +65,7 @@ export async function POST(req: Request) {
       queuedAt: Date.now(),
     };
     existing.push(entry);
-    await kv.set(k, JSON.stringify(existing), { ex: TTL_SEC });
+    await kv.set(k, existing, { ex: TTL_SEC });
 
     return NextResponse.json({ ok: true, commandId: entry.id, shell: ALLOWED_COMMANDS[command] });
   } catch (e) {
@@ -118,7 +118,7 @@ export async function PATCH(req: Request) {
     entry.status = status || "done";
     entry.output = typeof output === "string" ? output.slice(0, 5000) : "";
     entry.doneAt = Date.now();
-    await kv.set(k, JSON.stringify(entries), { ex: TTL_SEC });
+    await kv.set(k, entries, { ex: TTL_SEC });
 
     return NextResponse.json({ ok: true });
   } catch (e) {

@@ -290,6 +290,19 @@ function SubmitForm({
                 </p>
               )}
             </>
+          ) : result._gradingReason === "no_codespace" ? (
+            <div className="text-sm text-center space-y-1">
+              <p className="text-amber-400">
+                {locale === "ko"
+                  ? "Codespace가 연결되지 않았습니다."
+                  : "Codespace not connected."}
+              </p>
+              <p className="text-xs text-zinc-400">
+                {locale === "ko"
+                  ? "Codespace를 먼저 시작한 뒤 이 페이지로 돌아와 주세요."
+                  : "Launch your Codespace first, then return to this page to submit."}
+              </p>
+            </div>
           ) : result._gradingReason === "no_artifacts" ? (
             <div className="text-sm text-center space-y-1">
               <p className="text-amber-400">

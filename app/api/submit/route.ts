@@ -52,20 +52,32 @@ export async function POST(req: Request) {
     // If no artifacts yet and codespaceId present, trigger force-push then poll
     if ((!artifacts || !artifacts.trim()) && codespaceId) {
       // Trigger immediate push via command queue
+      let forcePushOk = false;
       try {
         const cmdRes = await fetch(new URL("/api/commands", req.url).origin + "/api/commands", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ codespaceId, command: "force-push" }),
         });
-        if (cmdRes.ok) console.log("[submit] force-push triggered for %s", codespaceId);
-      } catch {}
+        forcePushOk = cmdRes.ok;
+        if (cmdRes.ok) {
+          console.log("[submit] force-push triggered for %s", codespaceId);
+        } else {
+          console.warn("[submit] force-push failed HTTP %d for %s", cmdRes.status, codespaceId);
+        }
+      } catch (e) {
+        console.warn("[submit] force-push fetch error for %s: %s", codespaceId, e instanceof Error ? e.message : String(e));
+      }
 
-      // Poll for artifacts (force-push should arrive within 3-6s)
+      // Poll for artifacts (force-push should arrive within 3-6s, auto-push every 15s)
       for (let i = 0; i < 5; i++) {
         await new Promise((r) => setTimeout(r, 3000));
         artifacts = await getAndConsumeArtifacts(submission.challengeId, participantNameTrimmed, codespaceId);
         if (artifacts?.trim()) break;
+      }
+
+      if (!artifacts?.trim() && !forcePushOk) {
+        console.warn("[submit] No artifacts AND force-push failed — likely KV/command issue for codespace %s", codespaceId);
       }
     }
 
@@ -76,11 +88,12 @@ export async function POST(req: Request) {
 
     // 채점은 Codespace에서 보낸 artifacts가 있을 때만 수행
     if (!artifacts || !artifacts.trim()) {
-      console.log("[submit] No artifacts — grading skipped (Codespace-only) lookupKey=%s:%s", submission.challengeId, participantNameTrimmed);
+      const reason = codespaceId ? "no_artifacts" : "no_codespace";
+      console.log("[submit] No artifacts — grading skipped reason=%s challengeId=%s name=%s codespaceId=%s", reason, submission.challengeId, participantNameTrimmed, codespaceId ?? "(none)");
       return NextResponse.json({
         ...submission,
         _gradingSkipped: true,
-        _gradingReason: "no_artifacts",
+        _gradingReason: reason,
       });
     }
 
