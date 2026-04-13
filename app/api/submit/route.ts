@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     const step = typeof steps === "string" ? steps : text;
 
     const participantNameTrimmed = String(participantName).trim();
-    const submission = addSubmission({
+    const submission = await addSubmission({
       challengeId: String(challengeId),
       participantName: participantNameTrimmed,
       causeSummary: cause || text,
@@ -88,7 +88,7 @@ export async function POST(req: Request) {
       artifacts
     );
     if (grade.success) {
-      updateSubmission(submission.id, { score: grade.score, artifactScore: grade.artifactScore });
+      await updateSubmission(submission.id, { score: grade.score, artifactScore: grade.artifactScore });
       submission.score = grade.score;
       console.log("[submit] Grading ok challengeId=%s score=%s artifact=%s", submission.challengeId, grade.score, grade.artifactScore);
       return NextResponse.json({ ...submission, artifactScore: grade.artifactScore });

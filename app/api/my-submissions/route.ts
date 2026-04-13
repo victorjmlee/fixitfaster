@@ -7,7 +7,7 @@ export async function GET(req: Request) {
   if (!participantName) {
     return NextResponse.json({ challengeIds: [], scores: {} });
   }
-  const challengeIds = getSubmissionChallengeIdsByParticipant(participantName);
-  const scores = getScoresByParticipant(participantName);
+  const challengeIds = await getSubmissionChallengeIdsByParticipant(participantName);
+  const scores = await getScoresByParticipant(participantName);
   return NextResponse.json({ challengeIds, scores });
 }

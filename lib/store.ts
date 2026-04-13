@@ -1,6 +1,3 @@
-import fs from "fs";
-import path from "path";
-
 export type Submission = {
   id: string;
   challengeId: string;
@@ -10,110 +7,131 @@ export type Submission = {
   docLinks: string;
   elapsedSeconds: number;
   submittedAt: string;
-  /** 0–100, Gemini 채점 결과. 없으면 미채점 */
   score?: number;
-  /** artifact 패턴 매칭으로 받은 점수 (솔루션 재제출 시 base로 사용) */
   artifactScore?: number;
 };
 
+const KV_KEY = "submissions";
+
+// --- KV (Redis) backend ---
+let _kv: ReturnType<typeof import("@vercel/kv").createClient> | null | undefined;
+
+async function getKv() {
+  if (_kv !== undefined) return _kv;
+  const url = process.env.KV_REST_API_URL?.trim() || process.env.UPSTASH_REDIS_REST_URL?.trim();
+  const token = process.env.KV_REST_API_TOKEN?.trim() || process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
+  if (!url || !token) { _kv = null; return null; }
+  const { createClient } = await import("@vercel/kv");
+  _kv = createClient({ url, token });
+  return _kv;
+}
+
+// --- Read/Write with KV primary, file fallback ---
+import fs from "fs";
+import path from "path";
+
 const DATA_DIR = path.join(process.cwd(), "data");
 const SUBMISSIONS_FILE = path.join(DATA_DIR, "submissions.json");
-
 let memoryFallback: Submission[] | null = null;
 
-function ensureDataDir() {
-  try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-  } catch {
-    memoryFallback = memoryFallback ?? [];
-  }
-}
-
-function readSubmissions(): Submission[] {
+function readSubmissionsFile(): Submission[] {
   if (memoryFallback !== null) return memoryFallback;
-  ensureDataDir();
-  if (!fs.existsSync(SUBMISSIONS_FILE)) return [];
   try {
-    const raw = fs.readFileSync(SUBMISSIONS_FILE, "utf-8");
-    return JSON.parse(raw);
-  } catch {
-    return [];
-  }
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  } catch { memoryFallback = memoryFallback ?? []; return memoryFallback; }
+  if (!fs.existsSync(SUBMISSIONS_FILE)) return [];
+  try { return JSON.parse(fs.readFileSync(SUBMISSIONS_FILE, "utf-8")); } catch { return []; }
 }
 
-function writeSubmissions(list: Submission[]) {
-  if (memoryFallback !== null) {
-    memoryFallback = list;
+function writeSubmissionsFile(list: Submission[]) {
+  if (memoryFallback !== null) { memoryFallback = list; return; }
+  try {
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.writeFileSync(SUBMISSIONS_FILE, JSON.stringify(list, null, 2), "utf-8");
+  } catch { memoryFallback = list; }
+}
+
+async function readSubmissions(): Promise<Submission[]> {
+  const kv = await getKv();
+  if (kv) {
+    try {
+      const raw = await kv.get(KV_KEY);
+      if (raw) {
+        const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+        return Array.isArray(parsed) ? parsed : [];
+      }
+      return [];
+    } catch { return []; }
+  }
+  return readSubmissionsFile();
+}
+
+async function writeSubmissions(list: Submission[]) {
+  const kv = await getKv();
+  if (kv) {
+    try { await kv.set(KV_KEY, JSON.stringify(list)); } catch {}
     return;
   }
-  try {
-    ensureDataDir();
-    fs.writeFileSync(SUBMISSIONS_FILE, JSON.stringify(list, null, 2), "utf-8");
-  } catch {
-    memoryFallback = list;
-  }
+  writeSubmissionsFile(list);
 }
 
-export function addSubmission(s: Omit<Submission, "id" | "submittedAt">): Submission {
-  const list = readSubmissions();
+// --- Public API (async, same interface) ---
+
+export async function addSubmission(s: Omit<Submission, "id" | "submittedAt">): Promise<Submission> {
+  const list = await readSubmissions();
   const submission: Submission = {
     ...s,
     id: `sub-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
     submittedAt: new Date().toISOString(),
   };
   list.push(submission);
-  writeSubmissions(list);
+  await writeSubmissions(list);
   return submission;
 }
 
-export function updateSubmission(
+export async function updateSubmission(
   id: string,
   patch: Partial<Pick<Submission, "score" | "artifactScore" | "causeSummary" | "steps">>
-): Submission | null {
-  const list = readSubmissions();
+): Promise<Submission | null> {
+  const list = await readSubmissions();
   const i = list.findIndex((s) => s.id === id);
   if (i < 0) return null;
   list[i] = { ...list[i], ...patch };
-  writeSubmissions(list);
+  await writeSubmissions(list);
   return list[i];
 }
 
-/** 참가자+챌린지 기준 가장 최근 제출 1건 */
-export function getLatestSubmissionByParticipantAndChallenge(
+export async function getLatestSubmissionByParticipantAndChallenge(
   participantName: string,
   challengeId: string
-): Submission | null {
+): Promise<Submission | null> {
   const name = participantName?.trim();
   if (!name) return null;
-  const list = readSubmissions()
+  const list = (await readSubmissions())
     .filter((s) => s.challengeId === challengeId && s.participantName.trim() === name)
     .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
   return list[0] ?? null;
 }
 
-export function getSubmissionsByChallenge(challengeId: string): Submission[] {
-  return readSubmissions().filter((s) => s.challengeId === challengeId);
+export async function getSubmissionsByChallenge(challengeId: string): Promise<Submission[]> {
+  return (await readSubmissions()).filter((s) => s.challengeId === challengeId);
 }
 
-/** 참가자 이름으로 제출한 챌린지 ID 목록 (중복 제거) */
-export function getSubmissionChallengeIdsByParticipant(participantName: string): string[] {
+export async function getSubmissionChallengeIdsByParticipant(participantName: string): Promise<string[]> {
   const name = participantName?.trim();
   if (!name) return [];
   const set = new Set<string>();
-  for (const s of readSubmissions()) {
+  for (const s of await readSubmissions()) {
     if (s.participantName.trim() === name) set.add(s.challengeId);
   }
   return Array.from(set);
 }
 
-/** 참가자별 챌린지 최고 점수 맵 (제출한 챌린지만) */
-export function getScoresByParticipant(participantName: string): Record<string, number> {
+export async function getScoresByParticipant(participantName: string): Promise<Record<string, number>> {
   const name = participantName?.trim();
   if (!name) return {};
   const scores: Record<string, number> = {};
-  for (const s of readSubmissions()) {
+  for (const s of await readSubmissions()) {
     if (s.participantName.trim() !== name) continue;
     const prev = scores[s.challengeId] ?? -1;
     if ((s.score ?? 0) > prev) scores[s.challengeId] = s.score ?? 0;
@@ -121,8 +139,8 @@ export function getScoresByParticipant(participantName: string): Record<string, 
   return scores;
 }
 
-export function getLeaderboard(challengeId?: string): Submission[] {
-  let list = readSubmissions();
+export async function getLeaderboard(challengeId?: string): Promise<Submission[]> {
+  let list = await readSubmissions();
   if (challengeId) list = list.filter((s) => s.challengeId === challengeId);
   return list.sort((a, b) => {
     const scoreA = a.score ?? -1;
@@ -138,13 +156,11 @@ export type LeaderboardRow = {
   totalTime: number;
   submissionCount: number;
   lastSubmittedAt: string;
-  /** 시나리오별 점수 (같은 시나리오 여러 제출 시 마지막 제출 점수) */
   scoresByChallenge: Record<string, number>;
 };
 
-/** 참가자별 점수 합산, 등수: 총점 높은 순 → 총 시간 짧은 순 */
-export function getLeaderboardAggregated(): LeaderboardRow[] {
-  const list = readSubmissions().sort(
+export async function getLeaderboardAggregated(): Promise<LeaderboardRow[]> {
+  const list = (await readSubmissions()).sort(
     (a, b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime()
   );
   const byName = new Map<
@@ -153,12 +169,7 @@ export function getLeaderboardAggregated(): LeaderboardRow[] {
   >();
   for (const s of list) {
     const key = s.participantName.trim() || "(anonymous)";
-    const cur = byName.get(key) ?? {
-      totalTime: 0,
-      count: 0,
-      lastAt: s.submittedAt,
-      scores: {},
-    };
+    const cur = byName.get(key) ?? { totalTime: 0, count: 0, lastAt: s.submittedAt, scores: {} };
     const nextScores = { ...cur.scores };
     if (s.score != null) nextScores[s.challengeId] = s.score;
     byName.set(key, {
@@ -169,33 +180,22 @@ export function getLeaderboardAggregated(): LeaderboardRow[] {
     });
   }
   return Array.from(byName.entries())
-    .map(([participantName, v]) => {
-      const totalScore = Object.values(v.scores).reduce((a, b) => a + b, 0);
-      return {
-        participantName,
-        totalScore,
-        totalTime: v.totalTime,
-        submissionCount: v.count,
-        lastSubmittedAt: v.lastAt,
-        scoresByChallenge: v.scores,
-      };
-    })
+    .map(([participantName, v]) => ({
+      participantName,
+      totalScore: Object.values(v.scores).reduce((a, b) => a + b, 0),
+      totalTime: v.totalTime,
+      submissionCount: v.count,
+      lastSubmittedAt: v.lastAt,
+      scoresByChallenge: v.scores,
+    }))
     .sort((a, b) => {
       if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
       return a.totalTime - b.totalTime;
     });
 }
 
-export function clearSubmissions(): void {
-  const empty: Submission[] = [];
-  if (memoryFallback !== null) {
-    memoryFallback = empty;
-    return;
-  }
-  ensureDataDir();
-  try {
-    fs.writeFileSync(SUBMISSIONS_FILE, "[]", "utf-8");
-  } catch {
-    memoryFallback = empty;
-  }
+export async function clearSubmissions(): Promise<void> {
+  const kv = await getKv();
+  if (kv) { try { await kv.set(KV_KEY, "[]"); } catch {} return; }
+  writeSubmissionsFile([]);
 }

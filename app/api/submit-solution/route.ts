@@ -22,7 +22,7 @@ export async function POST(req: Request) {
 
     const name = String(participantName).trim();
     const cid = String(challengeId);
-    let submission = getLatestSubmissionByParticipantAndChallenge(name, cid);
+    let submission = await getLatestSubmissionByParticipantAndChallenge(name, cid);
 
     // 솔루션 전용 시나리오(보너스)는 터미널 제출 없이도 제출 가능 — 자동 생성
     if (!submission) {
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
           { status: 404 }
         );
       }
-      submission = addSubmission({
+      submission = await addSubmission({
         challengeId: cid,
         participantName: name,
         causeSummary: "",
@@ -68,7 +68,7 @@ export async function POST(req: Request) {
 
     const baseScore = submission.artifactScore ?? submission.score ?? 0;
     const newScore = Math.min(100, baseScore + grade.score);
-    updateSubmission(submission.id, {
+    await updateSubmission(submission.id, {
       causeSummary: cause || submission.causeSummary,
       steps: step || submission.steps,
       score: newScore,
