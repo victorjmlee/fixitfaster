@@ -108,6 +108,19 @@ export function getSubmissionChallengeIdsByParticipant(participantName: string):
   return Array.from(set);
 }
 
+/** 참가자별 챌린지 최고 점수 맵 (제출한 챌린지만) */
+export function getScoresByParticipant(participantName: string): Record<string, number> {
+  const name = participantName?.trim();
+  if (!name) return {};
+  const scores: Record<string, number> = {};
+  for (const s of readSubmissions()) {
+    if (s.participantName.trim() !== name) continue;
+    const prev = scores[s.challengeId] ?? -1;
+    if ((s.score ?? 0) > prev) scores[s.challengeId] = s.score ?? 0;
+  }
+  return scores;
+}
+
 export function getLeaderboard(challengeId?: string): Submission[] {
   let list = readSubmissions();
   if (challengeId) list = list.filter((s) => s.challengeId === challengeId);

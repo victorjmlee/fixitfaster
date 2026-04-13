@@ -20,6 +20,7 @@ function ChallengesListContent() {
   const participantNameFromUrl = searchParams.get("participantName")?.trim() ?? "";
   const [challenges, setChallenges] = useState<ChallengeMeta[]>([]);
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
+  const [scores, setScores] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [nameInput, setNameInput] = useState(participantNameFromUrl);
@@ -67,8 +68,11 @@ function ChallengesListContent() {
     }
     fetch(`/api/my-submissions?participantName=${encodeURIComponent(name)}`)
       .then((r) => r.json())
-      .then((data) => setCompletedIds(new Set(Array.isArray(data.challengeIds) ? data.challengeIds : [])))
-      .catch(() => setCompletedIds(new Set()));
+      .then((data) => {
+        setCompletedIds(new Set(Array.isArray(data.challengeIds) ? data.challengeIds : []));
+        setScores(data.scores || {});
+      })
+      .catch(() => { setCompletedIds(new Set()); setScores({}); });
   }, [participantNameFromUrl]);
 
   if (loading && !error) {
@@ -133,6 +137,21 @@ function ChallengesListContent() {
         )}
       </div>
 
+      {participantNameFromUrl && challenges.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-xs text-zinc-400">
+            <span>{locale === "ko" ? "진행률" : "Progress"}</span>
+            <span>{completedIds.size}/{challenges.length}</span>
+          </div>
+          <div className="h-2 rounded-full bg-[var(--border)] overflow-hidden">
+            <div
+              className="h-full rounded-full bg-[var(--accent)] transition-all duration-500"
+              style={{ width: `${(completedIds.size / challenges.length) * 100}%` }}
+            />
+          </div>
+        </div>
+      )}
+
       {challenges.length === 0 ? (
         <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-8 text-center text-zinc-500">
           {t("home.noChallenges")}
@@ -145,29 +164,30 @@ function ChallengesListContent() {
               <li key={c.id}>
                 <Link
                   href={participantNameFromUrl ? `/challenges/${c.id}?participantName=${encodeURIComponent(participantNameFromUrl)}` : `/challenges/${c.id}`}
-                  className="block rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 transition hover:border-[var(--accent-dim)] hover:bg-[var(--card)]/90"
+                  className="block rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 transition-all duration-200 hover:border-[var(--accent-dim)] hover:translate-x-1 hover:shadow-lg hover:shadow-[var(--accent)]/5"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3 min-w-0">
-                      <span
-                        className="shrink-0 mt-0.5 flex h-5 w-5 items-center justify-center rounded border border-[var(--border)]"
-                        aria-hidden
-                      >
-                        {completed ? (
-                          <span className="text-[var(--accent)]" title={t("home.submitted")}>✓</span>
-                        ) : (
-                          <span className="w-2 h-2 rounded-full bg-transparent" />
-                        )}
-                      </span>
+                      {completed && scores[c.id] != null ? (
+                        <span className={`shrink-0 mt-0.5 rounded-full px-2 py-0.5 text-xs font-bold ${
+                          scores[c.id] >= 86 ? "bg-[var(--accent)]/20 text-[var(--accent)]" :
+                          scores[c.id] >= 60 ? "bg-green-500/20 text-green-400" :
+                          scores[c.id] >= 31 ? "bg-yellow-500/20 text-yellow-400" :
+                          "bg-zinc-500/20 text-zinc-400"
+                        }`}>
+                          {scores[c.id]}
+                        </span>
+                      ) : completed ? (
+                        <span className="shrink-0 mt-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--accent)]/20 text-[var(--accent)] text-xs">✓</span>
+                      ) : (
+                        <span className="shrink-0 mt-0.5 flex h-5 w-5 items-center justify-center rounded-full border border-[var(--border)]" />
+                      )}
                       <div className="min-w-0">
                         <h2 className="font-semibold text-white">
                           {t(`scenario.${c.id}`).startsWith("scenario.") ? c.title : t(`scenario.${c.id}`)}
                         </h2>
                         <p className="mt-1 text-sm text-zinc-500">
                           {c.difficulty} · {c.estimatedMinutes} · {c.products}
-                          {completed && (
-                            <span className="ml-2 text-[var(--accent)]">· {t("home.submitted")}</span>
-                          )}
                         </p>
                       </div>
                     </div>

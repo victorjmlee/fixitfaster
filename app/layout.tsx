@@ -19,7 +19,7 @@ export default function RootLayout({
       <body className="antialiased">
         <LocaleProvider>
           <Header />
-          <main className="mx-auto max-w-4xl px-4 py-8">{children}</main>
+          <main className="mx-auto max-w-4xl px-4 py-8 animate-fade-in">{children}</main>
         </LocaleProvider>
       </body>
     </html>

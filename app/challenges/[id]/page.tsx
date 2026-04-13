@@ -27,6 +27,44 @@ function formatTime(seconds: number) {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
+function scoreMessage(score: number, locale: string): string {
+  if (locale === "ko") {
+    if (score >= 86) return "완벽해요!";
+    if (score >= 61) return "잘했어요!";
+    if (score >= 31) return "거의 다 왔어요!";
+    return "다시 도전!";
+  }
+  if (score >= 86) return "Perfect!";
+  if (score >= 61) return "Nice work!";
+  if (score >= 31) return "Getting there!";
+  return "Keep trying!";
+}
+
+function ScoreReveal({ score, locale }: { score: number; locale: string }) {
+  const [display, setDisplay] = useState(0);
+  const frameRef = useRef<number>(0);
+
+  useEffect(() => {
+    const duration = 800;
+    const start = performance.now();
+    function step(now: number) {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplay(Math.round(eased * score));
+      if (progress < 1) frameRef.current = requestAnimationFrame(step);
+    }
+    frameRef.current = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frameRef.current);
+  }, [score]);
+
+  return (
+    <div className={`animate-score-pop text-center py-3 ${score >= 80 ? "score-glow rounded-lg" : ""}`}>
+      <p className="font-mono text-4xl font-bold text-[var(--accent)]">{display}</p>
+      <p className="text-sm text-zinc-400 mt-1">{scoreMessage(score, locale)}</p>
+    </div>
+  );
+}
+
 /** 메인 제출 폼: artifact(자동 push) + 솔루션(선택) 통합 */
 function SubmitForm({
   challengeId,
@@ -126,21 +164,19 @@ function SubmitForm({
         className="w-full rounded-lg bg-[var(--accent)] px-4 py-3 text-sm font-medium text-[var(--bg)] disabled:opacity-50 hover:opacity-90"
       >
         {submitting
-          ? (locale === "ko" ? "제출 중…" : "Submitting…")
+          ? (<><span className="animate-spinner mr-2" />{locale === "ko" ? "채점 중…" : "Grading…"}</>)
           : result
             ? (locale === "ko" ? "다시 제출하기" : "Re-submit")
             : (locale === "ko" ? "제출하기" : "Submit")}
       </button>
 
       {result && (
-        <div className="rounded-lg border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-3 py-2 text-sm text-[var(--accent)]">
+        <div className="animate-slide-up rounded-lg border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-4 py-3 text-[var(--accent)]">
           {result.score != null ? (
             <>
-              <p className="font-medium">
-                {locale === "ko" ? `채점 완료: ${result.score}점` : `Score: ${result.score}`}
-              </p>
+              <ScoreReveal score={result.score} locale={locale} />
               {!(causeSummary.trim() || steps.trim()) && (
-                <p className="text-xs mt-1 text-zinc-400">
+                <p className="text-xs text-center text-zinc-400 mt-2">
                   {locale === "ko"
                     ? "원인과 해결 방법을 작성하고 다시 제출하면 추가 점수를 받을 수 있습니다."
                     : "Write cause and resolution above, then re-submit for bonus points."}
@@ -148,7 +184,7 @@ function SubmitForm({
               )}
             </>
           ) : (
-            <p>
+            <p className="text-sm text-center">
               {locale === "ko"
                 ? "제출 완료 — 리더보드에서 결과를 확인하세요."
                 : "Submitted — check the leaderboard for results."}
@@ -355,6 +391,7 @@ function ChallengePageContent() {
       ) : (
         <div className="sticky top-2 z-10 flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--card)] px-4 py-3">
           <div className="flex items-center gap-3">
+            <span className={`w-2 h-2 rounded-full ${timerStopped ? "bg-[var(--accent)]" : "bg-green-400 animate-pulse-dot"}`} />
             <span className="font-mono text-lg text-[var(--accent)]">{formatTime(elapsed)}</span>
             {challenges.length > 1 && (
               <span className="text-xs text-zinc-600">
@@ -435,35 +472,53 @@ function ChallengePageContent() {
               onSubmit={stopTimer}
             />
           )}
+          {timerStopped && challenges.length > 0 && (() => {
+            const idx = challenges.findIndex((c) => c.id === id);
+            const nextChallenge = idx >= 0 && idx < challenges.length - 1 ? challenges[idx + 1] : null;
+            const navParams = new URLSearchParams();
+            if (participantName) navParams.set("participantName", participantName);
+            if (codespaceId) navParams.set("codespace", codespaceId);
+            const qs = navParams.toString() ? `?${navParams.toString()}` : "";
+            return (
+              <div className="animate-slide-up">
+                {nextChallenge ? (
+                  <Link
+                    href={`/challenges/${nextChallenge.id}${qs}`}
+                    className="flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--bg)] p-4 hover:border-[var(--accent-dim)] transition-all duration-200"
+                  >
+                    <div>
+                      <p className="text-xs text-zinc-500">{locale === "ko" ? "다음 시나리오" : "Next scenario"}</p>
+                      <p className="text-sm font-medium text-white">{nextChallenge.title}</p>
+                    </div>
+                    <span className="text-[var(--accent)] text-lg">→</span>
+                  </Link>
+                ) : (
+                  <Link
+                    href={`/leaderboard${participantName ? `?name=${encodeURIComponent(participantName)}` : ""}`}
+                    className="flex items-center justify-between rounded-lg border border-[var(--accent)]/30 bg-[var(--accent)]/5 p-4 hover:bg-[var(--accent)]/10 transition-all duration-200"
+                  >
+                    <div>
+                      <p className="text-xs text-[var(--accent)]">{locale === "ko" ? "모든 시나리오 완료!" : "All scenarios complete!"}</p>
+                      <p className="text-sm font-medium text-white">{locale === "ko" ? "리더보드 확인하기" : "Check the leaderboard"}</p>
+                    </div>
+                    <span className="text-[var(--accent)] text-lg">→</span>
+                  </Link>
+                )}
+              </div>
+            );
+          })()}
+
           <p className="text-sm text-zinc-500">
-            {locale === "ko" ? "리더보드에서 점수를 확인하세요." : "Check your score on the leaderboard."}
-            {" "}
-            <a href="/leaderboard" className="text-[var(--accent)] hover:underline">/leaderboard</a>
+            <a href="/leaderboard" className="text-[var(--accent)] hover:underline">
+              {locale === "ko" ? "리더보드" : "Leaderboard"}
+            </a>
+            {" · "}
+            <Link href="/challenges" className="text-zinc-400 hover:text-zinc-300">
+              {locale === "ko" ? "챌린지 목록" : "All challenges"}
+            </Link>
           </p>
         </div>
       )}
-
-      {challenges.length > 0 && (() => {
-        const idx = challenges.findIndex((c) => c.id === id);
-        const nextChallenge = idx >= 0 && idx < challenges.length - 1 ? challenges[idx + 1] : null;
-        const params = new URLSearchParams();
-        if (participantName) params.set("participantName", participantName);
-        if (codespaceId) params.set("codespace", codespaceId);
-        const qs = params.toString() ? `?${params.toString()}` : "";
-        return (
-          <div className="flex gap-6 pt-2">
-            {nextChallenge ? (
-              <Link href={`/challenges/${nextChallenge.id}${qs}`} className="text-[var(--accent)] hover:underline">
-                {locale === "ko" ? `다음 시나리오 →` : `Next scenario →`}
-              </Link>
-            ) : (
-              <Link href="/challenges" className="text-[var(--accent)] hover:underline">
-                {locale === "ko" ? `← 챌린지 목록으로` : `← Back to Challenges`}
-              </Link>
-            )}
-          </div>
-        );
-      })()}
     </div>
   );
 }
