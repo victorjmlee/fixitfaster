@@ -1,12 +1,10 @@
 "use client";
 
-import { Suspense, useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale } from "@/app/LocaleContext";
-import { seedFromParams, getSession, updateSession } from "@/lib/session";
-
-const SETUP_DONE_KEY = "fixitfaster-setup-done";
+import { seedFromParams, getSession } from "@/lib/session";
 
 type ChallengeMeta = {
   id: string;
@@ -15,190 +13,6 @@ type ChallengeMeta = {
   estimatedMinutes: string;
   products: string;
 };
-
-function SetupForm({
-  codespaceId,
-  initialName,
-  locale,
-  onComplete,
-}: {
-  codespaceId: string;
-  initialName: string;
-  locale: string;
-  onComplete: (name: string) => void;
-}) {
-  const [nameInput, setNameInput] = useState(initialName);
-  const [apiKey, setApiKey] = useState("");
-  const [appKey, setAppKey] = useState("");
-  const [setting, setSetting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const canSubmit = nameInput.trim() && apiKey.trim() && appKey.trim() && !setting;
-
-  const handleSetup = useCallback(async () => {
-    if (!canSubmit) return;
-    setSetting(true);
-    setError(null);
-
-    try {
-      // 1. POST setup command with API keys
-      const res = await fetch("/api/commands", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          codespaceId,
-          command: "setup",
-          payload: { apiKey: apiKey.trim(), appKey: appKey.trim() },
-        }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || `HTTP ${res.status}`);
-      }
-      const { commandId } = await res.json();
-
-      // 2. Poll for completion
-      for (let i = 0; i < 60; i++) {
-        await new Promise((r) => setTimeout(r, 2000));
-        const poll = await fetch(
-          `/api/commands?codespaceId=${encodeURIComponent(codespaceId)}`
-        );
-        const { all } = await poll.json();
-        const entry = all?.find(
-          (e: { id: string; status: string }) => e.id === commandId
-        );
-        if (entry?.status === "done") {
-          // Success — persist flag and notify parent
-          try {
-            sessionStorage.setItem(SETUP_DONE_KEY, "true");
-          } catch {}
-          updateSession({ participantName: nameInput.trim() });
-          onComplete(nameInput.trim());
-          return;
-        }
-        if (entry?.status === "error") {
-          throw new Error(entry.output || "Setup failed");
-        }
-      }
-      throw new Error("Setup timed out");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Setup failed");
-    } finally {
-      setSetting(false);
-    }
-  }, [canSubmit, codespaceId, apiKey, appKey, nameInput, onComplete]);
-
-  return (
-    <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-6 space-y-4">
-      <div>
-        <h2 className="text-lg font-semibold text-white">
-          {locale === "ko" ? "환경 설정" : "Environment Setup"}
-        </h2>
-        <p className="text-sm text-zinc-400 mt-1">
-          {locale === "ko"
-            ? "이름과 Datadog API Key를 입력하여 환경을 시작하세요."
-            : "Enter your name and Datadog API keys to start the environment."}
-        </p>
-      </div>
-
-      <div className="space-y-3">
-        <div className="space-y-1">
-          <label className="text-sm text-zinc-300">
-            {locale === "ko" ? "이름" : "Your name"}
-          </label>
-          <input
-            type="text"
-            value={nameInput}
-            onChange={(e) => setNameInput(e.target.value)}
-            placeholder={locale === "ko" ? "예: Jongmin" : "e.g. Aaron"}
-            className="w-full rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-white placeholder:text-zinc-500"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label className="text-sm text-zinc-300">Datadog API Key</label>
-          <input
-            type="password"
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            placeholder="32-character hex"
-            className="w-full rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-white placeholder:text-zinc-500 font-mono"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label className="text-sm text-zinc-300">Datadog App Key</label>
-          <input
-            type="password"
-            value={appKey}
-            onChange={(e) => setAppKey(e.target.value)}
-            placeholder="40-character hex"
-            className="w-full rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-white placeholder:text-zinc-500 font-mono"
-          />
-        </div>
-
-        <details className="text-xs text-zinc-500">
-          <summary className="cursor-pointer hover:text-zinc-300">
-            {locale === "ko" ? "API Key 찾는 방법" : "How to find your keys"}
-          </summary>
-          <ol className="mt-2 ml-4 list-decimal space-y-1">
-            <li>
-              <a
-                href="https://app.datadoghq.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[var(--accent)] hover:underline"
-              >
-                app.datadoghq.com
-              </a>{" "}
-              {locale === "ko" ? "로그인" : "→ Log in"}
-            </li>
-            <li>
-              {locale === "ko"
-                ? "좌측 하단 계정 아이콘 → Organization Settings"
-                : "Bottom-left account icon → Organization Settings"}
-            </li>
-            <li>
-              {locale === "ko"
-                ? "API Keys 탭 → 키 복사"
-                : "API Keys tab → Copy key"}
-            </li>
-            <li>
-              {locale === "ko"
-                ? "Application Keys 탭 → 키 복사"
-                : "Application Keys tab → Copy key"}
-            </li>
-          </ol>
-        </details>
-      </div>
-
-      <button
-        type="button"
-        disabled={!canSubmit}
-        onClick={handleSetup}
-        className="w-full rounded-lg bg-[var(--accent)] px-4 py-3 text-sm font-medium text-[var(--bg)] disabled:opacity-50 hover:opacity-90"
-      >
-        {setting ? (
-          <>
-            <span
-              className="animate-spinner mr-2 inline-block"
-              style={{ width: 14, height: 14, borderWidth: 2 }}
-            />
-            {locale === "ko" ? "환경 설정 중..." : "Setting up environment..."}
-          </>
-        ) : locale === "ko" ? (
-          "환경 시작 / Start Environment"
-        ) : (
-          "Start Environment"
-        )}
-      </button>
-
-      {error && (
-        <p className="text-sm text-amber-400">{error}</p>
-      )}
-    </div>
-  );
-}
 
 function ChallengesListContent() {
   const { t, locale } = useLocale();
@@ -214,27 +28,14 @@ function ChallengesListContent() {
   const [error, setError] = useState<string | null>(null);
   const [nameInput, setNameInput] = useState(participantNameFromUrl || session.participantName || "");
 
-  // Determine whether to show setup form
-  const [setupDone, setSetupDone] = useState(() => {
-    if (typeof window === "undefined") return false;
-    try {
-      return sessionStorage.getItem(SETUP_DONE_KEY) === "true";
-    } catch {
-      return false;
-    }
-  });
-
-  // Show setup form when: codespaceId present AND name not set AND setup not done yet
-  const needsSetup = !!codespaceId && !participantNameFromUrl && !setupDone;
-
   // Restore name from session if not in URL
   useEffect(() => {
     if (participantNameFromUrl) return;
     const s = getSession();
-    if (s.participantName && !needsSetup) {
+    if (s.participantName) {
       router.replace(`/challenges?participantName=${encodeURIComponent(s.participantName)}${s.codespaceId ? `&codespace=${encodeURIComponent(s.codespaceId)}` : ""}`);
     }
-  }, [participantNameFromUrl, router, needsSetup]);
+  }, [participantNameFromUrl, router]);
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -268,13 +69,6 @@ function ChallengesListContent() {
       .catch(() => { setCompletedIds(new Set()); setScores({}); });
   }, [participantNameFromUrl]);
 
-  const handleSetupComplete = useCallback((name: string) => {
-    setSetupDone(true);
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("participantName", name);
-    router.replace(`/challenges?${params.toString()}`);
-  }, [searchParams, router]);
-
   if (loading && !error) {
     return (
       <div className="flex justify-center py-16">
@@ -307,16 +101,7 @@ function ChallengesListContent() {
         <p className="text-zinc-400 text-sm">{t("home.subtitle")}</p>
       </div>
 
-      {needsSetup ? (
-        <SetupForm
-          codespaceId={codespaceId!}
-          initialName={nameInput}
-          locale={locale}
-          onComplete={handleSetupComplete}
-        />
-      ) : (
-        <>
-          <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4">
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4">
             <p className="text-sm text-zinc-300 mb-2">
               {locale === "ko"
                 ? "이름을 입력하면 제출과 점수가 해당 이름으로 기록됩니다."
@@ -425,8 +210,6 @@ function ChallengesListContent() {
               {t("home.agentTroubleshooting")}
             </a>
           </div>
-        </>
-      )}
     </div>
   );
 }
