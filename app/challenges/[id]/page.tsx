@@ -205,21 +205,7 @@ function SubmitForm({
     setResult(null);
 
     try {
-      // Fetch artifacts directly from Codespace (no Redis dependency)
-      let artifacts = "";
-      if (codespaceId) {
-        try {
-          const csUrl = `https://${codespaceId}-4000.app.github.dev/artifacts`;
-          const artRes = await fetch(csUrl, { signal: AbortSignal.timeout(10000) });
-          if (artRes.ok) {
-            const artData = await artRes.json();
-            artifacts = artData.artifacts || "";
-          }
-        } catch {
-          // Codespace unreachable — submit without artifacts
-        }
-      }
-
+      // Submit via Vercel — artifacts fetched from Redis (auto-pushed by Codespace)
       const res = await fetch("/api/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -227,7 +213,6 @@ function SubmitForm({
           challengeId,
           participantName: participantName!.trim(),
           codespaceId: codespaceId || undefined,
-          artifacts: artifacts || undefined,
           causeSummary: causeSummary.trim(),
           steps: steps.trim(),
           elapsedSeconds: elapsed,

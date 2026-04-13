@@ -44,10 +44,26 @@ export async function POST(req: Request) {
       elapsedSeconds: Math.floor(Number(elapsedSeconds)),
     });
 
-    // Use inline artifacts (browser fetched from Codespace) or fall back to store (CLI/auto-push)
+    // Artifacts from Redis (auto-pushed by Codespace every 15s)
     const inlineArtifacts = typeof body.artifacts === "string" ? body.artifacts.trim() : "";
     const codespaceId = typeof body.codespaceId === "string" ? body.codespaceId.trim() : null;
-    const artifacts = inlineArtifacts || await getAndConsumeArtifacts(submission.challengeId, participantNameTrimmed, codespaceId);
+    let artifacts = inlineArtifacts || await getAndConsumeArtifacts(submission.challengeId, participantNameTrimmed, codespaceId);
+
+    // If no artifacts yet, trigger force-push via command queue and poll
+    if ((!artifacts || !artifacts.trim()) && codespaceId) {
+      try {
+        await fetch(new URL("/api/commands", req.url).origin + "/api/commands", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ codespaceId, command: "force-push" }),
+        });
+      } catch {}
+      for (let i = 0; i < 6; i++) {
+        await new Promise((r) => setTimeout(r, 3000));
+        artifacts = await getAndConsumeArtifacts(submission.challengeId, participantNameTrimmed, codespaceId);
+        if (artifacts?.trim()) break;
+      }
+    }
 
     if (artifacts?.trim()) {
       const sample = artifacts.slice(0, 200).replace(/\n/g, " ");
