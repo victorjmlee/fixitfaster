@@ -22,7 +22,6 @@ export default function HomePage() {
     const params = new URLSearchParams();
     params.set("env[DATADOG_API_KEY]", apiKey.trim());
     params.set("env[DATADOG_APP_KEY]", appKey.trim());
-    params.set("env[PARTICIPANT_NAME]", name.trim());
     const url = `https://codespaces.new/${CODESPACE_REPO}?${params.toString()}`;
 
     updateSession({ participantName: name.trim(), launched: true, launchedAt: Date.now() });
