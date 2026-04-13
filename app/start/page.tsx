@@ -12,7 +12,6 @@ export default function StartPage() {
   const [name, setName] = useState("");
   const [apiKey, setApiKey] = useState("");
   const [appKey, setAppKey] = useState("");
-  const [site, setSite] = useState("datadoghq.com");
   const [launched, setLaunched] = useState(false);
 
   const canLaunch = name.trim() && apiKey.trim() && appKey.trim();
@@ -22,7 +21,6 @@ export default function StartPage() {
     const params = new URLSearchParams();
     params.set("env[DATADOG_API_KEY]", apiKey.trim());
     params.set("env[DATADOG_APP_KEY]", appKey.trim());
-    if (site && site !== "datadoghq.com") params.set("env[DATADOG_SITE]", site.trim());
     const url = `https://codespaces.new/${CODESPACE_REPO}?${params.toString()}`;
 
     try { sessionStorage.setItem("fixitfaster-participant-name", name.trim()); } catch {}
@@ -80,21 +78,6 @@ export default function StartPage() {
             placeholder="Organization Settings → Application Keys"
             className="w-full rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-white placeholder:text-zinc-500 font-mono"
           />
-        </div>
-
-        <div className="space-y-1">
-          <label className="text-sm text-zinc-300">Datadog Site</label>
-          <select
-            value={site}
-            onChange={(e) => setSite(e.target.value)}
-            className="w-full rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-white"
-          >
-            <option value="datadoghq.com">datadoghq.com (US1)</option>
-            <option value="datadoghq.eu">datadoghq.eu (EU)</option>
-            <option value="us3.datadoghq.com">us3.datadoghq.com (US3)</option>
-            <option value="us5.datadoghq.com">us5.datadoghq.com (US5)</option>
-            <option value="ap1.datadoghq.com">ap1.datadoghq.com (AP1)</option>
-          </select>
         </div>
 
         {!launched ? (

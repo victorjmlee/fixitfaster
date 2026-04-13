@@ -29,7 +29,7 @@ export default function Header() {
         </Link>
         <div className="flex items-center gap-4">
           <nav className="flex gap-6 text-sm">
-            <Link href="/" className={linkClass("/")}>
+            <Link href="/start" className={linkClass("/start")}>
               {t("nav.start")}
             </Link>
             {isEmbedded && (
