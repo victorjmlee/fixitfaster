@@ -11,38 +11,16 @@ export default function HomePage() {
   const { locale } = useLocale();
   const router = useRouter();
   const [name, setName] = useState("");
-  const [apiKey, setApiKey] = useState("");
-  const [appKey, setAppKey] = useState("");
   const [launched, setLaunched] = useState(false);
 
-  const canLaunch = name.trim() && apiKey.trim() && appKey.trim();
+  const canLaunch = name.trim().length > 0;
 
-  const launch = async () => {
+  const launch = () => {
     if (!canLaunch) return;
-
-    // Compute deterministic token from API keys (SHA-256)
-    const encoder = new TextEncoder();
-    const data = encoder.encode(`${apiKey.trim()}:${appKey.trim()}`);
-    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-    const token = Array.from(new Uint8Array(hashBuffer))
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-
-    // Store name→token mapping in Redis (fire-and-forget)
-    fetch("/api/setup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ participantName: name.trim(), token }),
-    }).catch(() => {});
-
-    const params = new URLSearchParams();
-    params.set("env[DATADOG_API_KEY]", apiKey.trim());
-    params.set("env[DATADOG_APP_KEY]", appKey.trim());
-    const url = `https://codespaces.new/${CODESPACE_REPO}?${params.toString()}`;
 
     updateSession({ participantName: name.trim(), launched: true, launchedAt: Date.now() });
 
-    window.open(url, "_blank");
+    window.open(`https://codespaces.new/${CODESPACE_REPO}`, "_blank");
     setLaunched(true);
   };
 
@@ -75,40 +53,6 @@ export default function HomePage() {
           />
         </div>
 
-        <div className="space-y-1">
-          <label className="text-sm text-zinc-300">Datadog API Key</label>
-          <input
-            type="password"
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            placeholder="32-character hex"
-            className="w-full rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-white placeholder:text-zinc-500 font-mono"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label className="text-sm text-zinc-300">Datadog App Key</label>
-          <input
-            type="password"
-            value={appKey}
-            onChange={(e) => setAppKey(e.target.value)}
-            placeholder="40-character hex"
-            className="w-full rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-white placeholder:text-zinc-500 font-mono"
-          />
-        </div>
-
-        <details className="text-xs text-zinc-500">
-          <summary className="cursor-pointer hover:text-zinc-300">
-            {locale === "ko" ? "API Key 찾는 방법" : "How to find your keys"}
-          </summary>
-          <ol className="mt-2 ml-4 list-decimal space-y-1">
-            <li><a href="https://app.datadoghq.com" target="_blank" rel="noopener noreferrer" className="text-[var(--accent)] hover:underline">app.datadoghq.com</a> {locale === "ko" ? "로그인" : "→ Log in"}</li>
-            <li>{locale === "ko" ? "좌측 하단 계정 아이콘 → Organization Settings" : "Bottom-left account icon → Organization Settings"}</li>
-            <li>{locale === "ko" ? "API Keys 탭 → 키 복사" : "API Keys tab → Copy key"}</li>
-            <li>{locale === "ko" ? "Application Keys 탭 → 키 복사" : "Application Keys tab → Copy key"}</li>
-          </ol>
-        </details>
-
         {!launched ? (
           <button
             type="button"
@@ -138,8 +82,8 @@ export default function HomePage() {
 
       <p className="text-center text-xs text-zinc-600">
         {locale === "ko"
-          ? "API Key는 Codespace 환경변수로만 사용되며 서버에 저장되지 않습니다."
-          : "Keys are passed as Codespace secrets only. Not stored on our servers."}
+          ? "Codespace가 시작되면 브라우저 내에서 API Key를 설정합니다."
+          : "You'll configure API keys inside the Codespace after it launches."}
       </p>
     </div>
   );

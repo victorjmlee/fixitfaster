@@ -49,8 +49,19 @@ export async function POST(req: Request) {
     const codespaceId = typeof body.codespaceId === "string" ? body.codespaceId.trim() : null;
     let artifacts = inlineArtifacts || await getAndConsumeArtifacts(submission.challengeId, participantNameTrimmed, codespaceId);
 
-    // If no artifacts yet and codespaceId present, poll for up to 15s (wait for auto-push)
+    // If no artifacts yet and codespaceId present, trigger force-push then poll
     if ((!artifacts || !artifacts.trim()) && codespaceId) {
+      // Trigger immediate push via command queue
+      try {
+        const cmdRes = await fetch(new URL("/api/commands", req.url).origin + "/api/commands", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ codespaceId, command: "force-push" }),
+        });
+        if (cmdRes.ok) console.log("[submit] force-push triggered for %s", codespaceId);
+      } catch {}
+
+      // Poll for artifacts (force-push should arrive within 3-6s)
       for (let i = 0; i < 5; i++) {
         await new Promise((r) => setTimeout(r, 3000));
         artifacts = await getAndConsumeArtifacts(submission.challengeId, participantNameTrimmed, codespaceId);

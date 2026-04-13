@@ -12,6 +12,7 @@ type CommandEntry = {
   command: string;
   status: "pending" | "running" | "done" | "error";
   output?: string;
+  payload?: Record<string, string>;
   queuedAt: number;
   doneAt?: number;
 };
@@ -20,6 +21,8 @@ const ALLOWED_COMMANDS: Record<string, string> = {
   "agent-restart": "docker compose --env-file .env.local restart agent",
   "rebuild": "docker compose --env-file .env.local up -d --build",
   "agent-status": "docker exec fixitfaster-agent agent status 2>&1 | head -80",
+  "force-push": "_internal",
+  "setup": "_internal",
 };
 
 const TTL_SEC = 600; // 10 minutes
@@ -39,7 +42,7 @@ function kvKey(codespaceId: string) {
 /** POST: Queue a command */
 export async function POST(req: Request) {
   try {
-    const { codespaceId, command } = await req.json();
+    const { codespaceId, command, payload } = await req.json();
     if (!codespaceId?.trim() || !command?.trim()) {
       return NextResponse.json({ error: "codespaceId and command required" }, { status: 400 });
     }
@@ -58,6 +61,7 @@ export async function POST(req: Request) {
       id: `cmd-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       command,
       status: "pending",
+      ...(command === "setup" && payload ? { payload } : {}),
       queuedAt: Date.now(),
     };
     existing.push(entry);
@@ -89,6 +93,7 @@ export async function GET(req: Request) {
       id: e.id,
       command: e.command,
       shell: ALLOWED_COMMANDS[e.command] || e.command,
+      ...(e.payload ? { payload: e.payload } : {}),
     })),
     all: entries,
   });
