@@ -44,42 +44,10 @@ export async function POST(req: Request) {
       elapsedSeconds: Math.floor(Number(elapsedSeconds)),
     });
 
-    // Use inline artifacts (browser submit) or fall back to store (CLI/auto-push)
+    // Use inline artifacts (browser fetched from Codespace) or fall back to store (CLI/auto-push)
     const inlineArtifacts = typeof body.artifacts === "string" ? body.artifacts.trim() : "";
     const codespaceId = typeof body.codespaceId === "string" ? body.codespaceId.trim() : null;
-    let artifacts = inlineArtifacts || await getAndConsumeArtifacts(submission.challengeId, participantNameTrimmed, codespaceId);
-
-    // If no artifacts yet and codespaceId present, trigger force-push then poll
-    if ((!artifacts || !artifacts.trim()) && codespaceId) {
-      // Trigger immediate push via command queue
-      let forcePushOk = false;
-      try {
-        const cmdRes = await fetch(new URL("/api/commands", req.url).origin + "/api/commands", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ codespaceId, command: "force-push" }),
-        });
-        forcePushOk = cmdRes.ok;
-        if (cmdRes.ok) {
-          console.log("[submit] force-push triggered for %s", codespaceId);
-        } else {
-          console.warn("[submit] force-push failed HTTP %d for %s", cmdRes.status, codespaceId);
-        }
-      } catch (e) {
-        console.warn("[submit] force-push fetch error for %s: %s", codespaceId, e instanceof Error ? e.message : String(e));
-      }
-
-      // Poll for artifacts (force-push should arrive within 3-6s, auto-push every 15s)
-      for (let i = 0; i < 5; i++) {
-        await new Promise((r) => setTimeout(r, 3000));
-        artifacts = await getAndConsumeArtifacts(submission.challengeId, participantNameTrimmed, codespaceId);
-        if (artifacts?.trim()) break;
-      }
-
-      if (!artifacts?.trim() && !forcePushOk) {
-        console.warn("[submit] No artifacts AND force-push failed — likely KV/command issue for codespace %s", codespaceId);
-      }
-    }
+    const artifacts = inlineArtifacts || await getAndConsumeArtifacts(submission.challengeId, participantNameTrimmed, codespaceId);
 
     if (artifacts?.trim()) {
       const sample = artifacts.slice(0, 200).replace(/\n/g, " ");
@@ -106,8 +74,8 @@ export async function POST(req: Request) {
     if (grade.success) {
       updateSubmission(submission.id, { score: grade.score, artifactScore: grade.artifactScore });
       submission.score = grade.score;
-      console.log("[submit] Grading ok challengeId=%s score=%s", submission.challengeId, grade.score);
-      return NextResponse.json(submission);
+      console.log("[submit] Grading ok challengeId=%s score=%s artifact=%s", submission.challengeId, grade.score, grade.artifactScore);
+      return NextResponse.json({ ...submission, artifactScore: grade.artifactScore });
     }
     console.warn("[submit] Grading skipped challengeId=%s reason=%s", submission.challengeId, grade.reason);
     const hintByReason: Record<string, string> = {
