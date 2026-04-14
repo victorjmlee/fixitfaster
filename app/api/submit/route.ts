@@ -44,25 +44,29 @@ export async function POST(req: Request) {
       elapsedSeconds: Math.floor(Number(elapsedSeconds)),
     });
 
-    // Artifacts from Redis (auto-pushed by Codespace every 15s)
+    // Artifacts: try direct fetch from Codespace (server→server, no CSP), fallback to Redis
     const inlineArtifacts = typeof body.artifacts === "string" ? body.artifacts.trim() : "";
     const codespaceId = typeof body.codespaceId === "string" ? body.codespaceId.trim() : null;
-    let artifacts = inlineArtifacts || await getAndConsumeArtifacts(submission.challengeId, participantNameTrimmed, codespaceId);
+    let artifacts = inlineArtifacts;
 
-    // If no artifacts yet, trigger force-push via command queue and poll
-    if ((!artifacts || !artifacts.trim()) && codespaceId) {
+    // Server-side direct fetch from Codespace (no CSP restriction on Vercel serverless)
+    if (!artifacts && codespaceId) {
       try {
-        await fetch(new URL("/api/commands", req.url).origin + "/api/commands", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ codespaceId, command: "force-push" }),
-        });
-      } catch {}
-      for (let i = 0; i < 6; i++) {
-        await new Promise((r) => setTimeout(r, 3000));
-        artifacts = await getAndConsumeArtifacts(submission.challengeId, participantNameTrimmed, codespaceId);
-        if (artifacts?.trim()) break;
+        const csUrl = `https://${codespaceId}-4000.app.github.dev/artifacts`;
+        const csRes = await fetch(csUrl, { signal: AbortSignal.timeout(8000) });
+        if (csRes.ok) {
+          const csData = await csRes.json();
+          artifacts = csData.artifacts || "";
+          console.log("[submit] Fetched artifacts directly from Codespace len=%d", artifacts.length);
+        }
+      } catch (e) {
+        console.warn("[submit] Direct Codespace fetch failed: %s", e instanceof Error ? e.message : String(e));
       }
+    }
+
+    // Fallback to Redis (auto-pushed artifacts)
+    if (!artifacts?.trim()) {
+      artifacts = await getAndConsumeArtifacts(submission.challengeId, participantNameTrimmed, codespaceId);
     }
 
     if (artifacts?.trim()) {
