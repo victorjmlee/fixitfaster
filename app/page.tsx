@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { useLocale } from "@/app/LocaleContext";
@@ -9,7 +9,6 @@ import { seedFromParams, updateSession } from "@/lib/session";
 const CODESPACE_REPO = "victorjmlee/fixitfaster-agent";
 const SETUP_DONE_KEY = "fixitfaster-setup-done";
 
-/** Setup form for Codespace environment (name + API keys → docker start) */
 function SetupForm({
   codespaceId,
   locale,
@@ -22,64 +21,27 @@ function SetupForm({
   const [nameInput, setNameInput] = useState("");
   const [apiKey, setApiKey] = useState("");
   const [appKey, setAppKey] = useState("");
-  const [setting, setSetting] = useState(false);
-  const [status, setStatus] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const busyRef = useRef(false);
+  const [copied, setCopied] = useState(false);
 
-  const canSubmit = nameInput.trim() && apiKey.trim() && appKey.trim() && !setting;
+  const ready = nameInput.trim() && apiKey.trim() && appKey.trim();
 
-  const handleSetup = useCallback(async () => {
-    if (!canSubmit || busyRef.current) return;
-    busyRef.current = true;
-    setSetting(true);
-    setError(null);
-    setStatus(locale === "ko" ? "Docker 컨테이너 시작 중..." : "Starting Docker containers...");
+  const command = ready
+    ? `echo 'DATADOG_API_KEY=${apiKey.trim()}' > .env.local && echo 'DATADOG_APP_KEY=${appKey.trim()}' >> .env.local && npm run up:full`
+    : "";
 
-    try {
-      // Setup via Vercel Redis → Codespace polls (bypasses Simple Browser CSP)
-      const res = await fetch("/api/commands", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          codespaceId,
-          command: "setup",
-          payload: { apiKey: apiKey.trim(), appKey: appKey.trim() },
-        }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Failed to send setup command");
-      }
-      const { commandId } = await res.json();
+  const copyAndContinue = useCallback(() => {
+    if (!ready || !command) return;
+    navigator.clipboard.writeText(command).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(() => {});
+    updateSession({ participantName: nameInput.trim() });
+    try { sessionStorage.setItem(SETUP_DONE_KEY, "true"); } catch {}
+  }, [ready, command, nameInput]);
 
-      setStatus(locale === "ko" ? "Docker 컨테이너 시작 중..." : "Starting Docker containers...");
-
-      for (let i = 0; i < 90; i++) {
-        await new Promise((r) => setTimeout(r, 2000));
-        const poll = await fetch(`/api/commands?codespaceId=${encodeURIComponent(codespaceId)}`);
-        const { all } = await poll.json();
-        const entry = all?.find((e: { id: string; status: string }) => e.id === commandId);
-        if (entry?.status === "done") {
-          try { sessionStorage.setItem(SETUP_DONE_KEY, "true"); } catch {}
-          updateSession({ participantName: nameInput.trim() });
-          onComplete(nameInput.trim());
-          return;
-        }
-        if (entry?.status === "error") {
-          throw new Error(locale === "ko" ? "환경 설정 실패. 키를 확인하고 다시 시도하세요." : "Setup failed. Check your keys and try again.");
-        }
-        if (i === 15) setStatus(locale === "ko" ? "거의 완료..." : "Almost ready...");
-      }
-      throw new Error("Setup timed out");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Setup failed");
-    } finally {
-      busyRef.current = false;
-      setSetting(false);
-      setStatus("");
-    }
-  }, [canSubmit, codespaceId, apiKey, appKey, nameInput, locale, onComplete]);
+  const goToChallenges = useCallback(() => {
+    onComplete(nameInput.trim());
+  }, [nameInput, onComplete]);
 
   return (
     <div className="space-y-4 rounded-xl border border-[var(--border)] bg-[var(--card)] p-6">
@@ -89,8 +51,8 @@ function SetupForm({
         </h2>
         <p className="text-sm text-zinc-400 mt-1">
           {locale === "ko"
-            ? "이름과 Datadog API Key를 입력하면 환경이 자동으로 시작됩니다."
-            : "Enter your name and Datadog API keys to auto-start the environment."}
+            ? "이름과 Datadog API Key를 입력하세요."
+            : "Enter your name and Datadog API keys."}
         </p>
       </div>
 
@@ -105,7 +67,6 @@ function SetupForm({
             className="w-full rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-white placeholder:text-zinc-500"
           />
         </div>
-
         <div className="space-y-1">
           <label className="text-sm text-zinc-300">Datadog API Key</label>
           <input
@@ -116,7 +77,6 @@ function SetupForm({
             className="w-full rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-white placeholder:text-zinc-500 font-mono"
           />
         </div>
-
         <div className="space-y-1">
           <label className="text-sm text-zinc-300">Datadog App Key</label>
           <input
@@ -127,7 +87,6 @@ function SetupForm({
             className="w-full rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-white placeholder:text-zinc-500 font-mono"
           />
         </div>
-
         <details className="text-xs text-zinc-500">
           <summary className="cursor-pointer hover:text-zinc-300">
             {locale === "ko" ? "API Key 찾는 방법" : "How to find your keys"}
@@ -141,23 +100,35 @@ function SetupForm({
         </details>
       </div>
 
-      <button
-        type="button"
-        disabled={!canSubmit}
-        onClick={handleSetup}
-        className="w-full rounded-lg bg-[var(--accent)] px-4 py-3 text-sm font-medium text-[var(--bg)] disabled:opacity-50 hover:opacity-90"
-      >
-        {setting ? (
-          <><span className="animate-spinner mr-2 inline-block" style={{ width: 14, height: 14, borderWidth: 2 }} />{status}</>
-        ) : locale === "ko" ? "환경 시작" : "Start Environment"}
-      </button>
-
-      {error && <p className="text-sm text-amber-400">{error}</p>}
+      {!copied ? (
+        <button
+          type="button"
+          disabled={!ready}
+          onClick={copyAndContinue}
+          className="w-full rounded-lg bg-[var(--accent)] px-4 py-3 text-sm font-medium text-[var(--bg)] disabled:opacity-50 hover:opacity-90"
+        >
+          {locale === "ko" ? "설정 명령어 복사" : "Copy Setup Command"}
+        </button>
+      ) : (
+        <div className="animate-slide-up space-y-3">
+          <div className="rounded-lg border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-4 py-3 text-sm text-[var(--accent)] text-center">
+            {locale === "ko"
+              ? "복사됨! 오른쪽 터미널에 붙여넣기 (Ctrl+V) 하세요."
+              : "Copied! Paste (Ctrl+V) in the terminal on the right."}
+          </div>
+          <button
+            type="button"
+            onClick={goToChallenges}
+            className="w-full rounded-lg bg-[var(--accent)] px-4 py-3 text-sm font-medium text-[var(--bg)] hover:opacity-90"
+          >
+            {locale === "ko" ? "챌린지 시작 →" : "Go to Challenges →"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
-/** External view: launch Codespace button */
 function LaunchView({ locale }: { locale: string }) {
   const [launched, setLaunched] = useState(false);
 
@@ -198,7 +169,6 @@ function HomePageContent() {
 
   useEffect(() => { seedFromParams(searchParams); }, [searchParams]);
 
-  // If setup already done, redirect to challenges
   useEffect(() => {
     if (!codespaceId) return;
     try {
