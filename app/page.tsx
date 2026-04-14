@@ -29,15 +29,12 @@ function SetupForm({
     ? `echo 'DATADOG_API_KEY=${apiKey.trim()}' > .env.local && echo 'DATADOG_APP_KEY=${appKey.trim()}' >> .env.local && npm run up:full`
     : "";
 
-  const copyAndContinue = useCallback(() => {
-    if (!ready || !command) return;
-    navigator.clipboard.writeText(command).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }).catch(() => {});
+  const showCommand = useCallback(() => {
+    if (!ready) return;
     updateSession({ participantName: nameInput.trim() });
     try { sessionStorage.setItem(SETUP_DONE_KEY, "true"); } catch {}
-  }, [ready, command, nameInput]);
+    setCopied(true);
+  }, [ready, nameInput]);
 
   const goToChallenges = useCallback(() => {
     onComplete(nameInput.trim());
@@ -104,18 +101,29 @@ function SetupForm({
         <button
           type="button"
           disabled={!ready}
-          onClick={copyAndContinue}
+          onClick={showCommand}
           className="w-full rounded-lg bg-[var(--accent)] px-4 py-3 text-sm font-medium text-[var(--bg)] disabled:opacity-50 hover:opacity-90"
         >
-          {locale === "ko" ? "설정 명령어 복사" : "Copy Setup Command"}
+          {locale === "ko" ? "설정 명령어 생성" : "Generate Setup Command"}
         </button>
       ) : (
         <div className="animate-slide-up space-y-3">
-          <div className="rounded-lg border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-4 py-3 text-sm text-[var(--accent)] text-center">
+          <p className="text-xs text-zinc-400">
             {locale === "ko"
-              ? "복사됨! 오른쪽 터미널에 붙여넣기 (Ctrl+V) 하세요."
-              : "Copied! Paste (Ctrl+V) in the terminal on the right."}
-          </div>
+              ? "아래 명령어를 전체 선택(Ctrl+A → Ctrl+C)한 뒤 오른쪽 터미널에 붙여넣기 하세요."
+              : "Select all below (Ctrl+A → Ctrl+C), then paste in the terminal."}
+          </p>
+          <pre
+            className="p-3 rounded bg-black/50 border border-[var(--border)] text-xs font-mono text-green-300 whitespace-pre-wrap break-all cursor-text select-all overflow-x-auto"
+            onClick={(e) => {
+              const range = document.createRange();
+              range.selectNodeContents(e.currentTarget);
+              window.getSelection()?.removeAllRanges();
+              window.getSelection()?.addRange(range);
+            }}
+          >
+            {command}
+          </pre>
           <button
             type="button"
             onClick={goToChallenges}
