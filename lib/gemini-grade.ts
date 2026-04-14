@@ -154,32 +154,50 @@ function extractDiffSection(artifacts: string): string {
 
 /**
  * artifacts만 있을 때 정답지(artifactCheck)로 채점. 조건 하나라도 만족하면 점수 부여 (Gemini 호출 안 함).
- * git diff 섹션만 검사하여 변경 없는 제출로 점수 받는 것 방지.
+ * 1차: git diff 섹션 검사 (변경 확인)
+ * 2차: diff 없을 때(커밋된 변경) artifactCheckFull로 전체 내용 검사
  */
 function gradeFromArtifactPatterns(
   challengeId: string,
   artifacts: string,
-  ref: { artifactCheck?: string[][]; artifactScore?: number }
+  ref: { artifactCheck?: string[][]; artifactCheckFull?: string[][]; artifactScore?: number }
 ): number | null {
   const check = ref?.artifactCheck;
   if (!check?.length) return null;
 
   const diff = extractDiffSection(artifacts);
-  if (!diff.trim()) {
-    console.log("[grade] No git diff found in artifacts, skip pattern check challengeId=%s", challengeId);
+  if (diff.trim()) {
+    // Primary: check the git diff section
+    for (const condition of check) {
+      if (condition.length === 0) continue;
+      const allPresent = condition.every((s) => wordMatch(diff, s));
+      if (allPresent) {
+        const score = ref.artifactScore ?? 75;
+        console.log("[grade] Artifact diff check pass challengeId=%s condition=%s score=%d", challengeId, condition.join(","), score);
+        return score;
+      }
+    }
+    console.log("[grade] Artifact diff check miss challengeId=%s diffLen=%d sample=%s", challengeId, diff.length, diff.slice(0, 400).replace(/\n/g, " "));
     return null;
   }
 
-  for (const condition of check) {
-    if (condition.length === 0) continue;
-    const allPresent = condition.every((s) => wordMatch(diff, s));
-    if (allPresent) {
-      const score = ref.artifactScore ?? 75;
-      console.log("[grade] Artifact check pass challengeId=%s condition=%s score=%d", challengeId, condition.join(","), score);
-      return score;
+  // Diff is empty — changes may have been committed. Try full-content check with stricter patterns.
+  const fullCheck = ref?.artifactCheckFull;
+  if (fullCheck?.length) {
+    for (const condition of fullCheck) {
+      if (condition.length === 0) continue;
+      const allPresent = condition.every((s) => wordMatch(artifacts, s));
+      if (allPresent) {
+        const score = ref.artifactScore ?? 75;
+        console.log("[grade] Artifact full-content check pass challengeId=%s condition=%s score=%d", challengeId, condition.join(","), score);
+        return score;
+      }
     }
+    console.log("[grade] Artifact full-content check miss challengeId=%s artifactsLen=%d", challengeId, artifacts.length);
+    return null;
   }
-  console.log("[grade] Artifact check miss challengeId=%s diffLen=%d sample=%s", challengeId, diff.length, diff.slice(0, 400).replace(/\n/g, " "));
+
+  console.log("[grade] No git diff found in artifacts, skip pattern check challengeId=%s", challengeId);
   return null;
 }
 

@@ -16,6 +16,11 @@ export const REFERENCE_ANSWERS: Record<
     resolution: string;
     expectedChange: string;
     artifactCheck: ArtifactCheck;
+    /**
+     * 커밋된 변경사항 채점용 (diff가 비어있을 때 전체 artifact 내용 검색).
+     * diff 채점보다 구체적인 패턴 필요 (오탐 방지).
+     */
+    artifactCheckFull?: ArtifactCheck;
     /** 결과(artifact) 통과 시 점수. */
     artifactScore?: number;
     /** 솔루션 채점 만점 (기본 20). 솔루션 전용 시나리오는 높게 설정. */
@@ -31,6 +36,10 @@ export const REFERENCE_ANSWERS: Record<
     /* hostname과 DD_HOSTNAME 둘 다 fixitfaster-agent로 변경해야 통과 */
     artifactCheck: [
       ["docker-compose", "fixitfaster-agent", "hostname", "dd_hostname"],
+    ],
+    /* diff가 비어있을 때(커밋된 변경) 전체 파일 내용으로 검증 — "hostname: fixitfaster-agent"는 container_name과 구별됨 */
+    artifactCheckFull: [
+      ["hostname: fixitfaster-agent", "DD_HOSTNAME=fixitfaster-agent"],
     ],
     artifactScore: 50,
     scoreGuide: {
@@ -71,6 +80,10 @@ export const REFERENCE_ANSWERS: Record<
     artifactCheck: [
       ["docker-compose", "correlation", "dd_logs_injection", "true"],
       ["docker-compose", "correlation", "logs_injection", "true"],
+    ],
+    /* diff 없을 때: docker-compose.yml에 DD_LOGS_INJECTION=true가 있으면 통과 (false→true로 변경됨) */
+    artifactCheckFull: [
+      ["DD_LOGS_INJECTION=true"],
     ],
     artifactScore: 50,
     scoreGuide: {

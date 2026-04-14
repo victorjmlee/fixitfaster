@@ -193,6 +193,7 @@ function SubmitForm({
   const [causeSummary, setCauseSummary] = useState("");
   const [steps, setSteps] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [submitPhase, setSubmitPhase] = useState<"syncing" | "grading" | null>(null);
   const [result, setResult] = useState<{ score?: number; artifactScore?: number; _gradingSkipped?: boolean; _gradingReason?: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -201,11 +202,39 @@ function SubmitForm({
   const handleSubmit = async () => {
     if (!canSubmit) return;
     setSubmitting(true);
+    setSubmitPhase(null);
     setError(null);
     setResult(null);
 
     try {
-      // Submit via Vercel — artifacts fetched from Redis (auto-pushed by Codespace)
+      // 1. If Codespace is connected, trigger a force-push so Redis has fresh artifacts
+      if (codespaceId) {
+        setSubmitPhase("syncing");
+        try {
+          const cmdRes = await fetch("/api/commands", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ codespaceId, command: "force-push" }),
+          });
+          if (cmdRes.ok) {
+            const { commandId } = await cmdRes.json();
+            // Wait up to 12s for artifact-server to execute the force-push
+            for (let i = 0; i < 6; i++) {
+              await new Promise((r) => setTimeout(r, 2000));
+              try {
+                const poll = await fetch(`/api/commands?codespaceId=${encodeURIComponent(codespaceId)}`);
+                const { all } = await poll.json();
+                const entry = all?.find((e: { id: string; status: string }) => e.id === commandId);
+                if (entry?.status === "done" || entry?.status === "error") break;
+              } catch {}
+            }
+          }
+        } catch {}
+      }
+
+      setSubmitPhase("grading");
+
+      // 2. Submit — Vercel fetches fresh artifacts from Codespace or Redis
       const res = await fetch("/api/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -230,6 +259,7 @@ function SubmitForm({
       setError("Request failed");
     } finally {
       setSubmitting(false);
+      setSubmitPhase(null);
     }
   };
 
@@ -272,7 +302,9 @@ function SubmitForm({
         className="w-full rounded-lg bg-[var(--accent)] px-4 py-3 text-sm font-medium text-[var(--bg)] disabled:opacity-50 hover:opacity-90"
       >
         {submitting
-          ? (<><span className="animate-spinner mr-2" />{locale === "ko" ? "채점 중…" : "Grading…"}</>)
+          ? submitPhase === "syncing"
+            ? (<><span className="animate-spinner mr-2" />{locale === "ko" ? "동기화 중…" : "Syncing…"}</>)
+            : (<><span className="animate-spinner mr-2" />{locale === "ko" ? "채점 중…" : "Grading…"}</>)
           : result
             ? (locale === "ko" ? "다시 제출하기" : "Re-submit")
             : (locale === "ko" ? "제출하기" : "Submit")}
