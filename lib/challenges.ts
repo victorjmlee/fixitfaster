@@ -23,7 +23,6 @@ const CHALLENGES_DIR = path.join(process.cwd(), "challenges");
 const CHALLENGE_ORDER = [
   "scenario-infra",
   "scenario-autodiscovery",
-  "scenario-apm",
   "scenario-correlation",
   "scenario-custom-metrics",
   "scenario-log-timezone",

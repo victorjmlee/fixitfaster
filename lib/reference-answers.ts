@@ -60,21 +60,6 @@ export const REFERENCE_ANSWERS: Record<
       en: "Result 60 pts + Solution 20 pts = 80 max",
     },
   },
-  "scenario-apm": {
-    rootCause: "trace-demo가 트레이스를 보내는 포트가 Agent(8126)와 다름.",
-    resolution: "trace-demo에서 dd-trace port를 8126으로 수정 후 재빌드·재시작.",
-    expectedChange: "trace-demo 관련 파일에서 port 8126.",
-    /* trace-demo 코드/설정에서 8126 포트 설정이 있어야 함 (diff 또는 docker-compose) */
-    artifactCheck: [
-      ["trace-demo", "8126"],
-      ["ddtrace", "8126"],
-    ],
-    artifactScore: 80,
-    scoreGuide: {
-      ko: "결과 80점 + 솔루션 20점 = 만점 100점",
-      en: "Result 80 pts + Solution 20 pts = 100 max",
-    },
-  },
   "scenario-correlation": {
     rootCause: "correlation-demo에 DD_LOGS_INJECTION이 false라 trace_id 주입 안 됨.",
     resolution: "docker-compose.yml에서 correlation-demo의 DD_LOGS_INJECTION을 true로.",
