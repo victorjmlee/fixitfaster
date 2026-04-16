@@ -28,7 +28,6 @@ const CHALLENGE_ORDER = [
   "scenario-custom-metrics",
   "scenario-log-timezone",,
   "scenario-logs-disabled",,
-  "scenario-docker-logs-disabled",
 ];
 
 function extractSection(content: string, title: string): string {

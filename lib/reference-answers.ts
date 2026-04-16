@@ -141,30 +141,4 @@ export const REFERENCE_ANSWERS: Record<
       en: "Result 75 pts + Solution 20 pts = 95 max",
     },
   },
-  "scenario-docker-logs-disabled": {
-    rootCause: "Agent 컨테이너의 docker-compose 환경변수에 DD_LOGS_ENABLED=true와 DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true가 누락되어 로그 수집 기능 자체가 비활성화되었습니다.",
-    resolution: "docker-compose.yml의 Agent 서비스 environment 섹션에 DD_LOGS_ENABLED=true, DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true를 추가하고 Agent를 재시작합니다.",
-    expectedChange: "docker-compose.yml 파일의 agent 서비스 정의에 DD_LOGS_ENABLED와 DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL 환경 변수가 추가되어야 합니다.",
-    artifactCheck: [
-      [
-        "docker-compose",
-        "DD_LOGS_ENABLED",
-        "true"
-      ],
-      [
-        "docker-compose",
-        "DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL",
-        "true"
-      ]
-    ],
-    artifactCheckFull: [
-      ["DD_LOGS_ENABLED=true"],
-      ["DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true"]
-    ],
-    artifactScore: 75,
-    scoreGuide: {
-      ko: "결과 75점 + 솔루션 20점 = 만점 95점",
-      en: "Result 75 pts + Solution 20 pts = 95 max",
-    },
-  },
 };
