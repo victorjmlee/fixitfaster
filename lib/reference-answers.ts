@@ -31,24 +31,6 @@ export const REFERENCE_ANSWERS: Record<
     scoreGuide: { ko: string; en: string };
   }
 > = {
-  "scenario-infra": {
-    rootCause: "Agent의 hostname과 DD_HOSTNAME이 잘못 설정되어 있음.",
-    resolution: "docker-compose.yml에서 agent 서비스의 hostname과 DD_HOSTNAME을 모두 fixitfaster-agent로 설정 후 Agent 재시작.",
-    expectedChange: "docker-compose.yml 내 agent 서비스에 hostname = fixitfaster-agent, DD_HOSTNAME = fixitfaster-agent.",
-    /* hostname과 DD_HOSTNAME 둘 다 fixitfaster-agent로 변경해야 통과 */
-    artifactCheck: [
-      ["docker-compose", "fixitfaster-agent", "hostname", "dd_hostname"],
-    ],
-    /* diff가 비어있을 때(커밋된 변경) 전체 파일 내용으로 검증 — "hostname: fixitfaster-agent"는 container_name과 구별됨 */
-    artifactCheckFull: [
-      ["hostname: fixitfaster-agent", "DD_HOSTNAME=fixitfaster-agent"],
-    ],
-    artifactScore: 50,
-    scoreGuide: {
-      ko: "결과 50점 + 솔루션(원인/해결 작성) 20점 = 만점 70점",
-      en: "Result 50 pts + Solution (optional) 20 pts = 70 max",
-    },
-  },
   "scenario-custom-metrics": {
     rootCause: "metrics-demo가 DogStatsD를 잘못된 호스트로 보냄.",
     resolution: "metrics-demo에서 StatsD host를 agent로 수정 후 재빌드·재시작.",
