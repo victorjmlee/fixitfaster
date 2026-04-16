@@ -131,7 +131,7 @@ export const REFERENCE_ANSWERS: Record<
       ]
     ],
     artifactCheckFull: [
-      "DD_LOGS_ENABLED=true"
+      ["DD_LOGS_ENABLED=true"]
     ],
     artifactScore: 75,
     scoreGuide: {
@@ -156,8 +156,8 @@ export const REFERENCE_ANSWERS: Record<
       ]
     ],
     artifactCheckFull: [
-      "DD_LOGS_ENABLED=true",
-      "DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true"
+      ["DD_LOGS_ENABLED=true"],
+      ["DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true"]
     ],
     artifactScore: 75,
     scoreGuide: {
