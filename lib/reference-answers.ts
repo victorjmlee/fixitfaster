@@ -49,24 +49,6 @@ export const REFERENCE_ANSWERS: Record<
       en: "Result 50 pts + Solution (optional) 20 pts = 70 max",
     },
   },
-  "scenario-correlation": {
-    rootCause: "correlation-demo에 DD_LOGS_INJECTION이 false라 trace_id 주입 안 됨.",
-    resolution: "docker-compose.yml에서 correlation-demo의 DD_LOGS_INJECTION을 true로.",
-    expectedChange: "docker-compose에서 correlation-demo에 DD_LOGS_INJECTION: true.",
-    artifactCheck: [
-      ["docker-compose", "correlation", "dd_logs_injection", "true"],
-      ["docker-compose", "correlation", "logs_injection", "true"],
-    ],
-    /* diff 없을 때: docker-compose.yml에 DD_LOGS_INJECTION=true가 있으면 통과 (false→true로 변경됨) */
-    artifactCheckFull: [
-      ["DD_LOGS_INJECTION=true"],
-    ],
-    artifactScore: 50,
-    scoreGuide: {
-      ko: "결과 50점 + 솔루션 20점 = 만점 70점",
-      en: "Result 50 pts + Solution 20 pts = 70 max",
-    },
-  },
   "scenario-custom-metrics": {
     rootCause: "metrics-demo가 DogStatsD를 잘못된 호스트로 보냄.",
     resolution: "metrics-demo에서 StatsD host를 agent로 수정 후 재빌드·재시작.",
