@@ -60,25 +60,35 @@ function revertByPatch(patch: DockerComposePatch): void {
   fs.writeFileSync(COMPOSE_FILE, compose, "utf-8");
 }
 
-// ─── docker-compose.yml 롤백 (git revert 방식) ─────────────────────────────
+// ─── docker-compose.yml 롤백 (git show 파싱 방식) ──────────────────────────
 
 function revertByGit(slug: string): void {
   // "feat: add broken config for <slug>" 커밋 찾기
-  const log = execSync(
-    `git log --oneline --all`,
-    { cwd: AGENT_DIR, encoding: "utf-8" }
-  );
-  const line = log.split("\n").find((l) =>
-    l.includes(`add broken config for ${slug}`)
-  );
+  const log = execSync("git log --oneline --all", { cwd: AGENT_DIR, encoding: "utf-8" });
+  const line = log.split("\n").find((l) => l.includes(`add broken config for ${slug}`));
   if (!line) throw new Error(`fixitfaster-agent에서 "${slug}" broken config 커밋을 찾지 못했어요`);
   const hash = line.trim().split(" ")[0];
 
-  // --no-commit으로 revert (커밋은 나중에)
-  execSync(
-    `git -c commit.gpgsign=false revert --no-commit ${hash}`,
-    { cwd: AGENT_DIR, encoding: "utf-8", timeout: 30_000 }
-  );
+  // 해당 커밋에서 추가된 env var 라인 추출 (+로 시작, KEY=VALUE 형태)
+  const diff = execSync(`git show ${hash} -- docker-compose.yml`, {
+    cwd: AGENT_DIR,
+    encoding: "utf-8",
+  });
+  const addedKeys = diff
+    .split("\n")
+    .filter((l) => l.startsWith("+") && !l.startsWith("+++"))
+    .map((l) => l.slice(1).trim())  // "+" 제거
+    .filter((l) => l.startsWith("- "))  // YAML list item
+    .map((l) => l.replace(/^-\s+/, "").split("=")[0]);  // KEY 추출
+
+  if (!addedKeys.length) throw new Error(`${slug} 커밋(${hash})에서 추가된 env var를 찾지 못했어요`);
+
+  // 현재 docker-compose.yml에서 해당 키 제거
+  let compose = fs.readFileSync(COMPOSE_FILE, "utf-8");
+  for (const key of addedKeys) {
+    compose = compose.replace(new RegExp(`\\n\\s+- ${key}=[^\\n]*`, "g"), "");
+  }
+  fs.writeFileSync(COMPOSE_FILE, compose, "utf-8");
 }
 
 // ─── reference-answers.ts에서 slug 제거 ────────────────────────────────────
