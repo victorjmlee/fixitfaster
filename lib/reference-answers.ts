@@ -15,6 +15,8 @@ export const REFERENCE_ANSWERS: Record<
     rootCause: string;
     resolution: string;
     expectedChange: string;
+    /** AI 채점 프롬프트용 상세 기준. 없으면 rootCause/resolution으로 대체. */
+    solutionRubric?: string;
     artifactCheck: ArtifactCheck;
     /**
      * 커밋된 변경사항 채점용 (diff가 비어있을 때 전체 artifact 내용 검색).

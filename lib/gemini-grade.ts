@@ -10,14 +10,17 @@ export type GradeOutcome =
 
 /** 솔루션(원인/해결) 텍스트만 0~100으로 채점. */
 function buildPromptForSolution(
-  ref: { rootCause: string; resolution: string },
+  ref: { rootCause: string; resolution: string; solutionRubric?: string },
   causeSummary: string,
   steps: string
 ): string {
+  const rubricSection = ref.solutionRubric
+    ? `\nGrading rubric (what to look for):\n${ref.solutionRubric}`
+    : "";
   return `You are a grader. Score ONLY the participant's written solution (root cause + resolution) from 0 to 100.
 Reference (what we expect):
 - Root cause: ${ref.rootCause}
-- Resolution: ${ref.resolution}
+- Resolution: ${ref.resolution}${rubricSection}
 
 Participant's written answer:
 - Cause summary: ${causeSummary || "(empty)"}

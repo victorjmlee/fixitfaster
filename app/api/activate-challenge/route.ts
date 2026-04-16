@@ -29,6 +29,7 @@ type ReferenceAnswer = {
   rootCause: string;
   resolution: string;
   expectedChange: string;
+  solutionRubric?: string;
   artifactCheck: string[][];
   artifactCheckFull?: string[][];
   artifactScore: number;
@@ -105,7 +106,7 @@ function generateRefAnswerEntry(slug: string, ref: ReferenceAnswer): string {
   return `  "${slug}": {
     rootCause: ${JSON.stringify(ref.rootCause)},
     resolution: ${JSON.stringify(ref.resolution)},
-    expectedChange: ${JSON.stringify(ref.expectedChange)},
+    expectedChange: ${JSON.stringify(ref.expectedChange)},${ref.solutionRubric ? `\n    solutionRubric: ${JSON.stringify(ref.solutionRubric)},` : ""}
     artifactCheck: ${ac},${acf ? `\n    artifactCheckFull: ${acf},` : ""}
     artifactScore: ${ref.artifactScore},
     scoreGuide: {
