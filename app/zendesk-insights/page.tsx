@@ -299,27 +299,44 @@ function CandidateCard({ candidate }: { candidate: ScenarioCandidate }) {
 
 export default function ZendeskInsightsPage() {
   const [data, setData] = useState<ZendeskInsightsData | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const startAnalysis = async () => {
-    setError(null);
-    setAnalyzing(true);
-    setData(null);
+  const fetchStatus = async () => {
     try {
-      const res = await fetch("/api/zendesk-insights", { method: "POST" });
-      const json = await res.json() as ZendeskInsightsData & { error?: string };
-      if (!res.ok) throw new Error(json.error ?? "Unknown error");
+      const res = await fetch("/api/zendesk-insights", { cache: "no-store" });
+      const json = await res.json() as ZendeskInsightsData & { analyzing?: boolean };
+      if (!res.ok) throw new Error((json as { error?: string }).error ?? "Unknown error");
+      setAnalyzing(!!json.analyzing);
       setData(json);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const startAnalysis = async () => {
+    setError(null);
+    setAnalyzing(true);
+    try {
+      const res = await fetch("/api/zendesk-insights", { method: "POST" });
+      const json = await res.json();
+      if (!res.ok && res.status !== 409) throw new Error(json.error ?? "Unknown error");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
       setAnalyzing(false);
     }
   };
 
-  useEffect(() => { /* 페이지 로드 시 자동 분석 안 함 — 버튼 클릭으로만 */ }, []);
+  useEffect(() => { fetchStatus(); }, []);
+
+  useEffect(() => {
+    if (!analyzing) return;
+    const id = setInterval(fetchStatus, 3000);
+    return () => clearInterval(id);
+  }, [analyzing]);
 
   const hasData = data && data.candidates.length > 0;
 
@@ -334,15 +351,15 @@ export default function ZendeskInsightsPage() {
         </div>
         <button
           type="button"
-          onClick={startAnalysis}
-          disabled={analyzing}
+          onClick={analyzing ? fetchStatus : startAnalysis}
+          disabled={loading}
           className={`rounded-lg px-3 py-1.5 text-sm font-medium transition disabled:opacity-40 ${
             analyzing
               ? "border border-yellow-500/30 bg-yellow-500/10 text-yellow-400 cursor-default"
               : "bg-[var(--accent)] text-[var(--bg)] hover:opacity-90"
           }`}
         >
-          {analyzing ? "분석 중..." : "새로 뽑기"}
+          {analyzing ? "검색 중..." : loading ? "로딩..." : "새로 뽑기"}
         </button>
       </div>
 
@@ -353,9 +370,9 @@ export default function ZendeskInsightsPage() {
         </div>
       )}
 
-      {analyzing && (
+      {(loading || analyzing) && (
         <div className="text-center py-12 text-zinc-400 text-sm animate-pulse">
-          Gemini가 티켓 분석 중... (약 5~10초)
+          {analyzing ? "Glean으로 Zendesk 티켓 검색 중... (1~3분)" : "로딩 중..."}
         </div>
       )}
 
@@ -365,7 +382,7 @@ export default function ZendeskInsightsPage() {
         </div>
       )}
 
-      {!analyzing && !error && !hasData && (
+      {!loading && !analyzing && !error && !hasData && (
         <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-6 py-12 text-center space-y-3">
           <p className="text-zinc-300 font-medium">아직 분석 결과가 없습니다</p>
           <p className="text-sm text-zinc-500">
@@ -374,7 +391,7 @@ export default function ZendeskInsightsPage() {
         </div>
       )}
 
-      {!analyzing && hasData && (
+      {!loading && !analyzing && hasData && (
         <div className="space-y-4">
           <div className="text-sm text-zinc-400">
             시나리오 후보 <span className="text-white font-medium">{data.candidates.length}개</span>
