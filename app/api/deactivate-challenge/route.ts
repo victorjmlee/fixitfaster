@@ -132,7 +132,9 @@ function removeChallengeOrder(slug: string): boolean {
   let src = fs.readFileSync(CHALLENGES_LIB_FILE, "utf-8");
   if (!src.includes(`"${slug}"`)) return false;
 
-  src = src.replace(new RegExp(`\\n\\s+"${slug}",?`, "g"), "");
+  // 해당 줄 전체 제거 후 이중 쉼표 정리
+  src = src.replace(new RegExp(`\\n[ \\t]*"${slug}",?`, "g"), "");
+  src = src.replace(/,(\s*,)+/g, ","); // 이중 쉼표 → 단일 쉼표
   fs.writeFileSync(CHALLENGES_LIB_FILE, src, "utf-8");
   return true;
 }
