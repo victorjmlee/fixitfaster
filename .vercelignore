@@ -1,0 +1,6 @@
+app/zendesk-insights/
+app/api/zendesk-insights/
+app/api/generate-challenge/
+app/api/activate-challenge/
+data/
+challenges/_drafts/
