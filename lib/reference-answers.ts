@@ -31,19 +31,6 @@ export const REFERENCE_ANSWERS: Record<
     scoreGuide: { ko: string; en: string };
   }
 > = {
-  "scenario-log-timezone": {
-    rootCause: "log-demo 로그의 타임스탬프가 Asia/Seoul인데 Datadog 파이프라인에 올바른 Grok Parser와 Date Remapper(timezone Asia/Seoul)가 없음.",
-    resolution: "Datadog 로그 파이프라인에서 Grok Parser로 타임스탬프를 파싱하고, Date Remapper에 timezone Asia/Seoul을 설정.",
-    expectedChange: "",
-    /* 보너스: Datadog UI에서 파이프라인을 수정하므로 artifact 채점 불가. 솔루션만 채점. */
-    artifactCheck: [],
-    artifactScore: 0,
-    solutionMaxPoints: 20,
-    scoreGuide: {
-      ko: "보너스 시나리오 — 솔루션(원인/해결 작성) 만점 20점",
-      en: "Bonus scenario — Solution (cause/resolution) 20 pts max",
-    },
-  },
   "scenario-logs-disabled": {
     rootCause: "datadog.yaml에 logs_enabled 항목이 기본값(false)으로 남아 있어 Agent가 로그 수집 모듈 전체를 비활성화했습니다.",
     resolution: "docker-compose.yml 파일에서 agent 서비스의 DD_LOGS_ENABLED 환경 변수를 true로 설정합니다.",
