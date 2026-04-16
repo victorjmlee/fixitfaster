@@ -69,7 +69,7 @@ export default function AdminPage() {
                   <p className="font-medium text-white text-sm">{ch.title}</p>
                   <p className="text-xs text-zinc-500 font-mono mt-0.5">{ch.slug}</p>
                   {!ch.hasPatch && (
-                    <p className="text-xs text-yellow-500 mt-0.5">⚠ patch 정보 없음 — docker-compose 롤백 불가</p>
+                    <p className="text-xs text-zinc-500 mt-0.5">git revert 방식으로 롤백</p>
                   )}
                 </div>
                 <button
