@@ -31,21 +31,6 @@ export const REFERENCE_ANSWERS: Record<
     scoreGuide: { ko: string; en: string };
   }
 > = {
-  "scenario-custom-metrics": {
-    rootCause: "metrics-demo가 DogStatsD를 잘못된 호스트로 보냄.",
-    resolution: "metrics-demo에서 StatsD host를 agent로 수정 후 재빌드·재시작.",
-    expectedChange: "metrics-demo 코드에서 host를 agent(또는 agent 서비스명)로.",
-    /* metrics-demo에서 host/StatsD 설정으로 agent 지정한 흔적 */
-    artifactCheck: [
-      ["metrics-demo", "agent", "host"],
-      ["metrics-demo", "statsd", "agent"],
-    ],
-    artifactScore: 80,
-    scoreGuide: {
-      ko: "결과 80점 + 솔루션 20점 = 만점 100점",
-      en: "Result 80 pts + Solution 20 pts = 100 max",
-    },
-  },
   "scenario-log-timezone": {
     rootCause: "log-demo 로그의 타임스탬프가 Asia/Seoul인데 Datadog 파이프라인에 올바른 Grok Parser와 Date Remapper(timezone Asia/Seoul)가 없음.",
     resolution: "Datadog 로그 파이프라인에서 Grok Parser로 타임스탬프를 파싱하고, Date Remapper에 timezone Asia/Seoul을 설정.",

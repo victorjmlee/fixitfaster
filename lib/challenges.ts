@@ -21,7 +21,6 @@ export type Challenge = ChallengeMeta & {
 const CHALLENGES_DIR = path.join(process.cwd(), "challenges");
 
 const CHALLENGE_ORDER = [
-  "scenario-custom-metrics",
   "scenario-log-timezone",
   "scenario-logs-disabled",
 ];
