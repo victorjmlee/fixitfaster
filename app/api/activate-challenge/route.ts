@@ -7,6 +7,7 @@ const ROOT = process.cwd();
 const AGENT_DIR = path.join(ROOT, "fixitfaster-agent");
 const CHALLENGES_DIR = path.join(ROOT, "challenges");
 const DRAFTS_DIR = path.join(CHALLENGES_DIR, "_drafts");
+const PATCHES_DIR = path.join(CHALLENGES_DIR, "_patches");
 const REFERENCE_ANSWERS_FILE = path.join(ROOT, "lib", "reference-answers.ts");
 const CHALLENGES_LIB_FILE = path.join(ROOT, "lib", "challenges.ts");
 const COMPOSE_FILE = path.join(AGENT_DIR, "docker-compose.yml");
@@ -203,8 +204,14 @@ export async function POST(req: NextRequest) {
       throw e;
     }
 
-    // 5. challenge 파일 이동
+    // 5. challenge 파일 이동 + patch 정보 저장
     fs.copyFileSync(mdDraftPath, mdFinalPath);
+    if (!fs.existsSync(PATCHES_DIR)) fs.mkdirSync(PATCHES_DIR, { recursive: true });
+    fs.writeFileSync(
+      path.join(PATCHES_DIR, `${slug}.json`),
+      JSON.stringify(meta.dockerComposePatch, null, 2),
+      "utf-8"
+    );
     steps.push({ step: `challenges/${slug}.md 생성`, status: "ok" });
 
     // 6. fixitfaster-agent git commit + push
@@ -220,7 +227,7 @@ export async function POST(req: NextRequest) {
 
     // 7. fixitfaster git commit + push
     try {
-      git(`git add challenges/${slug}.md lib/reference-answers.ts lib/challenges.ts`, ROOT);
+      git(`git add challenges/${slug}.md challenges/_patches/${slug}.json lib/reference-answers.ts lib/challenges.ts`, ROOT);
       git(`git commit -m "feat: add challenge ${slug}"`, ROOT);
       git("git push origin main", ROOT);
       steps.push({ step: "fixitfaster git push → Vercel 재배포", status: "ok" });

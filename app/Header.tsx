@@ -40,6 +40,12 @@ export default function Header() {
             <Link href="/leaderboard" className={linkClass("/leaderboard")}>
               {t("nav.leaderboard")}
             </Link>
+            <Link href="/zendesk-insights" className={linkClass("/zendesk-insights")}>
+              Insights
+            </Link>
+            <Link href="/admin" className={linkClass("/admin")}>
+              Admin
+            </Link>
           </nav>
           <span className="text-white">|</span>
           <div className="flex rounded border border-[var(--border)] p-0.5 text-sm">
