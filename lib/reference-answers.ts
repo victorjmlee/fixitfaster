@@ -49,17 +49,6 @@ export const REFERENCE_ANSWERS: Record<
       en: "Result 50 pts + Solution (optional) 20 pts = 70 max",
     },
   },
-  "scenario-autodiscovery": {
-    rootCause: "conf.d/nginx.d/autoconf.yaml의 ad_identifiers가 nginx 이미지명과 다름.",
-    resolution: "ad_identifiers를 nginx로 수정 후 Agent 재시작.",
-    expectedChange: "conf.d 내 nginx yaml에 ad_identifiers에 nginx 포함.",
-    artifactCheck: [["conf.d", "ad_identifiers", "nginx"]],
-    artifactScore: 60,
-    scoreGuide: {
-      ko: "결과 60점 + 솔루션 20점 = 만점 80점",
-      en: "Result 60 pts + Solution 20 pts = 80 max",
-    },
-  },
   "scenario-correlation": {
     rootCause: "correlation-demo에 DD_LOGS_INJECTION이 false라 trace_id 주입 안 됨.",
     resolution: "docker-compose.yml에서 correlation-demo의 DD_LOGS_INJECTION을 true로.",
