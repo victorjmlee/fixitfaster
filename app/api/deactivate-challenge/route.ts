@@ -13,10 +13,11 @@ const CHALLENGES_LIB_FILE = path.join(ROOT, "lib", "challenges.ts");
 const COMPOSE_FILE = path.join(AGENT_DIR, "docker-compose.yml");
 
 type DockerComposePatch = {
-  service: string;
+  service?: string;
   envAdd?: [string, string][];
   envRemove?: string[];
   newService?: string | null;
+  configFiles?: { path: string; content: string }[];
 };
 
 // ─── git 헬퍼 ────────────────────────────────────────────────────────────────
@@ -58,6 +59,14 @@ function revertByPatch(patch: DockerComposePatch): void {
   }
 
   fs.writeFileSync(COMPOSE_FILE, compose, "utf-8");
+
+  // configFiles 삭제
+  if (patch.configFiles?.length) {
+    for (const { path: relPath } of patch.configFiles) {
+      const absPath = path.join(AGENT_DIR, relPath);
+      if (fs.existsSync(absPath)) fs.unlinkSync(absPath);
+    }
+  }
 }
 
 // ─── docker-compose.yml 롤백 (git show 파싱 방식) ──────────────────────────

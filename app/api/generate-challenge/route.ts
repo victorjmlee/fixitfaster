@@ -22,11 +22,12 @@ export type GeneratedChallenge = {
   };
   dockerComposePatch: {
     description: string;
-    service: string;
+    service?: string;
     envAdd?: [string, string][];
     envRemove?: string[];
-    volumeAdd?: string[];
     newService?: string;
+    /** 생성할 파일 목록. path는 fixitfaster-agent/ 기준 상대경로 */
+    configFiles?: { path: string; content: string }[];
   };
 };
 
@@ -49,10 +50,15 @@ ${dockerCompose}
 
 ## 규칙
 1. **환경**: 모든 챌린지는 로컬 Docker (docker-compose) 기반
-2. **broken 상태**: docker-compose.yml의 기존 서비스에 잘못된 환경변수/설정을 추가하거나, 새 서비스를 추가
-3. **채점**: 참가자가 git diff로 변경사항을 제출하므로 artifactCheck는 diff에서 찾을 문자열 패턴
-4. **slug**: scenario-{짧은-영어-식별자} 형식 (예: scenario-apm-disabled)
-5. **힌트 규칙 (매우 중요)**:
+2. **broken 상태 주입 방법 (택일 또는 조합)**:
+   - 기존 서비스에 잘못된 환경변수 추가 (envAdd)
+   - 기존 서비스에서 필요한 환경변수 제거 (envRemove)
+   - 새 서비스 추가 (newService) — 예: broken 앱 컨테이너
+   - 설정 파일 생성 (configFiles) — 예: conf.d/custom.yaml, datadog.yaml
+3. **configFiles 사용 시**: path는 fixitfaster-agent/ 기준 상대경로 (예: "conf.d/http_check.d/broken.yaml"), content는 파일 전체 내용
+4. **채점**: 참가자가 git diff로 변경사항을 제출하므로 artifactCheck는 diff에서 찾을 문자열 패턴
+5. **slug**: scenario-{짧은-영어-식별자} 형식 (예: scenario-apm-disabled)
+6. **힌트 규칙 (매우 중요)**:
    - 힌트는 "어디를 봐야 하는가"만 알려줘야 함 — 무엇을 바꿔야 하는지는 절대 언급 금지
    - 정답(환경변수명, 올바른 값, 파일명)을 직접 노출하지 말 것
    - "Agent 설정을 확인해보세요", "트레이스가 전송되는 경로를 추적해보세요" 수준으로 작성
@@ -78,11 +84,17 @@ ${dockerCompose}
     }
   },
   "dockerComposePatch": {
-    "description": "docker-compose.yml에서 무엇을 어떻게 변경하는지 설명",
-    "service": "변경할 서비스명 (예: agent, trace-demo, log-demo)",
+    "description": "어떤 broken 상태를 만드는지 설명",
+    "service": "환경변수 변경 대상 서비스명 (없으면 null)",
     "envAdd": [["ENV_VAR_NAME", "broken_value"]],
     "envRemove": ["제거할_기존_env_var_이름"],
-    "newService": null
+    "newService": null,
+    "configFiles": [
+      {
+        "path": "conf.d/http_check.d/broken.yaml",
+        "content": "파일 전체 내용"
+      }
+    ]
   }
 }
 

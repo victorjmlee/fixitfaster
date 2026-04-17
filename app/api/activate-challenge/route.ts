@@ -19,11 +19,12 @@ export type ActivateStep = {
 };
 
 type DockerComposePatch = {
-  service: string;
+  service?: string;
   description: string;
   envAdd?: [string, string][];
   envRemove?: string[];
   newService?: string | null;
+  configFiles?: { path: string; content: string }[];
 };
 
 type ReferenceAnswer = {
@@ -88,6 +89,15 @@ function applyDockerComposePatch(patch: DockerComposePatch): void {
   }
 
   fs.writeFileSync(COMPOSE_FILE, compose, "utf-8");
+
+  // configFiles: 설정 파일 생성
+  if (patch.configFiles?.length) {
+    for (const { path: relPath, content } of patch.configFiles) {
+      const absPath = path.join(AGENT_DIR, relPath);
+      fs.mkdirSync(path.dirname(absPath), { recursive: true });
+      fs.writeFileSync(absPath, content, "utf-8");
+    }
+  }
 }
 
 // ─── reference-answers.ts 업데이트 ─────────────────────────────────────────
@@ -217,6 +227,12 @@ export async function POST(req: NextRequest) {
     // 6. fixitfaster-agent git commit + push
     try {
       git("git add docker-compose.yml", AGENT_DIR);
+      // configFiles가 있으면 함께 스테이징
+      if (meta.dockerComposePatch.configFiles?.length) {
+        for (const { path: relPath } of meta.dockerComposePatch.configFiles) {
+          git(`git add "${relPath}"`, AGENT_DIR);
+        }
+      }
       git(`git commit -m "feat: add broken config for ${slug}"`, AGENT_DIR);
       git("git push origin main", AGENT_DIR);
       steps.push({ step: "fixitfaster-agent git push", status: "ok" });
