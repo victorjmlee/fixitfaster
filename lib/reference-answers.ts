@@ -109,21 +109,6 @@ export const REFERENCE_ANSWERS: Record<
       en: "Result 80 pts + Solution 20 pts = 100 max",
     },
   },
-  "scenario-container-logs-exclusion": {
-    rootCause: "Agent 환경변수 DD_CONTAINER_EXCLUDE_LOGS=name:fixitfaster-app-demo와 DD_CONTAINER_EXCLUDE_METRICS=name:fixitfaster-app-demo로 인해 app-demo 컨테이너의 로그와 메트릭이 모두 수집에서 제외되었습니다.",
-    resolution: "docker-compose.yml의 agent 서비스에서 DD_CONTAINER_EXCLUDE_LOGS와 DD_CONTAINER_EXCLUDE_METRICS 환경변수(name:fixitfaster-app-demo 포함)를 제거하고 Agent를 재시작합니다.",
-    expectedChange: "docker-compose.yml의 agent 서비스 환경변수에서 DD_CONTAINER_EXCLUDE_LOGS와 DD_CONTAINER_EXCLUDE_METRICS 항목이 삭제되어야 합니다.",
-    solutionRubric: "DD_CONTAINER_EXCLUDE_LOGS 또는 DD_CONTAINER_EXCLUDE_METRICS가 원인임을 언급해야 정답으로 인정합니다. 컨테이너 제외 규칙(exclusion rule)으로 인해 로그 또는 메트릭이 수집되지 않는다는 내용이면 부분 정답입니다. 해당 환경변수를 제거하거나 값에서 fixitfaster-app-demo를 제외해야 해결로 인정합니다. DD_CONTAINER_EXCLUDE_LOGS와 DD_CONTAINER_EXCLUDE_METRICS 둘 다 언급하고 제거하면 만점입니다.",
-    artifactCheck: [
-      ["DD_CONTAINER_EXCLUDE_LOGS", "fixitfaster-app-demo"],
-      ["DD_CONTAINER_EXCLUDE_METRICS", "fixitfaster-app-demo"],
-    ],
-    artifactScore: 75,
-    scoreGuide: {
-      ko: "결과 75점 + 솔루션 20점 = 만점 95점",
-      en: "Result 75 pts + Solution 20 pts = 95 max",
-    },
-  },
   "scenario-log-timezone": {
     rootCause: "log-demo 로그의 타임스탬프가 Asia/Seoul인데 Datadog 파이프라인에 올바른 Grok Parser와 Date Remapper(timezone Asia/Seoul)가 없음.",
     resolution: "Datadog 로그 파이프라인에서 Grok Parser로 타임스탬프를 파싱하고, Date Remapper에 timezone Asia/Seoul을 설정.",
