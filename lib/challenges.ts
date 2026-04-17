@@ -27,7 +27,6 @@ const CHALLENGE_ORDER = [
   "scenario-correlation",
   "scenario-custom-metrics",
   "scenario-log-timezone",
-  "scenario-logs-disabled",
 ];
 
 function extractSection(content: string, title: string): string {

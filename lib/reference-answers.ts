@@ -31,26 +31,6 @@ export const REFERENCE_ANSWERS: Record<
     scoreGuide: { ko: string; en: string };
   }
 > = {
-  "scenario-logs-disabled": {
-    rootCause: "datadog.yaml에 logs_enabled 항목이 기본값(false)으로 남아 있어 Agent가 로그 수집 모듈 전체를 비활성화했습니다.",
-    resolution: "docker-compose.yml 파일에서 agent 서비스의 DD_LOGS_ENABLED 환경 변수를 true로 설정합니다.",
-    expectedChange: "docker-compose.yml 파일의 agent 서비스에서 DD_LOGS_ENABLED 환경 변수 값이 true로 변경되어야 합니다.",
-    artifactCheck: [
-      [
-        "docker-compose",
-        "DD_LOGS_ENABLED",
-        "true"
-      ]
-    ],
-    artifactCheckFull: [
-      ["DD_LOGS_ENABLED=true"]
-    ],
-    artifactScore: 75,
-    scoreGuide: {
-      ko: "결과 75점 + 솔루션 20점 = 만점 95점",
-      en: "Result 75 pts + Solution 20 pts = 95 max",
-    },
-  },
 
   "scenario-infra": {
     rootCause: "Agent의 hostname과 DD_HOSTNAME이 잘못 설정되어 있음.",
