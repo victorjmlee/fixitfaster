@@ -36,7 +36,7 @@ export default function AdminPage() {
       const data = await res.json();
       setSteps((s) => ({ ...s, [slug]: data.steps ?? [] }));
       if (data.ok) {
-        setDone((d) => new Set([...d, slug]));
+        setDone((d) => new Set(Array.from(d).concat(slug)));
         setChallenges((c) => c.filter((ch) => ch.slug !== slug));
       } else {
         setErrors((e) => ({ ...e, [slug]: data.error ?? "오류 발생" }));

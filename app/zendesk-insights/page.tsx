@@ -158,7 +158,7 @@ function GeneratedModal({
           )}
           {tab === "docker" && (
             <div className="space-y-3 text-sm">
-              <Row label="서비스" value={result.dockerComposePatch.service} />
+              {result.dockerComposePatch.service && <Row label="서비스" value={result.dockerComposePatch.service} />}
               <Row label="설명" value={result.dockerComposePatch.description} />
               {result.dockerComposePatch.envAdd && result.dockerComposePatch.envAdd.length > 0 && (
                 <div>
