@@ -26,6 +26,7 @@ const CHALLENGE_ORDER = [
   "scenario-apm",
   "scenario-correlation",
   "scenario-custom-metrics",
+  "scenario-container-logs-exclusion",
   "scenario-log-timezone",
 ];
 
