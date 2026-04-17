@@ -48,7 +48,7 @@ async function callGemini(prompt: string): Promise<string> {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.9, maxOutputTokens: 4096 },
+          generationConfig: { temperature: 0.9, maxOutputTokens: 8192 },
         }),
       });
       if (!res.ok) { console.warn(`[insights] Gemini ${modelId}: ${res.status}`); continue; }
@@ -138,8 +138,27 @@ ${ticketList}
 
   try {
     const raw = await callGemini(prompt);
-    const cleaned = raw.replace(/^```(?:json)?\n?/i, "").replace(/\n?```$/i, "").trim();
-    const candidates = JSON.parse(cleaned) as ScenarioCandidate[];
+    let cleaned = raw.replace(/^```(?:json)?\n?/i, "").replace(/\n?```$/i, "").trim();
+
+    // 배열만 추출 (앞뒤 텍스트 제거)
+    const arrStart = cleaned.indexOf("[");
+    const arrEnd = cleaned.lastIndexOf("]");
+    if (arrStart !== -1 && arrEnd > arrStart) {
+      cleaned = cleaned.slice(arrStart, arrEnd + 1);
+    }
+
+    // JSON이 잘린 경우 마지막 완전한 객체까지만 복구
+    let candidates: ScenarioCandidate[];
+    try {
+      candidates = JSON.parse(cleaned);
+    } catch {
+      const lastComplete = cleaned.lastIndexOf("},");
+      if (lastComplete !== -1) {
+        candidates = JSON.parse(cleaned.slice(0, lastComplete + 1) + "]");
+      } else {
+        throw new Error(`Gemini 응답 파싱 실패: ${cleaned.slice(0, 200)}`);
+      }
+    }
 
     return NextResponse.json(
       {
