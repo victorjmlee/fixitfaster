@@ -140,23 +140,30 @@ ${ticketList}
     const raw = await callGemini(prompt);
     let cleaned = raw.replace(/^```(?:json)?\n?/i, "").replace(/\n?```$/i, "").trim();
 
-    // 배열만 추출 (앞뒤 텍스트 제거)
+    // 배열만 추출
     const arrStart = cleaned.indexOf("[");
     const arrEnd = cleaned.lastIndexOf("]");
     if (arrStart !== -1 && arrEnd > arrStart) {
       cleaned = cleaned.slice(arrStart, arrEnd + 1);
     }
 
-    // JSON이 잘린 경우 마지막 완전한 객체까지만 복구
     let candidates: ScenarioCandidate[];
     try {
       candidates = JSON.parse(cleaned);
     } catch {
-      const lastComplete = cleaned.lastIndexOf("},");
-      if (lastComplete !== -1) {
-        candidates = JSON.parse(cleaned.slice(0, lastComplete + 1) + "]");
-      } else {
-        throw new Error(`Gemini 응답 파싱 실패: ${cleaned.slice(0, 200)}`);
+      // 문자열 값 안의 줄바꿈·탭 제거 후 재시도
+      const oneliner = cleaned
+        .replace(/:\s*"([\s\S]*?)"/g, (_, v) => `: "${v.replace(/\n/g, " ").replace(/\r/g, "").replace(/\t/g, " ").replace(/"/g, '\\"')}"`)
+      try {
+        candidates = JSON.parse(oneliner);
+      } catch {
+        // 마지막 완전한 객체까지 잘라서 재시도
+        const lastBrace = cleaned.lastIndexOf("},");
+        if (lastBrace !== -1) {
+          candidates = JSON.parse(cleaned.slice(0, lastBrace + 1) + "]");
+        } else {
+          throw new Error(`JSON 파싱 실패: ${cleaned.slice(0, 300)}`);
+        }
       }
     }
 
