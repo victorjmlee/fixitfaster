@@ -31,77 +31,6 @@ function useHeartbeat(codespaceId: string | null) {
   return status;
 }
 
-const COMMANDS = [
-  { id: "agent-restart", label: { ko: "Agent 재시작", en: "Restart Agent" } },
-  { id: "rebuild", label: { ko: "컨테이너 리빌드", en: "Rebuild" } },
-  { id: "agent-status", label: { ko: "Agent 상태", en: "Agent Status" } },
-] as const;
-
-type CmdResult = { id: string; status: string; output?: string };
-
-function CodespaceCommands({ codespaceId, locale }: { codespaceId: string; locale: string }) {
-  const [running, setRunning] = useState<string | null>(null);
-  const [lastResult, setLastResult] = useState<CmdResult | null>(null);
-
-  const run = async (command: string) => {
-    setRunning(command);
-    setLastResult(null);
-    try {
-      const res = await fetch("/api/commands", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ codespaceId, command }),
-      });
-      if (!res.ok) { setRunning(null); return; }
-      const { commandId } = await res.json();
-
-      // Poll for result
-      for (let i = 0; i < 30; i++) {
-        await new Promise((r) => setTimeout(r, 2000));
-        const poll = await fetch(`/api/commands?codespaceId=${encodeURIComponent(codespaceId)}`);
-        const { all } = await poll.json();
-        const entry = all?.find((e: CmdResult & { id: string }) => e.id === commandId);
-        if (entry && (entry.status === "done" || entry.status === "error")) {
-          setLastResult(entry);
-          setRunning(null);
-          return;
-        }
-      }
-      setRunning(null);
-    } catch {
-      setRunning(null);
-    }
-  };
-
-  return (
-    <div className="rounded-lg border border-[var(--border)] bg-[var(--bg)]/50 p-3 space-y-2">
-      <p className="text-xs text-zinc-500">
-        {locale === "ko" ? "제출 전에 수정 결과를 확인하세요" : "Verify your fix before submitting"}
-      </p>
-      <div className="flex flex-wrap gap-2">
-        {COMMANDS.map((cmd) => (
-          <button
-            key={cmd.id}
-            type="button"
-            disabled={!!running}
-            onClick={() => run(cmd.id)}
-            className="rounded border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-xs text-zinc-300 hover:border-[var(--accent-dim)] hover:text-white disabled:opacity-50 transition-colors"
-          >
-            {running === cmd.id && <span className="animate-spinner mr-1.5" style={{ width: 10, height: 10, borderWidth: 1.5 }} />}
-            {locale === "ko" ? cmd.label.ko : cmd.label.en}
-          </button>
-        ))}
-      </div>
-      {lastResult && (
-        <div className={`animate-slide-up rounded border p-2 text-xs font-mono max-h-40 overflow-y-auto ${
-          lastResult.status === "done" ? "border-green-500/30 bg-green-500/5 text-green-300" : "border-red-500/30 bg-red-500/5 text-red-300"
-        }`}>
-          <pre className="whitespace-pre-wrap">{lastResult.output || (lastResult.status === "done" ? "Done" : "Error")}</pre>
-        </div>
-      )}
-    </div>
-  );
-}
 
 type Challenge = {
   id: string;
@@ -608,10 +537,6 @@ function ChallengePageContent() {
           </section>
         ) : null}
       </div>
-
-      {started && codespaceId && (
-        <CodespaceCommands codespaceId={codespaceId} locale={locale} />
-      )}
 
       {started && (
         <div id="submit-section" className="space-y-4 rounded-xl border border-[var(--border)] bg-[var(--card)] p-5">
