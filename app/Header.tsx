@@ -9,9 +9,11 @@ export default function Header() {
   const { locale, setLocale, t } = useLocale();
   const pathname = usePathname();
   const [isEmbedded, setIsEmbedded] = useState(false);
+  const [isLocalhost, setIsLocalhost] = useState(false);
 
   useEffect(() => {
     try { setIsEmbedded(window.self !== window.top); } catch { setIsEmbedded(true); }
+    setIsLocalhost(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
   }, []);
 
   const linkClass = (href: string) => {
@@ -40,6 +42,16 @@ export default function Header() {
             <Link href="/leaderboard" className={linkClass("/leaderboard")}>
               {t("nav.leaderboard")}
             </Link>
+            {isLocalhost && (
+              <Link href="/zendesk-insights" className={linkClass("/zendesk-insights")}>
+                Insights
+              </Link>
+            )}
+            {isLocalhost && (
+              <Link href="/admin" className={linkClass("/admin")}>
+                Admin
+              </Link>
+            )}
           </nav>
           <span className="text-white">|</span>
           <div className="flex rounded border border-[var(--border)] p-0.5 text-sm">
