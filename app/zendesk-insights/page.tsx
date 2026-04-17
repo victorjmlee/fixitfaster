@@ -301,15 +301,16 @@ export default function ZendeskInsightsPage() {
   const [data, setData] = useState<ZendeskInsightsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
+  const [gleanFetching, setGleanFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchStatus = async () => {
     try {
       const res = await fetch("/api/zendesk-insights", { cache: "no-store" });
-      const json = await res.json() as ZendeskInsightsData & { analyzing?: boolean };
+      const json = await res.json() as ZendeskInsightsData;
       if (!res.ok) throw new Error((json as { error?: string }).error ?? "Unknown error");
-      setAnalyzing(!!json.analyzing);
-      setData(json);
+      setGleanFetching(!!json.gleanFetching);
+      setData((prev) => prev ?? json); // 상태만 업데이트, candidates는 유지
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -317,26 +318,43 @@ export default function ZendeskInsightsPage() {
     }
   };
 
+  // 미사용 티켓 → Gemini 분석 (빠름)
   const startAnalysis = async () => {
     setError(null);
     setAnalyzing(true);
+    setData(null);
     try {
-      const res = await fetch("/api/zendesk-insights", { method: "POST" });
-      const json = await res.json();
-      if (!res.ok && res.status !== 409) throw new Error(json.error ?? "Unknown error");
+      const res = await fetch("/api/zendesk-insights", { method: "POST", cache: "no-store" });
+      const json = await res.json() as ZendeskInsightsData & { error?: string };
+      if (!res.ok) throw new Error(json.error ?? "Unknown error");
+      setData(json);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
+    } finally {
       setAnalyzing(false);
+    }
+  };
+
+  // Glean으로 신선한 티켓 fetch (느림, background)
+  const startGleanFetch = async () => {
+    setError(null);
+    try {
+      const res = await fetch("/api/zendesk-insights", { method: "PUT" });
+      const json = await res.json();
+      if (!res.ok && res.status !== 409) throw new Error(json.error ?? "Unknown error");
+      setGleanFetching(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
     }
   };
 
   useEffect(() => { fetchStatus(); }, []);
 
   useEffect(() => {
-    if (!analyzing) return;
-    const id = setInterval(fetchStatus, 3000);
+    if (!gleanFetching) return;
+    const id = setInterval(fetchStatus, 4000);
     return () => clearInterval(id);
-  }, [analyzing]);
+  }, [gleanFetching]);
 
   const hasData = data && data.candidates.length > 0;
 
@@ -349,30 +367,53 @@ export default function ZendeskInsightsPage() {
             Zendesk 티켓 분석 → 시나리오 후보 → 챌린지 자동 생성
           </p>
         </div>
-        <button
-          type="button"
-          onClick={analyzing ? fetchStatus : startAnalysis}
-          disabled={loading}
-          className={`rounded-lg px-3 py-1.5 text-sm font-medium transition disabled:opacity-40 ${
-            analyzing
-              ? "border border-yellow-500/30 bg-yellow-500/10 text-yellow-400 cursor-default"
-              : "bg-[var(--accent)] text-[var(--bg)] hover:opacity-90"
-          }`}
-        >
-          {analyzing ? "검색 중..." : loading ? "로딩..." : "새로 뽑기"}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={startGleanFetch}
+            disabled={gleanFetching || analyzing}
+            title="Glean으로 Zendesk 티켓 새로 가져오기 (1~3분)"
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition disabled:opacity-40 border ${
+              gleanFetching
+                ? "border-yellow-500/30 bg-yellow-500/10 text-yellow-400 cursor-default"
+                : "border-[var(--border)] text-zinc-400 hover:text-white hover:border-zinc-500"
+            }`}
+          >
+            {gleanFetching ? "Glean 검색 중..." : "Zendesk 새로 가져오기"}
+          </button>
+          <button
+            type="button"
+            onClick={startAnalysis}
+            disabled={loading || analyzing || gleanFetching}
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition disabled:opacity-40 ${
+              analyzing
+                ? "border border-yellow-500/30 bg-yellow-500/10 text-yellow-400 cursor-default"
+                : "bg-[var(--accent)] text-[var(--bg)] hover:opacity-90"
+            }`}
+          >
+            {analyzing ? "분석 중..." : "새로 뽑기"}
+          </button>
+        </div>
       </div>
 
-      {data?.analyzedAt && (
-        <div className="text-xs text-zinc-500 flex flex-wrap gap-4">
-          <span>분석: {new Date(data.analyzedAt).toLocaleString("ko-KR")}</span>
-          <span>티켓 {data.ticketsAnalyzed}개 분석</span>
-        </div>
-      )}
+      <div className="text-xs text-zinc-500 flex flex-wrap gap-4">
+        {(data?.totalTickets ?? 0) > 0 && (
+          <>
+            <span>티켓 풀: <span className="text-zinc-300">{data!.totalTickets}개</span></span>
+            <span>사용됨: <span className="text-zinc-300">{data!.usedTickets}개</span></span>
+            <span>미사용: <span className="text-green-400 font-medium">{data!.totalTickets - data!.usedTickets}개</span></span>
+          </>
+        )}
+        {data?.analyzedAt && (
+          <span>마지막 분석: {new Date(data.analyzedAt).toLocaleString("ko-KR")}</span>
+        )}
+      </div>
 
-      {(loading || analyzing) && (
+      {(loading || analyzing || gleanFetching) && (
         <div className="text-center py-12 text-zinc-400 text-sm animate-pulse">
-          {analyzing ? "Glean으로 Zendesk 티켓 검색 중... (1~3분)" : "로딩 중..."}
+          {analyzing ? "Gemini가 미사용 티켓 분석 중... (약 10초)" :
+           gleanFetching ? "Glean으로 Zendesk 티켓 새로 가져오는 중... (1~3분)" :
+           "로딩 중..."}
         </div>
       )}
 

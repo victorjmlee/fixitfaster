@@ -11,6 +11,7 @@ const PATCHES_DIR = path.join(CHALLENGES_DIR, "_patches");
 const REFERENCE_ANSWERS_FILE = path.join(ROOT, "lib", "reference-answers.ts");
 const CHALLENGES_LIB_FILE = path.join(ROOT, "lib", "challenges.ts");
 const COMPOSE_FILE = path.join(AGENT_DIR, "docker-compose.yml");
+const USED_TICKETS_FILE = path.join(ROOT, "data", "used-tickets.json");
 
 export type ActivateStep = {
   step: string;
@@ -39,6 +40,7 @@ type ReferenceAnswer = {
 };
 
 type DraftMeta = {
+  candidate?: { sourceTicketTitle?: string };
   referenceAnswer: ReferenceAnswer;
   dockerComposePatch: DockerComposePatch;
 };
@@ -252,7 +254,19 @@ export async function POST(req: NextRequest) {
       throw e;
     }
 
-    // 8. draft 정리
+    // 8. used-tickets 기록
+    const sourceTitle = meta.candidate?.sourceTicketTitle;
+    if (sourceTitle) {
+      const used = fs.existsSync(USED_TICKETS_FILE)
+        ? JSON.parse(fs.readFileSync(USED_TICKETS_FILE, "utf-8")) as { usedTickets: string[] }
+        : { usedTickets: [] };
+      if (!used.usedTickets.includes(sourceTitle)) {
+        used.usedTickets.push(sourceTitle);
+        fs.writeFileSync(USED_TICKETS_FILE, JSON.stringify(used, null, 2), "utf-8");
+      }
+    }
+
+    // 9. draft 정리
     fs.unlinkSync(mdDraftPath);
     fs.unlinkSync(metaPath);
     steps.push({ step: "Draft 파일 정리", status: "ok" });
