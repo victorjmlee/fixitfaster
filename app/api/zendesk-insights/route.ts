@@ -51,23 +51,34 @@ export async function POST() {
   const insightsPath = INSIGHTS_FILE;
   const prompt = `Glean MCP를 사용해서 Zendesk 티켓을 검색하고 fixitfaster 시나리오 후보를 추출해줘.
 
-다음 쿼리로 검색해 (각각 다른 결과가 나오도록):
-1. "datadog agent environment variable misconfigured" (app: zendesk)
-2. "log pipeline not collecting docker container" (app: zendesk)
-3. "APM trace missing service configuration" (app: zendesk)
-4. "metric not showing datadog agent config" (app: zendesk)
+아래 6개 쿼리로 각각 검색해. 각 쿼리마다 최대한 많은 결과를 가져와:
+1. "datadog agent not working configuration" (app: zendesk)
+2. "data not showing up datadog" (app: zendesk)
+3. "datadog configuration environment variable" (app: zendesk)
+4. "datadog not collecting container" (app: zendesk)
+5. "datadog setup not sending" (app: zendesk)
+6. "datadog troubleshooting misconfigured" (app: zendesk)
 
-검색 결과에서 이전에 쓰지 않은 새로운 티켓 위주로 fixitfaster 챌린지 후보를 골라. 조건:
-- Docker 환경에서 docker-compose.yml 환경변수 수정으로 재현/해결 가능한 문제
-- 증상과 원인이 명확한 configuration 이슈
-- TSE 교육에 실용적
+전체 검색 결과를 합쳐서 fixitfaster 챌린지로 좋은 후보를 5~8개 골라.
+
+## 선택 기준 (중요)
+- **재현 가능성**: docker-compose.yml 환경변수 추가/수정, 또는 앱 컨테이너 설정 변경만으로 broken 상태를 만들고 고칠 수 있어야 함
+- **Root cause 명확**: "어떤 설정이 잘못되어서 어떤 증상이 생겼는지" 한 문장으로 설명 가능
+- **제품 무관**: APM, Logs, Metrics, Infrastructure 등 특정 제품에 치우치지 말고 다양하게 선택
+- **난이도 분산**: Easy / Medium / Hard 골고루 포함
+- **TSE 실습용**: 참가자가 30분 이내에 Agent 또는 앱 컨테이너 설정을 고쳐서 해결 가능
+
+## 제외 기준
+- Datadog UI 설정(대시보드, 알림 등)만으로 해결하는 문제
+- 코드 버그 수정이 필요한 문제
+- 클라우드 인프라(AWS, GCP 등) 권한 문제
 
 분석이 끝나면 반드시 아래 형식의 JSON을 ${insightsPath} 파일에 저장해줘 (파일 전체를 덮어써):
 
 {
   "analyzedAt": "<현재 ISO 8601 시각>",
   "ticketsAnalyzed": <검색된 티켓 총 수>,
-  "query": "agent config / log collection / APM traces / metrics",
+  "query": "datadog configuration troubleshooting",
   "candidates": [
     {
       "title": "짧고 명확한 영어 제목",
