@@ -26,7 +26,8 @@ const CHALLENGE_ORDER = [
   "scenario-apm",
   "scenario-correlation",
   "scenario-custom-metrics",
-  "scenario-log-timezone",
+  "scenario-log-timezone",,
+  "scenario-missing-container-metrics-logs-exclusion",
 ];
 
 function extractSection(content: string, title: string): string {

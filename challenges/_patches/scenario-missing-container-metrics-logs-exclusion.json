@@ -1,0 +1,17 @@
+{
+  "description": "agent 서비스에 DD_CONTAINER_EXCLUDE_LOGS=name:fixitfaster-infra-demo와 DD_CONTAINER_EXCLUDE_METRICS=name:fixitfaster-infra-demo를 추가하여 infra-demo 컨테이너의 로그와 메트릭 수집을 비활성화합니다.",
+  "service": "agent",
+  "envAdd": [
+    [
+      "DD_CONTAINER_EXCLUDE_LOGS",
+      "name:fixitfaster-infra-demo"
+    ],
+    [
+      "DD_CONTAINER_EXCLUDE_METRICS",
+      "name:fixitfaster-infra-demo"
+    ]
+  ],
+  "envRemove": [],
+  "newService": null,
+  "configFiles": []
+}

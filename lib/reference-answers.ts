@@ -122,4 +122,26 @@ export const REFERENCE_ANSWERS: Record<
       en: "Bonus scenario — Solution (cause/resolution) 20 pts max",
     },
   },
+  "scenario-missing-container-metrics-logs-exclusion": {
+    rootCause: "Agent 환경변수 DD_CONTAINER_EXCLUDE_LOGS=name:fixitfaster-infra-demo와 DD_CONTAINER_EXCLUDE_METRICS=name:fixitfaster-infra-demo로 인해 infra-demo 컨테이너의 로그와 메트릭이 수집에서 제외되었습니다.",
+    resolution: "docker-compose.yml의 agent 서비스에서 DD_CONTAINER_EXCLUDE_LOGS와 DD_CONTAINER_EXCLUDE_METRICS 환경변수(name:fixitfaster-infra-demo)를 제거하고 Agent를 재시작합니다.",
+    expectedChange: "docker-compose.yml의 agent 서비스에서 DD_CONTAINER_EXCLUDE_LOGS와 DD_CONTAINER_EXCLUDE_METRICS 항목이 삭제되어야 합니다.",
+    solutionRubric: "DD_CONTAINER_EXCLUDE_LOGS 또는 DD_CONTAINER_EXCLUDE_METRICS가 원인임을 언급하면 정답으로 인정합니다. 컨테이너 제외 규칙으로 인해 infra-demo의 데이터가 수집되지 않는다는 내용이면 부분 정답입니다. 두 환경변수를 모두 제거해야 완전 해결로 인정합니다.",
+    artifactCheck: [
+      [
+        "DD_CONTAINER_EXCLUDE_LOGS",
+        "fixitfaster-infra-demo"
+      ],
+      [
+        "DD_CONTAINER_EXCLUDE_METRICS",
+        "fixitfaster-infra-demo"
+      ]
+    ],
+    artifactCheckFull: [],
+    artifactScore: 75,
+    scoreGuide: {
+      ko: "결과 75점 + 솔루션 20점 = 만점 95점",
+      en: "Result 75 pts + Solution 20 pts = 95 max",
+    },
+  },
 };
