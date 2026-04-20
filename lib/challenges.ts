@@ -28,6 +28,7 @@ const CHALLENGE_ORDER = [
   "scenario-custom-metrics",
   "scenario-log-timezone",
   "scenario-missing-container-metrics-logs-exclusion",
+  "scenario-agent-wrong-org",
 ];
 
 function extractSection(content: string, title: string): string {

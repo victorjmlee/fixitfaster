@@ -144,4 +144,27 @@ export const REFERENCE_ANSWERS: Record<
       en: "Result 75 pts + Solution 20 pts = 95 max",
     },
   },
+  "scenario-agent-wrong-org": {
+    rootCause: "Datadog Agent가 잘못된 API 키를 사용하여 의도하지 않은 Datadog 조직으로 데이터를 전송하고 있습니다.",
+    resolution: "Agent 컨테이너의 DD_API_KEY 환경 변수를 올바른 Datadog 조직의 API 키를 참조하도록 수정합니다.",
+    expectedChange: "fixitfaster-agent 서비스의 DD_API_KEY 환경 변수 값이 `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa`에서 `\"${DD_API_KEY}\"`로 변경되어야 합니다.",
+    solutionRubric: "참가자가 DD_API_KEY 환경 변수가 잘못 설정되었음을 원인으로 언급하면 정답. DD_API_KEY 값을 올바른 API 키를 참조하도록 수정해야 한다는 내용이 있으면 해결로 인정. 특히 `\"${DD_API_KEY}\"`와 같이 .env 파일의 값을 사용하도록 변경하는 것을 언급하면 높은 점수를 받습니다.",
+    artifactCheck: [
+      [
+        "docker-compose",
+        "DD_API_KEY",
+        "${DD_API_KEY}"
+      ]
+    ],
+    artifactCheckFull: [
+      [
+        "DD_API_KEY=${DD_API_KEY}"
+      ]
+    ],
+    artifactScore: 75,
+    scoreGuide: {
+      ko: "결과 75점 + 솔루션 20점 = 만점 95점",
+      en: "Result 75 pts + Solution 20 pts = 95 max",
+    },
+  },
 };

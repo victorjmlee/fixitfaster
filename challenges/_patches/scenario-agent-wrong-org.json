@@ -1,0 +1,14 @@
+{
+  "description": "Injects a wrong Datadog API key into the Agent container's environment variables to simulate data being sent to an incorrect organization, overriding the .env.local setting.",
+  "service": "agent",
+  "envAdd": [
+    [
+      "DD_API_KEY",
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    ]
+  ],
+  "envRemove": null,
+  "newService": null,
+  "configFiles": null,
+  "buildContext": null
+}
