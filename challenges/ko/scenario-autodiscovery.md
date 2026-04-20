@@ -7,7 +7,7 @@
 
 ## Symptom summary
 
-nginx 컨테이너(ad-demo-nginx)는 실행 중이지만, nginx 통합 체크가 동작하지 않습니다. agent status에서 nginx 체크에 발견된 인스턴스가 없을 수 있습니다. Agent는 동작 중이고 Docker 체크는 정상입니다. nginx 체크가 해당 컨테이너에 적용되지 않는 원인을 찾아 수정해야 합니다.
+nginx 컨테이너(ad-demo-nginx)는 실행 중이지만, nginx 통합 체크가 동작하지 않습니다. agent status에서 nginx 체크에 발견된 인스턴스가 없을 수 있습니다. Datadog Integrations 페이지에서 nginx 통합이 "No Data" 상태로 표시됩니다. Agent는 동작 중이고 Docker 체크는 정상입니다. nginx 체크가 해당 컨테이너에 적용되지 않는 원인을 찾아 수정해야 합니다.
 
 
 ## Environment
@@ -18,10 +18,11 @@ nginx 컨테이너(ad-demo-nginx)는 실행 중이지만, nginx 통합 체크가
 
 ## Steps to reproduce / What to observe
 
-1. agent status에서 nginx 체크를 확인합니다. nginx 체크가 없거나 "No service found with this AD identifier" 등이 나올 수 있습니다.
-2. Datadog에서 nginx 통합이 이 호스트/컨테이너에 대한 데이터를 보고하지 않을 수 있습니다.
-3. Agent의 Docker 체크는 정상이고, nginx 컨테이너는 Docker에서 보입니다.
-4. 정리: Agent는 Docker를 보지만, nginx 체크가 nginx 컨테이너에 붙지 않습니다.
+1. agent status에서 nginx 체크를 확인합니다. nginx 체크가 없을 수 있습니다.
+2. `agent configcheck`를 실행합니다. nginx가 나타나지 않거나, 설정된 AD identifier와 매칭되는 컨테이너가 없다고 표시될 수 있습니다.
+3. Datadog에서 nginx 통합이 이 호스트/컨테이너에 대한 데이터를 보고하지 않을 수 있습니다.
+4. Agent의 Docker 체크는 정상이고, nginx 컨테이너는 Docker에서 보입니다.
+5. 정리: Agent는 Docker를 보지만, nginx 체크가 nginx 컨테이너에 붙지 않습니다.
 
 
 ## What to investigate (hints)
@@ -42,6 +43,9 @@ nginx 컨테이너(ad-demo-nginx)는 실행 중이지만, nginx 통합 체크가
 Agent 및 nginx 컨테이너 확인:
 docker ps | grep -E "agent|ad-demo-nginx"
 docker exec fixitfaster-agent agent status
+
+Autodiscovery 설정 확인:
+docker exec fixitfaster-agent agent configcheck
 
 nginx 컨테이너 이미지/short image 확인:
 docker inspect fixitfaster-ad-demo-nginx --format '{{.Config.Image}}'

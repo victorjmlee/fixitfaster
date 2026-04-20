@@ -7,7 +7,7 @@
 
 ## Symptom summary
 
-An nginx container (ad-demo-nginx) is running, but the nginx integration check does not run for it — or in agent status the nginx check shows no discovered instance. The Agent is running and the Docker check is OK. You need to find why the nginx check is not being applied to the container and fix it.
+An nginx container (ad-demo-nginx) is running, but the nginx integration check does not run for it — or in agent status the nginx check shows no discovered instance. In Datadog's Integrations page, the nginx integration shows "No Data". The Agent is running and the Docker check is OK. You need to find why the nginx check is not being applied to the container and fix it.
 
 
 ## Environment
@@ -18,10 +18,11 @@ An nginx container (ad-demo-nginx) is running, but the nginx integration check d
 
 ## Steps to reproduce / What to observe
 
-1. Check agent status for the nginx check: the nginx check may be missing or show "No service found with this AD identifier" (or similar).
-2. In Datadog, the nginx integration may report no data for this host/container.
-3. The Docker check in the agent is OK; the nginx container is visible to Docker.
-4. So: the agent sees Docker, but the nginx check is not attached to the nginx container.
+1. Check agent status for the nginx check: the nginx check may be missing.
+2. Run `agent configcheck`: nginx may not appear, or show no matching container for the configured AD identifier.
+3. In Datadog, the nginx integration may report no data for this host/container.
+4. The Docker check in the agent is OK; the nginx container is visible to Docker.
+5. So: the agent sees Docker, but the nginx check is not attached to the nginx container.
 
 
 ## What to investigate (hints)
@@ -42,6 +43,9 @@ An nginx container (ad-demo-nginx) is running, but the nginx integration check d
 Check Agent and nginx container:
 docker ps | grep -E "agent|ad-demo-nginx"
 docker exec fixitfaster-agent agent status
+
+Check Autodiscovery config:
+docker exec fixitfaster-agent agent configcheck
 
 Check nginx container image/short image:
 docker inspect fixitfaster-ad-demo-nginx --format '{{.Config.Image}}'

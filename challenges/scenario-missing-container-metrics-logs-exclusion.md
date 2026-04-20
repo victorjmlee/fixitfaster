@@ -1,4 +1,4 @@
-# Scenario: Missing Container Metrics and Logs due to Exclusion
+# Scenario: Missing Container Metrics and Logs
 
 **Difficulty:** ⭐ Easy
 **Estimated time:** 15–20 min
@@ -7,7 +7,7 @@
 
 ## Symptom summary
 
-The `infra-demo` container is running and visible via `docker ps`, but it does not appear in Datadog Infrastructure → Containers, and no logs from it show up in Datadog Logs. No errors are visible in the Agent status. All other containers are working normally.
+The `infra-demo` container is running and visible via `docker ps`, but it does not appear in Datadog Infrastructure → Containers, and logs for `service:infra-demo` do not appear in Datadog Logs. No errors are visible in the Agent status. All other containers are working normally.
 
 
 ## Environment
@@ -45,7 +45,9 @@ docker ps | grep infra-demo
 
 Agent status:
 docker exec fixitfaster-agent agent status
-docker exec fixitfaster-agent agent configcheck
+
+Check agent environment variables:
+docker exec fixitfaster-agent env
 
 Restart agent after fix:
 cd ~/fixitfaster-agent

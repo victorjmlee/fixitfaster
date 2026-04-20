@@ -1,4 +1,4 @@
-# Scenario: Missing Container Metrics and Logs due to Exclusion
+# Scenario: Missing Container Metrics and Logs
 
 **Difficulty:** ⭐ Easy
 **Estimated time:** 15–20 min
@@ -7,7 +7,7 @@
 
 ## Symptom summary
 
-`infra-demo` 컨테이너는 실행 중이고 `docker ps`로 확인되지만, Datadog Infrastructure → Containers에 보이지 않고 Datadog Logs에서도 로그가 전혀 수집되지 않습니다. Agent status에는 오류가 없고 다른 컨테이너들은 정상 동작 중입니다.
+`infra-demo` 컨테이너는 실행 중이고 `docker ps`로 확인되지만, Datadog Infrastructure → Containers에 보이지 않고 Datadog Logs에서 `service:infra-demo` 로그가 수집되지 않습니다. Agent status에는 오류가 없고 다른 컨테이너들은 정상 동작 중입니다.
 
 
 ## Environment
@@ -45,7 +45,9 @@ docker ps | grep infra-demo
 
 Agent 상태 확인:
 docker exec fixitfaster-agent agent status
-docker exec fixitfaster-agent agent configcheck
+
+Agent 환경변수 확인:
+docker exec fixitfaster-agent env
 
 수정 후 Agent 재시작:
 cd ~/fixitfaster-agent
