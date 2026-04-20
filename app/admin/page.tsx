@@ -11,6 +11,20 @@ export default function AdminPage() {
   const [steps, setSteps] = useState<Record<string, ActivateStep[]>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [done, setDone] = useState<Set<string>>(new Set());
+  const [resetting, setResetting] = useState(false);
+  const [resetDone, setResetDone] = useState(false);
+
+  const handleResetLeaderboard = async () => {
+    if (!confirm("리더보드를 초기화할까요? 모든 제출 기록이 삭제됩니다.")) return;
+    setResetting(true);
+    try {
+      await fetch("/api/reset-leaderboard", { method: "POST" });
+      setResetDone(true);
+      setTimeout(() => setResetDone(false), 3000);
+    } finally {
+      setResetting(false);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -50,9 +64,24 @@ export default function AdminPage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 py-8 px-4">
-      <div>
-        <h1 className="text-2xl font-bold text-white">Challenge Admin</h1>
-        <p className="mt-1 text-sm text-zinc-400">배포된 챌린지 관리 — 삭제 시 docker-compose.yml 설정도 함께 롤백됩니다.</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Challenge Admin</h1>
+          <p className="mt-1 text-sm text-zinc-400">배포된 챌린지 관리 — 삭제 시 docker-compose.yml 설정도 함께 롤백됩니다.</p>
+        </div>
+        <button
+          onClick={handleResetLeaderboard}
+          disabled={resetting}
+          className={`shrink-0 rounded px-3 py-1.5 text-xs font-medium transition border ${
+            resetDone
+              ? "bg-green-500/10 text-green-400 border-green-500/30"
+              : resetting
+              ? "bg-zinc-700 text-zinc-500 border-zinc-600 cursor-default"
+              : "bg-zinc-800 text-zinc-300 border-zinc-600 hover:bg-zinc-700"
+          }`}
+        >
+          {resetDone ? "초기화 완료" : resetting ? "처리 중..." : "리더보드 초기화"}
+        </button>
       </div>
 
       {loading && <p className="text-zinc-400 text-sm animate-pulse">로딩 중...</p>}
