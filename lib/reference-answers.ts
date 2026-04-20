@@ -144,23 +144,4 @@ export const REFERENCE_ANSWERS: Record<
       en: "Result 75 pts + Solution 20 pts = 95 max",
     },
   },
-  "scenario-agent-metrics-proxy-misconfig": {
-    rootCause: "Datadog Agent가 DogStatsD 메트릭을 중간 프록시(Vector)로 보내도록 설정되어 있으나, 해당 프록시가 Datadog 백엔드로 메트릭을 전달하도록 올바르게 구성되지 않았습니다.",
-    resolution: "`fixitfaster-agent` 서비스의 `DD_DOGSTATSD_URL` 환경 변수를 제거하여 Agent가 직접 메트릭을 수집하고 Datadog으로 전송하도록 합니다.",
-    expectedChange: "`docker-compose.yml` 파일에서 `fixitfaster-agent` 서비스에 추가된 `DD_DOGSTATSD_URL=udp://vector:8125` 환경 변수를 제거해야 합니다.",
-    solutionRubric: "원인: Agent가 DogStatsD 메트릭을 Vector 프록시로 보내지만, Vector가 Datadog으로 전달하지 않는다는 내용을 언급하면 정답. `DD_DOGSTATSD_URL` 환경 변수가 잘못 설정되었음을 언급해도 정답.\n해결: `DD_DOGSTATSD_URL` 환경 변수를 제거하거나 Agent가 직접 메트릭을 보내도록 수정하는 내용을 언급하면 정답. Vector 프록시 설정을 수정하여 Datadog으로 전달하도록 하는 내용을 언급해도 정답.",
-    artifactCheck: [
-      [
-        "docker-compose",
-        "DD_DOGSTATSD_URL",
-        ""
-      ]
-    ],
-    artifactCheckFull: [],
-    artifactScore: 75,
-    scoreGuide: {
-      ko: "결과 75점 + 솔루션 20점 = 만점 95점",
-      en: "Result 75 pts + Solution 20 pts = 95 max",
-    },
-  },
 };
