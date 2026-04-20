@@ -22,13 +22,13 @@ const CHALLENGES_DIR = path.join(process.cwd(), "challenges");
 
 const CHALLENGE_ORDER = [
   "scenario-infra",
+  "scenario-agent-wrong-org",
   "scenario-autodiscovery",
   "scenario-apm",
   "scenario-correlation",
   "scenario-custom-metrics",
   "scenario-log-timezone",
   "scenario-missing-container-metrics-logs-exclusion",
-  "scenario-agent-wrong-org",
 ];
 
 function extractSection(content: string, title: string): string {
