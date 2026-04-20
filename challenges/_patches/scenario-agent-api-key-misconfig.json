@@ -1,0 +1,13 @@
+{
+  "description": "Datadog Agent의 DD_API_KEY를 잘못된 값으로 설정하여 데이터 전송을 실패하게 만듭니다.",
+  "service": "agent",
+  "envAdd": [
+    [
+      "DD_API_KEY",
+      "dd_invalid_api_key_1234567890"
+    ]
+  ],
+  "envRemove": null,
+  "newService": null,
+  "configFiles": null
+}
