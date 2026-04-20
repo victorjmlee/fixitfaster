@@ -27,7 +27,8 @@ const CHALLENGE_ORDER = [
   "scenario-correlation",
   "scenario-custom-metrics",
   "scenario-log-timezone",
-  "scenario-missing-container-metrics-logs-exclusion",
+  "scenario-missing-container-metrics-logs-exclusion",,
+  "scenario-openmetrics-v2-not-collected",
 ];
 
 function extractSection(content: string, title: string): string {
