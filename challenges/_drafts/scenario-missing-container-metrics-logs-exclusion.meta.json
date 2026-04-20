@@ -1,6 +1,6 @@
 {
   "candidate": {
-    "title": "Missing Container Metrics and Logs due to Exclusion",
+    "title": "Missing Container and Logs",
     "difficulty": "Easy",
     "products": "Containers, Metrics, Logs",
     "symptomSummary": "infra-demo 컨테이너가 실행 중이지만 Datadog Infrastructure → Containers에 보이지 않고 로그도 수집되지 않습니다.",

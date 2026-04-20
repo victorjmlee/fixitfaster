@@ -1,4 +1,4 @@
-# Scenario: Missing Container Metrics and Logs
+# Missing Container and Logs
 
 **Difficulty:** ⭐ Easy
 **Estimated time:** 15–20 min
