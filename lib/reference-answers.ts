@@ -144,27 +144,4 @@ export const REFERENCE_ANSWERS: Record<
       en: "Result 75 pts + Solution 20 pts = 95 max",
     },
   },
-  "scenario-agent-api-key-misconfig": {
-    rootCause: "Datadog Agent 컨테이너의 DD_API_KEY 환경변수가 유효하지 않은 값으로 설정되어 Datadog 백엔드로의 데이터 전송이 실패했습니다.",
-    resolution: "Datadog Agent 컨테이너의 DD_API_KEY 환경변수를 올바른 Datadog API 키로 수정해야 합니다. 일반적으로 `.env.local` 파일에 올바른 API 키를 설정하고 Agent 컨테이너를 재시작합니다.",
-    expectedChange: "docker-compose.yml 파일에서 `agent` 서비스의 `DD_API_KEY` 환경변수 값이 `dd_invalid_api_key_1234567890`에서 `${DATADOG_API_KEY}` (또는 유효한 API 키)로 변경되어야 합니다.",
-    solutionRubric: "참가자가 DD_API_KEY의 오설정을 원인으로 언급하고, 올바른 API 키로 변경하는 것을 해결책으로 제시하면 점수를 받습니다. `.env.local` 파일 수정 또는 `docker-compose.yml` 직접 수정을 언급해도 정답으로 인정됩니다. DD_SITE 관련 언급은 이 시나리오의 주된 원인이 아니므로 점수에 영향을 주지 않습니다.",
-    artifactCheck: [
-      [
-        "docker-compose",
-        "DD_API_KEY",
-        "${DATADOG_API_KEY}"
-      ]
-    ],
-    artifactCheckFull: [
-      [
-        "DD_API_KEY=${DATADOG_API_KEY}"
-      ]
-    ],
-    artifactScore: 75,
-    scoreGuide: {
-      ko: "결과 75점 + 솔루션 20점 = 만점 95점",
-      en: "Result 75 pts + Solution 20 pts = 95 max",
-    },
-  },
 };

@@ -1,1 +1,0 @@
-# Scenario: Datadog Agent not sending any data due to API key misconfiguration
