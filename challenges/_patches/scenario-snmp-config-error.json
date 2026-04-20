@@ -1,0 +1,13 @@
+{
+  "description": "SNMP 통합 체크를 위한 `conf.d/snmp.d/conf.yaml` 파일에 구문 오류(instances 뒤 콜론 누락)를 주입하여 Agent가 체크를 로드하지 못하게 합니다.",
+  "service": null,
+  "envAdd": null,
+  "envRemove": null,
+  "newService": null,
+  "configFiles": [
+    {
+      "path": "conf.d/snmp.d/conf.yaml",
+      "content": "init_config:\ninstances\n  - ip_address: 127.0.0.1\n    community_string: public\n    port: 161\n    snmp_version: 2c\n    tags:\n      - snmp_device:test_device\n"
+    }
+  ]
+}
