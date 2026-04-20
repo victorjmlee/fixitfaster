@@ -7,7 +7,7 @@
 
 ## Symptom summary
 
-All Datadog data (metrics, logs, traces, etc.) for the `fixitfaster-agent` host is being sent to an unintended Datadog organization instead of the desired one. You will not see any data from `fixitfaster-agent` in your Datadog account.
+All Datadog data (metrics, logs, traces, etc.) for the `broken-agent` host is being sent to an unintended Datadog organization instead of the desired one. You will not see any data from `broken-agent` in your Datadog account.
 
 
 ## Environment
@@ -19,8 +19,8 @@ All Datadog data (metrics, logs, traces, etc.) for the `fixitfaster-agent` host 
 ## Steps to reproduce / What to observe
 
 1. Start the challenge environment using `npm run up:full`.
-2. Navigate to your Datadog account and search for data (metrics, logs, traces) from the host `fixitfaster-agent`.
-3. Observe that no data from `fixitfaster-agent` or its associated demo containers (e.g., `fixitfaster-trace-demo`, `fixitfaster-log-demo`) appears in your intended Datadog organization.
+2. Navigate to your Datadog account and search for data (metrics, logs, traces) from the host `broken-agent`.
+3. Observe that no data from `broken-agent` or its associated demo containers (e.g., `fixitfaster-trace-demo`, `fixitfaster-log-demo`) appears in your intended Datadog organization.
 
 
 ## Allowed resources
