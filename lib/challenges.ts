@@ -21,8 +21,8 @@ export type Challenge = ChallengeMeta & {
 const CHALLENGES_DIR = path.join(process.cwd(), "challenges");
 
 const CHALLENGE_ORDER = [
-  "scenario-infra",
   "scenario-agent-wrong-org",
+  "scenario-infra",
   "scenario-autodiscovery",
   "scenario-apm",
   "scenario-correlation",
