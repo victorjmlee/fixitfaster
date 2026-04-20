@@ -29,7 +29,6 @@ const CHALLENGE_ORDER = [
   "scenario-log-timezone",
   "scenario-missing-container-metrics-logs-exclusion",
   "scenario-agent-metrics-proxy-misconfig",
-  "scenario-snmp-config-error",
 ];
 
 function extractSection(content: string, title: string): string {

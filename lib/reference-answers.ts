@@ -163,33 +163,4 @@ export const REFERENCE_ANSWERS: Record<
       en: "Result 75 pts + Solution 20 pts = 95 max",
     },
   },
-  "scenario-snmp-config-error": {
-    rootCause: "`conf.d/snmp.d/conf.yaml` 파일의 `instances` 블록에 구문 오류(콜론 누락)가 있어 Agent가 SNMP 체크를 로드하지 못했습니다.",
-    resolution: "`conf.d/snmp.d/conf.yaml` 파일의 `instances` 블록에 콜론을 추가하고, `ip_address`와 `community_string` 등 필수 필드를 올바르게 구성해야 합니다.",
-    expectedChange: "`conf.d/snmp.d/conf.yaml` 파일에서 `instances` 뒤에 콜론을 추가하고, `ip_address`와 `community_string` 필드가 올바른 값으로 구성되어야 합니다.",
-    solutionRubric: "`conf.d/snmp.d/conf.yaml` 파일의 구문 오류(예: `instances` 뒤 콜론 누락) 또는 필수 필드 누락을 원인으로 언급하면 정답. `conf.d/snmp.d/conf.yaml` 파일의 `instances` 블록에 콜론을 추가하고 `ip_address` 및 `community_string` 필드를 올바르게 구성하는 내용을 해결로 언급하면 정답.",
-    artifactCheck: [
-      [
-        "configFiles",
-        "conf.d/snmp.d/conf.yaml",
-        "instances:"
-      ],
-      [
-        "configFiles",
-        "conf.d/snmp.d/conf.yaml",
-        "ip_address: 127.0.0.1"
-      ]
-    ],
-    artifactCheckFull: [
-      [
-        "conf.d/snmp.d/conf.yaml",
-        "init_config:\ninstances:\n  - ip_address: 127.0.0.1\n    community_string: public\n    port: 161\n    snmp_version: 2c\n    tags:\n      - snmp_device:test_device\n"
-      ]
-    ],
-    artifactScore: 75,
-    scoreGuide: {
-      ko: "결과 75점 + 솔루션 20점 = 만점 95점",
-      en: "Result 75 pts + Solution 20 pts = 95 max",
-    },
-  },
 };
