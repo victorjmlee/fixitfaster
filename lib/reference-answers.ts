@@ -144,27 +144,4 @@ export const REFERENCE_ANSWERS: Record<
       en: "Result 75 pts + Solution 20 pts = 95 max",
     },
   },
-  "scenario-openmetrics-v2-not-collected": {
-    rootCause: "Datadog Agent의 `openmetrics.d/conf.yaml` 파일 내 `instances` 섹션에 OpenMetrics V2 엔드포인트 URL이 잘못 지정되어 있습니다.",
-    resolution: "Agent의 `openmetrics.d/conf.yaml` 파일에서 `instances` 섹션의 `openmetrics_endpoint` URL을 `http://openmetrics-v2-app:8080/metrics`로 올바르게 수정하고, Agent를 재시작합니다.",
-    expectedChange: "Agent의 `conf.d/openmetrics.d/conf.yaml` 파일에서 `openmetrics_endpoint` URL을 `http://openmetrics-v2-app:8080/metrics`로 수정해야 합니다.",
-    solutionRubric: "참가자가 `openmetrics.d/conf.yaml` 파일의 잘못된 `openmetrics_endpoint` URL을 원인으로 언급하면 정답. `instances` 섹션의 `openmetrics_endpoint` 값을 `http://openmetrics-v2-app:8080/metrics`로 수정하는 내용을 해결로 제시하면 점수를 받습니다. Agent 재시작 언급도 포함되어야 합니다.",
-    artifactCheck: [
-      [
-        "configFiles",
-        "conf.d/openmetrics.d/conf.yaml",
-        "openmetrics_endpoint: http://openmetrics-v2-app:8080/metrics"
-      ]
-    ],
-    artifactCheckFull: [
-      [
-        "openmetrics_endpoint: http://openmetrics-v2-app:8080/metrics"
-      ]
-    ],
-    artifactScore: 75,
-    scoreGuide: {
-      ko: "결과 75점 + 솔루션 20점 = 만점 95점",
-      en: "Result 75 pts + Solution 20 pts = 95 max",
-    },
-  },
 };
